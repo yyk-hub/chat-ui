@@ -30,86 +30,95 @@ footer{margin-top:12px;color:var(--muted);font-size:13px;text-align:center}
 </head>
 <body>
 <div class="app card">
-<div class="header">
-<div class="logo">CS</div>
-<div>
-<h1>Customer Service Chat</h1>
-<div class="muted">Connects to your Render backend API</div>
+  <div class="header">
+    <div class="logo">CS</div>
+    <div>
+      <h1>Customer Service Chat</h1>
+      <div class="muted">Connects to your Render backend API</div>
+    </div>
+  </div>
+
+  <!-- ✅ Chat messages area -->
+  <div id="messages" class="messages">
+    <div class="empty">No messages yet. Type below to start chatting.</div>
+  </div>
+
+  <!-- ✅ Input + Send -->
+  <div class="controls">
+    <input id="input" type="text" placeholder="Type your message..." />
+    <button id="send">Send</button>
+  </div>
+
+  <!-- ✅ Status -->
+  <div id="status" class="muted"></div>
+
+  <footer>Powered by Render + Netlify</footer>
 </div>
-</div>
-  
+
 <script>
 // === EDIT THIS ===
-const BACKEND_URL = 'https://customer-service-qbwg.onrender.com'; // e.g. https://customer-service.onrender.com
+const BACKEND_URL = 'https://customer-service-qbwg.onrender.com'; // 👈 Replace with your Render backend
 const CHAT_ENDPOINT = BACKEND_URL + '/api/chat';
 // ==================
-
 
 const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const statusEl = document.getElementById('status');
 
-
 function appendMessage(text, sender='bot'){
-// remove empty placeholder
-const empty = messagesEl.querySelector('.empty'); if(empty) empty.remove();
-const m = document.createElement('div'); m.className = 'msg ' + (sender==='user'?'user':'bot');
-const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text;
-m.appendChild(b); messagesEl.appendChild(m);
-messagesEl.scrollTop = messagesEl.scrollHeight;
+  const empty = messagesEl.querySelector('.empty'); if(empty) empty.remove();
+  const m = document.createElement('div'); m.className = 'msg ' + (sender==='user'?'user':'bot');
+  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text;
+  m.appendChild(b); messagesEl.appendChild(m);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 }
-
 
 function setStatus(text, loading=false){
-statusEl.textContent = text || '';
-if(loading){
-const loader = document.createElement('span'); loader.className='loader'; statusEl.appendChild(loader);
+  statusEl.textContent = text || '';
+  if(loading){
+    const loader = document.createElement('span'); loader.className='loader'; statusEl.appendChild(loader);
+  }
 }
-}
-
 
 async function sendMessage(){
-const text = inputEl.value.trim(); if(!text) return;
-appendMessage(text, 'user'); inputEl.value = ''; inputEl.focus();
-setStatus('Sending...', true);
+  const text = inputEl.value.trim(); if(!text) return;
+  appendMessage(text, 'user'); inputEl.value = ''; inputEl.focus();
+  setStatus('Sending...', true);
 
-
-try{
-const res = await fetch(CHAT_ENDPOINT, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ message: text })
-});
-if(!res.ok){
-const errText = await res.text(); throw new Error(errText || res.statusText);
+  try{
+    const res = await fetch(CHAT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+    if(!res.ok){
+      const errText = await res.text(); throw new Error(errText || res.statusText);
+    }
+    const data = await res.json();
+    const reply = (data && (data.reply || data.response || data.answer)) || JSON.stringify(data);
+    appendMessage(reply, 'bot');
+    setStatus('');
+  }catch(err){
+    console.error(err);
+    appendMessage('Error: ' + (err.message||'Failed to reach backend'), 'bot');
+    setStatus('Error communicating with backend');
+  }
 }
-const data = await res.json();
-const reply = (data && (data.reply || data.response || data.answer)) || JSON.stringify(data);
-appendMessage(reply, 'bot');
-setStatus('');
-}catch(err){
-console.error(err);
-appendMessage('Error: ' + (err.message||'Failed to reach backend'), 'bot');
-setStatus('Error communicating with backend');
-}
-}
-
 
 sendBtn.addEventListener('click', sendMessage);
 inputEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') sendMessage(); });
 
-
-// quick health-check to inform status
+// quick health-check
 (async function healthCheck(){
-if(BACKEND_URL === 'https://customer-service-qbwg.onrender.com'){
-setStatus('⚠️ Edit index.html and set BACKEND_URL to your Render URL');
-return;
-}
-try{
-const res = await fetch(BACKEND_URL + '/health');
-if(res.ok) setStatus('Backend online'); else setStatus('Backend reachable but returned ' + res.status);
-}catch(e){ setStatus('Backend unreachable (check CORS and URL)'); }
+  if(BACKEND_URL === 'https://customer-service-qbwg.onrender.com'){
+    setStatus('⚠️ Edit index.html and set BACKEND_URL to your Render URL');
+    return;
+  }
+  try{
+    const res = await fetch(BACKEND_URL + '/health');
+    if(res.ok) setStatus('Backend online'); else setStatus('Backend returned ' + res.status);
+  }catch(e){ setStatus('Backend unreachable (check CORS and URL)'); }
 })();
 </script>
 </body>
