@@ -5,24 +5,82 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Customer Service Chat</title>
 <style>
-:root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#10b981}
+:root {
+  --bg:#ffffff;
+  --card:#f9f9f9;
+  --muted:#555;
+  --accent:#10b981;
+  --bubble:#eaeaea;
+  --bubble-user:#10b981;
+  --bubble-user-text:#fff;
+  --bubble-text:#222;
+}
+body.dark {
+  --bg:#0f172a;
+  --card:#1e293b;
+  --muted:#94a3b8;
+  --accent:#10b981;
+  --bubble:#334155;
+  --bubble-text:#f1f5f9;
+  --bubble-user:#10b981;
+  --bubble-user-text:#fff;
+}
 *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
-body{margin:0;background:linear-gradient(180deg,#071024 0%, #0b1220 100%);color:#e6eef6;display:flex;align-items:center;justify-content:center;height:100vh}
+body{
+  margin:0;background:var(--bg);color:#222;
+  display:flex;align-items:center;justify-content:center;height:100vh;
+  transition: background .3s ease, color .3s ease;
+}
+body.dark{color:#f1f5f9;}
 .app{width:100%;max-width:720px;padding:20px}
-.card{background:rgba(255,255,255,0.03);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
-.header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700}
+.card{
+  background:var(--card);
+  border-radius:12px;
+  padding:18px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  transition: background .3s ease;
+}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{
+  width:44px;height:44px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),#7c3aed);
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:white;
+}
 h1{font-size:18px;margin:0}
-.messages{height:420px;overflow:auto;padding:12px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);margin-bottom:12px}
+.theme-toggle{
+  background:none;border:0;cursor:pointer;font-size:18px;
+}
+.messages{
+  height:420px;overflow:auto;padding:12px;border-radius:8px;
+  background:#fff;margin-bottom:12px;border:1px solid #eee;
+  transition: background .3s ease;
+}
+body.dark .messages{background:#0f172a;border:1px solid #334155;}
 .msg{display:flex;margin-bottom:10px}
 .msg.user{justify-content:flex-end}
-.bubble{max-width:78%;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,0.03);color:var(--muted);line-height:1.4}
-.msg.user .bubble{background:linear-gradient(90deg,var(--accent),#7c3aed);color:#04201a}
+.bubble{
+  max-width:78%;padding:10px 14px;border-radius:12px;
+  background:var(--bubble);color:var(--bubble-text);line-height:1.4;
+}
+.msg.user .bubble{background:var(--bubble-user);color:var(--bubble-user-text);}
 .controls{display:flex;gap:8px}
-input[type=text]{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
-button{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;background:var(--accent);color:#04201a;font-weight:600}
+input[type=text]{
+  flex:1;padding:10px 12px;border-radius:10px;
+  border:1px solid #ccc;background:#fff;color:#222;
+  transition: background .3s ease,color .3s ease;
+}
+body.dark input[type=text]{background:#1e293b;border:1px solid #475569;color:#f1f5f9;}
+button{
+  padding:10px 14px;border-radius:10px;border:0;cursor:pointer;
+  background:var(--accent);color:#fff;font-weight:600;
+}
 .muted{color:var(--muted);font-size:13px;margin-top:8px}
-.loader{display:inline-block;width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,0.6);margin-left:8px;animation:blink 1s linear infinite}
+.loader{
+  display:inline-block;width:8px;height:8px;border-radius:999px;
+  background:#666;margin-left:8px;animation:blink 1s linear infinite;
+}
+body.dark .loader{background:#f1f5f9;}
 @keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0.2}}
 footer{margin-top:12px;color:var(--muted);font-size:13px;text-align:center}
 .empty{opacity:0.6;text-align:center;padding:36px 12px}
@@ -31,40 +89,38 @@ footer{margin-top:12px;color:var(--muted);font-size:13px;text-align:center}
 <body>
 <div class="app card">
   <div class="header">
-    <div class="logo">CS</div>
-    <div>
-      <h1>Customer Service Chat</h1>
-      <div class="muted">Connects to your Render backend API</div>
+    <div class="header-left">
+      <div class="logo">CS</div>
+      <div>
+        <h1>Customer Service Chat</h1>
+        <div class="muted">Connects to your Render backend API</div>
+      </div>
     </div>
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
   </div>
 
-  <!-- ✅ Chat messages area -->
   <div id="messages" class="messages">
-    <div class="empty">No messages yet. Type below to start chatting.</div>
+    <div class="empty">Start chatting with us 👋</div>
   </div>
 
-  <!-- ✅ Input + Send -->
   <div class="controls">
     <input id="input" type="text" placeholder="Type your message..." />
     <button id="send">Send</button>
   </div>
 
-  <!-- ✅ Status -->
   <div id="status" class="muted"></div>
-
-  <footer>Powered by Render + Netlify</footer>
+  <footer>© 2025 Customer Service</footer>
 </div>
 
 <script>
-// === EDIT THIS ===
-const BACKEND_URL = 'https://customer-service-qbwg.onrender.com'; // 👈 Replace with your Render backend
+const BACKEND_URL = 'https://customer-service-qbwg.onrender.com';
 const CHAT_ENDPOINT = BACKEND_URL + '/api/chat';
-// ==================
 
 const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const statusEl = document.getElementById('status');
+const themeToggle = document.getElementById('themeToggle');
 
 function appendMessage(text, sender='bot'){
   const empty = messagesEl.querySelector('.empty'); if(empty) empty.remove();
@@ -85,20 +141,16 @@ async function sendMessage(){
   const text = inputEl.value.trim(); if(!text) return;
   appendMessage(text, 'user'); inputEl.value = ''; inputEl.focus();
   setStatus('Sending...', true);
-
   try{
     const res = await fetch(CHAT_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: text })
     });
-    if(!res.ok){
-      const errText = await res.text(); throw new Error(errText || res.statusText);
-    }
+    if(!res.ok){ const errText = await res.text(); throw new Error(errText || res.statusText); }
     const data = await res.json();
     const reply = (data && (data.reply || data.response || data.answer)) || JSON.stringify(data);
-    appendMessage(reply, 'bot');
-    setStatus('');
+    appendMessage(reply, 'bot'); setStatus('');
   }catch(err){
     console.error(err);
     appendMessage('Error: ' + (err.message||'Failed to reach backend'), 'bot');
@@ -109,16 +161,28 @@ async function sendMessage(){
 sendBtn.addEventListener('click', sendMessage);
 inputEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') sendMessage(); });
 
-// quick health-check
 (async function healthCheck(){
-  if(BACKEND_URL === 'https://customer-service-qbwg.onrender.com'){
-    setStatus('⚠️ Edit index.html and set BACKEND_URL to your Render URL');
-    return;
-  }
   try{
     const res = await fetch(BACKEND_URL + '/health');
-    if(res.ok) setStatus('Backend online'); else setStatus('Backend returned ' + res.status);
+    if(res.ok) setStatus('Backend online'); else setStatus('Backend reachable but returned ' + res.status);
   }catch(e){ setStatus('Backend unreachable (check CORS and URL)'); }
+})();
+
+// Theme toggle
+themeToggle.addEventListener('click', ()=>{
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  themeToggle.textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+});
+
+// Load saved theme
+(function(){
+  const saved = localStorage.getItem('theme');
+  if(saved === 'dark'){
+    document.body.classList.add('dark');
+    themeToggle.textContent = '☀️';
+  }
 })();
 </script>
 </body>
