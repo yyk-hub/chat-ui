@@ -1,4 +1,43 @@
 <!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Customer Service Chat</title>
+<style>
+:root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#10b981}
+*{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+body{margin:0;background:linear-gradient(180deg,#071024 0%, #0b1220 100%);color:#e6eef6;display:flex;align-items:center;justify-content:center;height:100vh}
+.app{width:100%;max-width:720px;padding:20px}
+.card{background:rgba(255,255,255,0.03);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700}
+h1{font-size:18px;margin:0}
+.messages{height:420px;overflow:auto;padding:12px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);margin-bottom:12px}
+.msg{display:flex;margin-bottom:10px}
+.msg.user{justify-content:flex-end}
+.bubble{max-width:78%;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,0.03);color:var(--muted);line-height:1.4}
+.msg.user .bubble{background:linear-gradient(90deg,var(--accent),#7c3aed);color:#04201a}
+.controls{display:flex;gap:8px}
+input[type=text]{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+button{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;background:var(--accent);color:#04201a;font-weight:600}
+.muted{color:var(--muted);font-size:13px;margin-top:8px}
+.loader{display:inline-block;width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,0.6);margin-left:8px;animation:blink 1s linear infinite}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0.2}}
+footer{margin-top:12px;color:var(--muted);font-size:13px;text-align:center}
+.empty{opacity:0.6;text-align:center;padding:36px 12px}
+</style>
+</head>
+<body>
+<div class="app card">
+<div class="header">
+<div class="logo">CS</div>
+<div>
+<h1>Customer Service Chat</h1>
+<div class="muted">Connects to your Render backend API</div>
+</div>
+</div>
+  
 <script>
 // === EDIT THIS ===
 const BACKEND_URL = 'https://customer-service-qbwg.onrender.com'; // e.g. https://customer-service.onrender.com
