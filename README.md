@@ -1,2 +1,2 @@
-# chat-ui-
-This repository is for frontend chat ui to be integrated with backend customer-service Rep.
+# chat-ui
+A simple multilingual chat interface deployed on **Netlify**, connected to a **Render** backend.
