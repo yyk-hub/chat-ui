@@ -11,9 +11,25 @@
       margin: 40px auto;
       padding: 20px;
       line-height: 1.6;
-      background: #fff;
-      color: #333;
+      transition: background 0.3s, color 0.3s;
     }
+
+    /* Light mode (default) */
+    body {
+      background: #ffffff;
+      color: #333333;
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #111827;
+        color: #f9fafb;
+      }
+      footer { color: #9ca3af; }
+      a { color: #34d399; }
+    }
+
     h1 {
       font-size: 24px;
       margin-bottom: 20px;
@@ -29,7 +45,10 @@
       margin-top: 40px;
       font-size: 14px;
       text-align: center;
-      color: #666;
+    }
+    a {
+      color: #10b981;
+      text-decoration: none;
     }
   </style>
 </head>
@@ -66,7 +85,7 @@
   </p>
 
   <footer>
-    © 2025 Customer Service Chat · All Rights Reserved.
+    © 2025 Customer Service Chat · All Rights Reserved · 
     <a href="index.html">Back to Chat</a>
   </footer>
 </body>
