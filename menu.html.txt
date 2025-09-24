@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Menu</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+  line-height: 1.6;
+  transition: background .3s, color .3s;
+}
+body { background:#ffffff; color:#333; }
+@media (prefers-color-scheme: dark) {
+  body { background:#111827; color:#f9fafb; }
+  a { color:#34d399; }
+  footer { color:#9ca3af; }
+}
+h1 { font-size:24px; margin-bottom:20px; }
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
+  gap: 20px;
+}
+.card {
+  background:#f9f9f9;
+  border-radius:10px;
+  padding:12px;
+  text-align:center;
+  transition: background .3s;
+}
+@media (prefers-color-scheme: dark) {
+  .card { background:#1e293b; }
+}
+.card img {
+  max-width:100%; border-radius:8px; margin-bottom:10px;
+}
+footer { margin-top:40px; font-size:14px; text-align:center; color:#666; }
+a { color:#10b981; text-decoration:none; }
+</style>
+</head>
+<body>
+<h1>Our Menu</h1>
+<div class="menu-grid">
+  <div class="card">
+    <img src="https://via.placeholder.com/200x150.png?text=Item+1" alt="Item 1">
+    <p>Item 1</p>
+  </div>
+  <div class="card">
+    <img src="https://via.placeholder.com/200x150.png?text=Item+2" alt="Item 2">
+    <p>Item 2</p>
+  </div>
+  <div class="card">
+    <img src="https://via.placeholder.com/200x150.png?text=Item+3" alt="Item 3">
+    <p>Item 3</p>
+  </div>
+</div>
+<footer>
+  © 2025 Customer Service · <a href="index.html">Back to Chat</a>
+</footer>
+</body>
+</html>

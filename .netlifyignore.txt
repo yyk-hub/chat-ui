@@ -1,0 +1,12 @@
+# Ignore documentation changes
+README.md
+docs/*
+notes.txt
+
+# Ignore design files
+*.png
+*.jpg
+*.svg
+
+# Ignore local config files
+*.env

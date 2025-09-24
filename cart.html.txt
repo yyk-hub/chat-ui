@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Your Cart</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  max-width: 720px;
+  margin: 40px auto;
+  padding: 20px;
+  line-height: 1.6;
+  transition: background .3s, color .3s;
+}
+body { background:#ffffff; color:#333; }
+@media (prefers-color-scheme: dark) {
+  body { background:#111827; color:#f9fafb; }
+  a { color:#34d399; }
+  footer { color:#9ca3af; }
+}
+h1 { font-size:24px; margin-bottom:16px; }
+.empty { opacity:0.7; text-align:center; padding:40px; }
+footer { margin-top:40px; font-size:14px; text-align:center; color:#666; }
+a { color:#10b981; text-decoration:none; }
+</style>
+</head>
+<body>
+<h1>Your Cart</h1>
+<div class="empty">Your cart is currently empty 🛒</div>
+<footer>
+  © 2025 Customer Service · <a href="index.html">Back to Chat</a>
+</footer>
+</body>
+</html>
