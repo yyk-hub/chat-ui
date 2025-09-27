@@ -108,23 +108,14 @@ footer a:hover {
   text-decoration:none;
   border-radius:8px;
   margin:0 4px;
-  background:var(--card);
-  color:var(--link);
-  transition:background .3s;
+  color:var(--accent);
+  border:2px solid var(--accent);
+  background:transparent;
+  transition:background .3s,color .3s;
 }
-.bottom-nav a:hover { background:var(--bubble); }
-
-/* WhatsApp button */
-.whatsapp-btn {
-  background: #25D366;
-  color:#fff !important;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:50%;
-  width:40px;
-  height:40px;
-  font-weight:bold;
+.bottom-nav a:hover { 
+  background:var(--accent); 
+  color:#fff; 
 }
 </style>
 </head>
@@ -156,14 +147,15 @@ footer a:hover {
   <div class="bottom-nav">
     <a href="menu.html">Menu</a>
     <a href="cart.html">Cart</a>
-    <a href="https://wa.me/60168101358" target="_blank" class="whatsapp-btn">W</a>
+    <a href="https://wa.me/60168101358" target="_blank">Contact</a>
   </div>
 
   <footer>
-    © 2025 Customer Service ·
-    <a href="privacy.html" target="_blank">Privacy Policy</a> ·
-    <a href="terms.html" target="_blank">Terms of Service</a>
-  </footer>
+  © 2025 Customer Service Chat · All Rights Reserved · 
+  <a href="privacy.html">Privacy Policy</a> · 
+  <a href="terms.html">Terms&nbsp;of&nbsp;Service</a>
+</footer>
+  
 </div>
 
 <script>
