@@ -93,6 +93,39 @@ footer a:hover {
   text-decoration: underline;
 }
 .empty{opacity:0.6;text-align:center;padding:36px 12px}
+
+/* bottom nav bar */
+.bottom-nav {
+  display:flex;
+  justify-content:space-around;
+  margin-top:16px;
+}
+.bottom-nav a {
+  flex:1;
+  text-align:center;
+  padding:10px;
+  font-weight:600;
+  text-decoration:none;
+  border-radius:8px;
+  margin:0 4px;
+  background:var(--card);
+  color:var(--link);
+  transition:background .3s;
+}
+.bottom-nav a:hover { background:var(--bubble); }
+
+/* WhatsApp button */
+.whatsapp-btn {
+  background: #25D366;
+  color:#fff !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  width:40px;
+  height:40px;
+  font-weight:bold;
+}
 </style>
 </head>
 <body>
@@ -118,9 +151,18 @@ footer a:hover {
   </div>
 
   <div id="status" class="muted"></div>
+
+  <!-- Bottom navigation -->
+  <div class="bottom-nav">
+    <a href="menu.html">Menu</a>
+    <a href="cart.html">Cart</a>
+    <a href="https://wa.me/60168101358" target="_blank" class="whatsapp-btn">W</a>
+  </div>
+
   <footer>
     © 2025 Customer Service ·
-    <a href="privacy.html" target="_blank">Privacy Policy</a>
+    <a href="privacy.html" target="_blank">Privacy Policy</a> ·
+    <a href="terms.html" target="_blank">Terms of Service</a>
   </footer>
 </div>
 
