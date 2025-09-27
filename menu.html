@@ -1,65 +1,149 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Menu</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 20px;
-  line-height: 1.6;
-  transition: background .3s, color .3s;
-}
-body { background:#ffffff; color:#333; }
-@media (prefers-color-scheme: dark) {
-  body { background:#111827; color:#f9fafb; }
-  a { color:#34d399; }
-  footer { color:#9ca3af; }
-}
-h1 { font-size:24px; margin-bottom:20px; }
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
-  gap: 20px;
-}
-.card {
-  background:#f9f9f9;
-  border-radius:10px;
-  padding:12px;
-  text-align:center;
-  transition: background .3s;
-}
-@media (prefers-color-scheme: dark) {
-  .card { background:#1e293b; }
-}
-.card img {
-  max-width:100%; border-radius:8px; margin-bottom:10px;
-}
-footer { margin-top:40px; font-size:14px; text-align:center; color:#666; }
-a { color:#10b981; text-decoration:none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      line-height: 1.6;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Light mode */
+    body {
+      background: #ffffff;
+      color: #333333;
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #111827;
+        color: #f9fafb;
+      }
+    }
+
+    h1 {
+      font-size: 26px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      transition: background 0.3s;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .menu-item {
+        border-color: #374151;
+        background: #1f2937;
+      }
+    }
+
+    .menu-item img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #d1d5db;
+    }
+
+    .menu-details {
+      flex: 1;
+    }
+
+    .menu-details h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    .price {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #10b981;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 14px;
+      background: #10b981;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background: #059669;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 14px;
+    }
+
+    footer a {
+      color: #10b981;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-<h1>Our Menu</h1>
-<div class="menu-grid">
-  <div class="card">
-    <img src="https://via.placeholder.com/200x150.png?text=Item+1" alt="Item 1">
-    <p>Item 1</p>
+  <h1>Our Menu</h1>
+
+  <div class="menu-item">
+    <img src="placeholder.jpg" alt="CEO Coffee with sugar">
+    <div class="menu-details">
+      <h2>CEO Coffee with sugar</h2>
+      <p>A rich coffee premix blended with Ganoderma (Lingzhi). It's designed to boost energy, focus, and immunity.</p>
+      <p class="price">Price: RM45</p>
+      <button class="btn">Add to Cart</button>
+    </div>
   </div>
-  <div class="card">
-    <img src="https://via.placeholder.com/200x150.png?text=Item+2" alt="Item 2">
-    <p>Item 2</p>
+
+  <div class="menu-item">
+    <img src="placeholder.jpg" alt="CEO Coffee without sugar">
+    <div class="menu-details">
+      <h2>CEO Coffee without sugar</h2>
+      <p>A rich coffee premix blended with Ganoderma (Lingzhi). It's designed to boost energy, focus, and immunity.</p>
+      <p class="price">Price: RM45</p>
+      <button class="btn">Add to Cart</button>
+    </div>
   </div>
-  <div class="card">
-    <img src="https://via.placeholder.com/200x150.png?text=Item+3" alt="Item 3">
-    <p>Item 3</p>
+
+  <div class="menu-item">
+    <img src="placeholder.jpg" alt="Lu Chun Tea Mix">
+    <div class="menu-details">
+      <h2>Lu Chun Tea Mix</h2>
+      <p>A gentle and balancing tea blend of Oolong tea, brown rice, cassia seed, and Lingzhi extract.</p>
+      <p class="price">Price: RM50</p>
+      <button class="btn">Add to Cart</button>
+    </div>
   </div>
-</div>
-<footer>
-  © 2025 Customer Service · <a href="index.html">Back to Chat</a>
-</footer>
+
+  <footer>
+    <a href="index.html">⬅ Back to Chat</a>
+  </footer>
 </body>
 </html>
