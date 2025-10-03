@@ -95,28 +95,44 @@ footer a:hover {
 .empty{opacity:0.6;text-align:center;padding:36px 12px}
 
 /* bottom nav bar */
-.bottom-nav {
-  display:flex;
-  justify-content:space-around;
-  margin-top:16px;
+  .bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 16px;
 }
+
 .bottom-nav a {
-  flex:1;
-  text-align:center;
-  padding:10px;
-  font-weight:600;
-  text-decoration:none;
-  border-radius:8px;
-  margin:0 4px;
-  color:var(--accent);
-  border:2px solid var(--accent);
-  background:transparent;
-  transition:background .3s,color .3s;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  transition: background .3s, color .3s;
+  border: none;
 }
-.bottom-nav a:hover { 
-  background:var(--accent); 
-  color:#fff; 
+
+.bottom-nav svg {
+  width: 24px;
+  height: 24px;
 }
+
+/* Adaptive Menu & Cart (black in light mode, white in dark mode) */
+.bottom-nav a {
+  color: black;
+}
+@media (prefers-color-scheme: dark) {
+  .bottom-nav a {
+    color: white;
+  }
+}
+
+/* WhatsApp always green */
+.bottom-nav a.whatsapp {
+  color: #25D366 !important;
+}
+
 </style>
 </head>
 <body>
@@ -143,7 +159,7 @@ footer a:hover {
 
   <div id="status" class="muted"></div>
 
-    <!-- Bottom navigation -->
+<!-- Bottom navigation -->
 <div class="bottom-nav">
   <!-- Menu -->
   <a href="menu.html" class="btn">
@@ -161,13 +177,13 @@ footer a:hover {
     </svg>
   </a>
 
-  <!-- WhatsApp -->
+  <!-- WhatsApp (always green) -->
   <a href="https://wa.me/60168101358?text=Hello%2C%20I%20am%20contacting%20you%20from%20Customer%20Service%20Chat"
-     target="_blank" class="btn">
+     target="_blank" class="btn whatsapp">
     <svg xmlns="http://www.w3.org/2000/svg" 
-         viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+         viewBox="0 0 24 24" width="24" height="24">
       <title>WhatsApp</title>
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.031-.967-.273-.099-.472-.148-.67.15-.197.297-.767.966-.94 1.164-.173.198-.347.223-.644.074-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.207-.242-.579-.487-.5-.67-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.288.173-1.413-.074-.124-.272-.198-.57-.347M12.004 2.003c-5.522 0-10 4.477-10 10 0 1.769.465 3.498 1.348 5.022l-1.429 5.22 5.352-1.405c1.486.812 3.162 1.24 4.729 1.24h.004c5.523 0 10-4.477 10-10 0-2.67-1.04-5.178-2.929-7.07-1.89-1.89-4.398-2.929-7.075-2.929"></path>
+      <path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.031-.967-.273-.099-.472-.148-.67.15-.197.297-.767.966-.94 1.164-.173.198-.347.223-.644.074-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.207-.242-.579-.487-.5-.67-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.288.173-1.413-.074-.124-.272-.198-.57-.347M12.004 2.003c-5.522 0-10 4.477-10 10 0 1.769.465 3.498 1.348 5.022l-1.429 5.22 5.352-1.405c1.486.812 3.162 1.24 4.729 1.24h.004c5.523 0 10-4.477 10-10 0-2.67-1.04-5.178-2.929-7.07-1.89-1.89-4.398-2.929-7.075-2.929"></path>
     </svg>
   </a>
 </div>
