@@ -27,8 +27,24 @@
     }
     .category { margin-top:30px; }
     .category h2 { color:#996600; border-bottom:2px solid #ddd; padding-bottom:6px; }
-    .product { background:#fffbe6; padding:16px; border-radius:16px; margin:12px 0; display:flex; gap:12px; align-items:center; }
-    .product img { width:70px; height:70px; object-fit:cover; border-radius:12px; }
+    .product {
+      background:#fffbe6;
+      padding:16px;
+      border-radius:16px;
+      margin:12px 0;
+      display:flex;
+      gap:14px;
+      align-items:center;
+    }
+    .product img {
+      width:100px;
+      height:100px;
+      object-fit:cover;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform 0.2s;
+    }
+    .product img:hover { transform:scale(1.05); }
     .product-info { flex:1; }
     .product h3 { margin:0 0 6px; color:#996600; font-size:16px; }
     .product p { margin:3px 0; font-size:14px; }
@@ -49,13 +65,13 @@
   </div>
 
   <script>
-    // Auto-clear old products without desc
+    // Reset undefined data
     let old = JSON.parse(localStorage.getItem("products"));
     if (old && old.some(p => !p.desc)) {
       localStorage.removeItem("products");
     }
 
-    // Product data with description & categories
+    // Product data
     let products = JSON.parse(localStorage.getItem("products")) || [
       { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma.", img: "img/coffee.jpg" },
       { id: 2, name: "Greenzhi Tea", price: 38, stock: 6, category: "Beverage", desc: "Green tea with Ganoderma extract.", img: "img/tea.jpg" },
@@ -69,8 +85,6 @@
     function renderProducts() {
       let list = document.getElementById("product-list");
       list.innerHTML = "";
-
-      // Group by category
       let categories = [...new Set(products.map(p => p.category))];
 
       categories.forEach(cat => {
@@ -82,7 +96,7 @@
           let div = document.createElement("div");
           div.className = "product";
           div.innerHTML = `
-            <img src="${p.img}" alt="${p.name}">
+            <img src="${p.img}" alt="${p.name}" onclick="openMenu(${p.id})">
             <div class="product-info">
               <h3>${p.name}</h3>
               <p>${p.desc}</p>
@@ -111,6 +125,10 @@
       product.stock--;
       localStorage.setItem("products", JSON.stringify(products));
       renderProducts();
+    }
+
+    function openMenu(id) {
+      window.location.href = `menu.html?id=${id}`;
     }
 
     renderProducts();
