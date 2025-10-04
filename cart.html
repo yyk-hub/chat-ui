@@ -1,35 +1,119 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Your Cart</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  max-width: 720px;
-  margin: 40px auto;
-  padding: 20px;
-  line-height: 1.6;
-  transition: background .3s, color .3s;
-}
-body { background:#ffffff; color:#333; }
-@media (prefers-color-scheme: dark) {
-  body { background:#111827; color:#f9fafb; }
-  a { color:#34d399; }
-  footer { color:#9ca3af; }
-}
-h1 { font-size:24px; margin-bottom:16px; }
-.empty { opacity:0.7; text-align:center; padding:40px; }
-footer { margin-top:40px; font-size:14px; text-align:center; color:#666; }
-a { color:#10b981; text-decoration:none; }
-</style>
+  <meta charset="UTF-8">
+  <title>Cart - CEO Products</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
+    .container { padding:20px; max-width:800px; margin:auto; }
+    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .cart-item { background:#fffbe6; padding:16px; border-radius:16px; margin:12px 0; display:flex; justify-content:space-between; align-items:center; }
+    .item-info { flex:1; }
+    .item-info h3 { margin:0 0 8px; color:#996600; }
+    .qty-controls { display:flex; align-items:center; gap:8px; }
+    .qty-btn { padding:4px 10px; border:none; border-radius:6px; background:#996600; color:#fff; cursor:pointer; font-size:1rem; }
+    .remove-btn { background:#e74c3c; padding:4px 10px; border:none; border-radius:6px; color:#fff; cursor:pointer; }
+    .summary { margin-top:20px; background:#fff; padding:16px; border-radius:12px; }
+    .summary h3 { margin:0 0 10px; color:#333; }
+    .btn-checkout { display:block; margin-top:12px; text-align:center; background:#14b47e; color:#fff; padding:12px; border-radius:8px; text-decoration:none; font-weight:bold; }
+    .btn-checkout:hover { background:#11996a; }
+    .link-btn { text-decoration:none; background:#996600; color:#fff; padding:8px 16px; border-radius:8px; }
+  </style>
 </head>
 <body>
-<h1>Your Cart</h1>
-<div class="empty">Your cart is currently empty 🛒</div>
-<footer>
-  © 2025 Customer Service · <a href="index.html">Back to Chat</a>
-</footer>
+  <div class="container">
+    <div class="header">
+      <h2>🛒 Your Cart</h2>
+      <a href="shop.html" class="link-btn">⬅ Back to Shop</a>
+    </div>
+
+    <div id="cart-list"></div>
+
+    <div class="summary" id="summary"></div>
+  </div>
+
+  <script>
+    let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+    let products = JSON.parse(localStorage.getItem("products")) || [];
+
+    function renderCart() {
+      let list = document.getElementById("cart-list");
+      let summary = document.getElementById("summary");
+      list.innerHTML = "";
+      summary.innerHTML = "";
+
+      if(cart.length === 0) {
+        list.innerHTML = "<p>Your cart is empty.</p>";
+        return;
+      }
+
+      let total = 0;
+
+      cart.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "cart-item";
+        let subtotal = item.price * item.qty;
+        total += subtotal;
+
+        div.innerHTML = `
+          <div class="item-info">
+            <h3>${item.name}</h3>
+            <p>RM ${item.price} x ${item.qty} = RM ${subtotal}</p>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn" onclick="updateQty(${item.id}, -1)">-</button>
+            <span>${item.qty}</span>
+            <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
+            <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+
+      summary.innerHTML = `
+        <h3>Total: RM ${total}</h3>
+        <a href="checkout.html" class="btn-checkout">Proceed to Checkout</a>
+      `;
+    }
+
+    function updateQty(id, change) {
+      let item = cart.find(i => i.id === id);
+      let product = products.find(p => p.id === id);
+      if(!item || !product) return;
+
+      if(change === 1 && product.stock > 0) {
+        item.qty++;
+        product.stock--;
+      } else if(change === -1 && item.qty > 1) {
+        item.qty--;
+        product.stock++;
+      } else if(change === -1 && item.qty === 1) {
+        removeItem(id);
+        return;
+      } else {
+        alert("Out of stock!");
+        return;
+      }
+
+      localStorage.setItem("cartItems", JSON.stringify(cart));
+      localStorage.setItem("products", JSON.stringify(products));
+      renderCart();
+    }
+
+    function removeItem(id) {
+      let item = cart.find(i => i.id === id);
+      let product = products.find(p => p.id === id);
+      if(item && product) {
+        product.stock += item.qty; // return stock
+      }
+      cart = cart.filter(i => i.id !== id);
+      localStorage.setItem("cartItems", JSON.stringify(cart));
+      localStorage.setItem("products", JSON.stringify(products));
+      renderCart();
+    }
+
+    renderCart();
+  </script>
 </body>
 </html>
