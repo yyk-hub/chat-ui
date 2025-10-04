@@ -10,12 +10,31 @@
     .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
     .category { margin-top:30px; }
     .category h2 { color:#996600; border-bottom:2px solid #ddd; padding-bottom:6px; }
-    .product { background:#fffbe6; padding:16px; border-radius:16px; margin:12px 0; }
-    .product h3 { margin:0 0 8px; color:#996600; }
-    .product p { margin:4px 0; }
-    .btn { background:#14b47e; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; }
+    .product {
+      display:flex; 
+      background:#fffbe6; 
+      padding:12px; 
+      border-radius:16px; 
+      margin:12px 0; 
+      align-items:flex-start;
+    }
+    .product img {
+      width:80px; 
+      height:80px; 
+      object-fit:cover; 
+      border-radius:8px; 
+      margin-right:12px; 
+      cursor:pointer;
+      background:#ddd;
+    }
+    .info { flex:1; }
+    .info h3 { margin:0 0 4px; color:#996600; font-size:1rem; }
+    .desc { font-size:0.85rem; color:#444; margin:0 0 6px; }
+    .price { margin:0 0 4px; font-weight:bold; }
+    .btn { background:#14b47e; color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; }
     .btn:disabled { background:gray; cursor:not-allowed; }
     .link-btn { text-decoration:none; background:#996600; color:#fff; padding:8px 16px; border-radius:8px; }
+    .home-btn { display:inline-block; margin:20px 0; background:#996600; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none; }
   </style>
 </head>
 <body>
@@ -26,17 +45,20 @@
     </div>
 
     <div id="product-list"></div>
+
+    <!-- Home button -->
+    <a href="index.html" class="home-btn">🏠 Home Screen</a>
   </div>
 
   <script>
-    // initial stock (with categories)
+    // initial stock with categories + img + description
     let products = JSON.parse(localStorage.getItem("products")) || [
-      { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5, category: "Beverage" },
-      { id: 2, name: "Greenzhi Tea", price: 38, stock: 6, category: "Beverage" },
-      { id: 3, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product" },
-      { id: 4, name: "Lacto Berry", price: 150, stock: 4, category: "Health Food" },
-      { id: 5, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care" },
-      { id: 6, name: "Natural Soap", price: 12, stock: 8, category: "Household Product" }
+      { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5, category: "Beverage", img:"img/coffee4in1.jpg", desc:"Rich aroma coffee with Ganoderma extract" },
+      { id: 2, name: "Greenzhi Tea", price: 38, stock: 6, category: "Beverage", img:"img/greenzhi.jpg", desc:"Green tea infused with Lingzhi essence" },
+      { id: 3, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product", img:"img/ganoderma.jpg", desc:"Supports immune system and wellness" },
+      { id: 4, name: "Lacto Berry", price: 150, stock: 4, category: "Health Food", img:"img/lactoberry.jpg", desc:"Probiotic supplement with antioxidants" },
+      { id: 5, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care", img:"img/toothpaste.jpg", desc:"Fluoride-free toothpaste with natural herbs" },
+      { id: 6, name: "Natural Soap", price: 12, stock: 8, category: "Household Product", img:"img/soap.jpg", desc:"Gentle, eco-friendly handmade soap" }
     ];
     localStorage.setItem("products", JSON.stringify(products));
 
@@ -44,7 +66,6 @@
       let list = document.getElementById("product-list");
       list.innerHTML = "";
 
-      // group by category
       let categories = [...new Set(products.map(p => p.category))];
 
       categories.forEach(cat => {
@@ -56,14 +77,17 @@
           let div = document.createElement("div");
           div.className = "product";
           div.innerHTML = `
-            <h3>${p.name}</h3>
-            <p>Price: RM ${p.price}</p>
-            <p>In Stock: <span id="stock-${p.id}">${p.stock}</span></p>
-            <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
+            <img src="${p.img}" alt="${p.name}" onclick="openDetails(${p.id})">
+            <div class="info">
+              <h3>${p.name}</h3>
+              <p class="desc">${p.desc}</p>
+              <p class="price">RM ${p.price}</p>
+              <p>Stock: <span id="stock-${p.id}">${p.stock}</span></p>
+              <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
+            </div>
           `;
           section.appendChild(div);
         });
-
         list.appendChild(section);
       });
     }
@@ -81,6 +105,12 @@
       product.stock--;
       localStorage.setItem("products", JSON.stringify(products));
       renderProducts();
+    }
+
+    function openDetails(id) {
+      // Save selected product ID to localStorage for menu.html
+      localStorage.setItem("selectedProduct", id);
+      location.href = "menu.html";
     }
 
     renderProducts();
