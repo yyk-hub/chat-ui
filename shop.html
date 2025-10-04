@@ -5,70 +5,64 @@
   <title>Shop - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-   body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
-  .container { padding:20px; max-width:800px; margin:auto; }
-  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-  .category { margin-top:30px; }
-  .category h2 { color:#996600; border-bottom:2px solid #ddd; padding-bottom:6px; }
-  
-  .product {
-    display:grid;
-    grid-template-columns: 120px 1fr;
-    background:#fffbe6;
-    padding:12px;
-    border-radius:16px;
-    margin:12px 0;
-    gap:12px;
-    align-items:center;
-  }
-
-  .product img {
-    width:100%;
-    height:120px;
-    object-fit:cover;
-    border-radius:12px;
-    cursor:pointer;
-    background:#ddd;
-  }
-
-  .info h3 { margin:0 0 4px; color:#996600; font-size:1rem; }
-  .desc { font-size:0.85rem; color:#444; margin:4px 0; line-height:1.3; }
-  .price { margin:0 0 4px; font-weight:bold; }
-  .btn { background:#14b47e; color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; }
-  .btn:disabled { background:gray; cursor:not-allowed; }
-  .link-btn { text-decoration:none; background:#996600; color:#fff; padding:8px 16px; border-radius:8px; }
-  .home-btn { display:inline-block; margin:20px 0; background:#996600; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none; }
-</style>
+    body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
+    .container { padding:20px; max-width:800px; margin:auto; }
+    .header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+      position:relative;
+    }
+    .home-btn {
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      background:#996600;
+      color:#fff;
+      padding:8px 16px;
+      border-radius:8px;
+      text-decoration:none;
+      font-weight:500;
+    }
+    .category { margin-top:30px; }
+    .category h2 { color:#996600; border-bottom:2px solid #ddd; padding-bottom:6px; }
+    .product { background:#fffbe6; padding:16px; border-radius:16px; margin:12px 0; display:flex; gap:12px; align-items:center; }
+    .product img { width:70px; height:70px; object-fit:cover; border-radius:12px; }
+    .product-info { flex:1; }
+    .product h3 { margin:0 0 6px; color:#996600; font-size:16px; }
+    .product p { margin:3px 0; font-size:14px; }
+    .btn { background:#14b47e; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; }
+    .btn:disabled { background:gray; cursor:not-allowed; }
+    .link-btn { text-decoration:none; background:#996600; color:#fff; padding:8px 16px; border-radius:8px; }
+  </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h2>🛍️ Shop</h2>
+      <a href="index.html" class="home-btn">Home</a>
       <a href="cart.html" class="link-btn">🛒 Cart</a>
     </div>
 
     <div id="product-list"></div>
-
-    <!-- Home button -->
-    <a href="index.html" class="home-btn">🏠 Home Screen</a>
   </div>
 
   <script>
-   // Force clear old products without descriptions
-  let old = JSON.parse(localStorage.getItem("products"));
-  if (old && old.some(p => !p.desc)) {
-    console.log("Old data found, clearing localStorage...");
-    localStorage.removeItem("products");
-  }
-    
-    // initial stock with categories + img + description
+    // Auto-clear old products without desc
+    let old = JSON.parse(localStorage.getItem("products"));
+    if (old && old.some(p => !p.desc)) {
+      localStorage.removeItem("products");
+    }
+
+    // Product data with description & categories
     let products = JSON.parse(localStorage.getItem("products")) || [
-      { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5, category: "Beverage", img:"img/coffee4in1.jpg", desc:"Rich aroma coffee with Ganoderma extract" },
-      { id: 2, name: "Greenzhi Tea", price: 38, stock: 6, category: "Beverage", img:"img/greenzhi.jpg", desc:"Green tea infused with Lingzhi essence" },
-      { id: 3, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product", img:"img/ganoderma.jpg", desc:"Supports immune system and wellness" },
-      { id: 4, name: "Lacto Berry", price: 150, stock: 4, category: "Health Food", img:"img/lactoberry.jpg", desc:"Probiotic supplement with antioxidants" },
-      { id: 5, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care", img:"img/toothpaste.jpg", desc:"Fluoride-free toothpaste with natural herbs" },
-      { id: 6, name: "Natural Soap", price: 12, stock: 8, category: "Household Product", img:"img/soap.jpg", desc:"Gentle, eco-friendly handmade soap" }
+      { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma.", img: "img/coffee.jpg" },
+      { id: 2, name: "Greenzhi Tea", price: 38, stock: 6, category: "Beverage", desc: "Green tea with Ganoderma extract.", img: "img/tea.jpg" },
+      { id: 3, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product", desc: "Supports immune system and vitality.", img: "img/ganoderma.jpg" },
+      { id: 4, name: "Lacto Berry", price: 150, stock: 4, category: "Health Food", desc: "Antioxidant-rich blend for inner wellness.", img: "img/lacto.jpg" },
+      { id: 5, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care", desc: "Natural herbal formula for oral care.", img: "img/toothpaste.jpg" },
+      { id: 6, name: "Natural Soap", price: 12, stock: 8, category: "Household Product", desc: "Mild natural soap suitable for daily use.", img: "img/soap.jpg" }
     ];
     localStorage.setItem("products", JSON.stringify(products));
 
@@ -76,6 +70,7 @@
       let list = document.getElementById("product-list");
       list.innerHTML = "";
 
+      // Group by category
       let categories = [...new Set(products.map(p => p.category))];
 
       categories.forEach(cat => {
@@ -87,17 +82,18 @@
           let div = document.createElement("div");
           div.className = "product";
           div.innerHTML = `
-            <img src="${p.img}" alt="${p.name}" onclick="openDetails(${p.id})">
-            <div class="info">
+            <img src="${p.img}" alt="${p.name}">
+            <div class="product-info">
               <h3>${p.name}</h3>
-              <p class="desc">${p.desc}</p>
-              <p class="price">RM ${p.price}</p>
-              <p>Stock: <span id="stock-${p.id}">${p.stock}</span></p>
+              <p>${p.desc}</p>
+              <p>Price: RM ${p.price}</p>
+              <p>In Stock: <span id="stock-${p.id}">${p.stock}</span></p>
               <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
             </div>
           `;
           section.appendChild(div);
         });
+
         list.appendChild(section);
       });
     }
@@ -115,12 +111,6 @@
       product.stock--;
       localStorage.setItem("products", JSON.stringify(products));
       renderProducts();
-    }
-
-    function openDetails(id) {
-      // Save selected product ID to localStorage for menu.html
-      localStorage.setItem("selectedProduct", id);
-      location.href = "menu.html";
     }
 
     renderProducts();
