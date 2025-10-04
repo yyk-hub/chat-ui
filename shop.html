@@ -54,6 +54,13 @@
   </div>
 
   <script>
+   // Force clear old products without descriptions
+  let old = JSON.parse(localStorage.getItem("products"));
+  if (old && old.some(p => !p.desc)) {
+    console.log("Old data found, clearing localStorage...");
+    localStorage.removeItem("products");
+  }
+    
     // initial stock with categories + img + description
     let products = JSON.parse(localStorage.getItem("products")) || [
       { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5, category: "Beverage", img:"img/coffee4in1.jpg", desc:"Rich aroma coffee with Ganoderma extract" },
