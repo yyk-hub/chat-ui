@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shop - CEO Coffee</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
+    .container { padding:20px; max-width:600px; margin:auto; }
+    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .product { background:#fffbe6; padding:16px; border-radius:16px; margin-bottom:16px; }
+    .product h3 { margin:0 0 8px; color:#996600; }
+    .product p { margin:4px 0; }
+    .btn { background:#14b47e; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; }
+    .btn:disabled { background:gray; cursor:not-allowed; }
+    .link-btn { text-decoration:none; background:#996600; color:#fff; padding:8px 16px; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>☕ Shop</h2>
+      <a href="cart.html" class="link-btn">🛒 Cart</a>
+    </div>
+
+    <div id="product-list"></div>
+  </div>
+
+  <script>
+    // initial stock (if not stored already)
+    let products = JSON.parse(localStorage.getItem("products")) || [
+      { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5 },
+      { id: 2, name: "CEO Coffee 2 in 1", price: 40, stock: 3 }
+    ];
+    localStorage.setItem("products", JSON.stringify(products));
+
+    function renderProducts() {
+      let list = document.getElementById("product-list");
+      list.innerHTML = "";
+      products.forEach(p => {
+        let div = document.createElement("div");
+        div.className = "product";
+        div.innerHTML = `
+          <h3>${p.name}</h3>
+          <p>Price: RM ${p.price}</p>
+          <p>In Stock: <span id="stock-${p.id}">${p.stock}</span></p>
+          <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function addToCart(id) {
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let product = products.find(p => p.id === id);
+      if(!product || product.stock<=0) { alert("Out of stock!"); return; }
+
+      let item = cart.find(i => i.id === id);
+      if(item) { item.qty++; }
+      else { cart.push({ id: product.id, name: product.name, price: product.price, qty:1 }); }
+      localStorage.setItem("cartItems", JSON.stringify(cart));
+
+      product.stock--; // temporarily reduce
+      localStorage.setItem("products", JSON.stringify(products));
+      renderProducts();
+    }
+
+    renderProducts();
+  </script>
+</body>
+</html>
