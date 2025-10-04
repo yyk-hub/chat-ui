@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Shop - CEO Coffee</title>
+  <title>Shop - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
-    .container { padding:20px; max-width:600px; margin:auto; }
+    .container { padding:20px; max-width:800px; margin:auto; }
     .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-    .product { background:#fffbe6; padding:16px; border-radius:16px; margin-bottom:16px; }
+    .category { margin-top:30px; }
+    .category h2 { color:#996600; border-bottom:2px solid #ddd; padding-bottom:6px; }
+    .product { background:#fffbe6; padding:16px; border-radius:16px; margin:12px 0; }
     .product h3 { margin:0 0 8px; color:#996600; }
     .product p { margin:4px 0; }
     .btn { background:#14b47e; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; }
@@ -19,7 +21,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <h2>☕ Shop</h2>
+      <h2>🛍️ Shop</h2>
       <a href="cart.html" class="link-btn">🛒 Cart</a>
     </div>
 
@@ -27,26 +29,42 @@
   </div>
 
   <script>
-    // initial stock (if not stored already)
+    // initial stock (with categories)
     let products = JSON.parse(localStorage.getItem("products")) || [
-      { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5 },
-      { id: 2, name: "CEO Coffee 2 in 1", price: 40, stock: 3 }
+      { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5, category: "Beverage" },
+      { id: 2, name: "Greenzhi Tea", price: 38, stock: 6, category: "Beverage" },
+      { id: 3, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product" },
+      { id: 4, name: "Lacto Berry", price: 150, stock: 4, category: "Health Food" },
+      { id: 5, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care" },
+      { id: 6, name: "Natural Soap", price: 12, stock: 8, category: "Household Product" }
     ];
     localStorage.setItem("products", JSON.stringify(products));
 
     function renderProducts() {
       let list = document.getElementById("product-list");
       list.innerHTML = "";
-      products.forEach(p => {
-        let div = document.createElement("div");
-        div.className = "product";
-        div.innerHTML = `
-          <h3>${p.name}</h3>
-          <p>Price: RM ${p.price}</p>
-          <p>In Stock: <span id="stock-${p.id}">${p.stock}</span></p>
-          <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
-        `;
-        list.appendChild(div);
+
+      // group by category
+      let categories = [...new Set(products.map(p => p.category))];
+
+      categories.forEach(cat => {
+        let section = document.createElement("div");
+        section.className = "category";
+        section.innerHTML = `<h2>${cat}</h2>`;
+
+        products.filter(p => p.category === cat).forEach(p => {
+          let div = document.createElement("div");
+          div.className = "product";
+          div.innerHTML = `
+            <h3>${p.name}</h3>
+            <p>Price: RM ${p.price}</p>
+            <p>In Stock: <span id="stock-${p.id}">${p.stock}</span></p>
+            <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
+          `;
+          section.appendChild(div);
+        });
+
+        list.appendChild(section);
       });
     }
 
@@ -60,7 +78,7 @@
       else { cart.push({ id: product.id, name: product.name, price: product.price, qty:1 }); }
       localStorage.setItem("cartItems", JSON.stringify(cart));
 
-      product.stock--; // temporarily reduce
+      product.stock--;
       localStorage.setItem("products", JSON.stringify(products));
       renderProducts();
     }
