@@ -5,140 +5,279 @@
   <title>Checkout - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
-    .container { padding:20px; max-width:800px; margin:auto; }
-    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-    .summary { background:#fffbe6; padding:16px; border-radius:16px; margin-bottom:20px; }
-    .summary h3 { margin:0 0 12px; color:#996600; }
-    .item { border-bottom:1px solid #ddd; padding:8px 0; }
-    .item:last-child { border-bottom:none; }
-    .total { font-size:1.2rem; font-weight:bold; margin-top:12px; }
-    .payment, .delivery { background:#fff; padding:16px; border-radius:12px; margin-top:20px; }
-    .payment h3, .delivery h3 { margin-top:0; }
-    .qr-container { display:flex; gap:20px; flex-wrap:wrap; margin-top:12px; }
-    .qr-box { text-align:center; }
-    .qr-box img { width:150px; height:150px; border:1px solid #ccc; border-radius:8px; }
-    .btn { display:block; margin-top:20px; padding:12px; background:#14b47e; color:#fff; border:none; border-radius:8px; font-size:1rem; text-align:center; cursor:pointer; }
-    .btn:hover { background:#11996a; }
-    .link-btn { text-decoration:none; background:#996600; color:#fff; padding:8px 16px; border-radius:8px; }
-    .form-group { margin-bottom:12px; }
-    label { display:block; margin-bottom:4px; font-weight:500; }
-    input, textarea { width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:1rem; }
-    textarea { resize:vertical; min-height:80px; }
+    body {
+      background: #f4ecd6;
+      font-family: Segoe UI, Arial, sans-serif;
+      margin: 0;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    /* Sticky Header */
+    .header {
+      position: sticky;
+      top: 0;
+      background: #f4ecd6;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 2px solid #d1c4a1;
+    }
+
+    .home-btn {
+      position: absolute;
+      left: 20px;
+      background: #996600;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .header-title {
+      color: #996600;
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .section {
+      background: #fffbe6;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      margin-top: 0;
+      color: #996600;
+      border-bottom: 1px solid #d1c4a1;
+      padding-bottom: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+    }
+
+    th {
+      background: #e9d8a6;
+      color: #654321;
+    }
+
+    .total {
+      text-align: right;
+      font-weight: bold;
+      color: #996600;
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    .qr-section {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .qr-box {
+      text-align: center;
+      margin: 10px;
+    }
+
+    .qr-box img {
+      width: 150px;
+      height: 150px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #654321;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 4px;
+      font-size: 14px;
+    }
+
+    .confirm-btn {
+      background: #14b47e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: block;
+      margin: 25px auto;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .last-order {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .last-order button {
+      background: #996600;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <div class="header">
+    <a href="cart.html" class="home-btn">Back</a>
+    <h2 class="header-title">Checkout</h2>
+  </div>
+
   <div class="container">
-    <div class="header">
-      <h2>✅ Checkout</h2>
-      <a href="cart.html" class="link-btn">⬅ Back to Cart</a>
+    <div class="section">
+      <h3>🛍️ Order Summary</h3>
+      <div id="order-summary"></div>
+      <div class="total" id="order-total"></div>
     </div>
 
-    <!-- Order Summary -->
-    <div class="summary" id="order-summary"></div>
-
-    <!-- Delivery Details -->
-    <div class="delivery">
-      <h3>Delivery Details</h3>
-      <div class="form-group">
-        <label for="name">Full Name</label>
-        <input type="text" id="name" placeholder="Enter your full name">
-      </div>
-      <div class="form-group">
-        <label for="phone">Phone Number</label>
-        <input type="text" id="phone" placeholder="e.g. 0123456789">
-      </div>
-      <div class="form-group">
-        <label for="address">Delivery Address</label>
-        <textarea id="address" placeholder="Enter full address"></textarea>
-      </div>
+    <div class="section">
+      <h3>🚚 Delivery Details</h3>
+      <label>Name</label>
+      <input type="text" id="custName" placeholder="Enter your name">
+      <label>Phone</label>
+      <input type="text" id="custPhone" placeholder="Enter phone number">
+      <label>Address</label>
+      <textarea id="custAddress" rows="3" placeholder="Delivery address"></textarea>
     </div>
 
-    <!-- Payment Options -->
-    <div class="payment">
-      <h3>Payment Options</h3>
+    <div class="section">
+      <h3>💳 Payment</h3>
       <p>Scan one of the QR codes below to make payment:</p>
-      <div class="qr-container">
+      <div class="qr-section">
         <div class="qr-box">
-          <p>🏦 Bank QR</p>
-          <img src="img/bank_qr.png" alt="Bank QR">
+          <p>Bank QR</p>
+          <img src="img/bankqr.jpg" alt="Bank QR">
         </div>
         <div class="qr-box">
-          <p>🟦 Touch 'n Go</p>
-          <img src="img/tng_qr.png" alt="Touch n Go QR">
+          <p>Touch 'n Go</p>
+          <img src="img/tngqr.jpg" alt="TNG QR">
         </div>
       </div>
     </div>
 
-    <!-- Confirm -->
-    <button class="btn" onclick="confirmOrder()">Confirm Order</button>
+    <button class="confirm-btn" onclick="confirmOrder()">✅ Confirm Order</button>
+
+    <div class="last-order">
+      <button onclick="viewLastOrder()">📦 View Last Order</button>
+      <div id="lastOrderDisplay"></div>
+    </div>
   </div>
 
   <script>
-    let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-    const SHIPPING_FEE = 10; // flat shipping fee
+    function loadOrder() {
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let summaryDiv = document.getElementById("order-summary");
+      let totalDiv = document.getElementById("order-total");
 
-    function renderSummary() {
-      let summary = document.getElementById("order-summary");
-      if(cart.length === 0) {
-        summary.innerHTML = "<p>Your cart is empty.</p>";
+      if (cart.length === 0) {
+        summaryDiv.innerHTML = "<p>No items in cart.</p>";
         return;
       }
 
-      let html = "<h3>Order Summary</h3>";
       let total = 0;
+      let table = "<table><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr>";
+
       cart.forEach(item => {
         let subtotal = item.price * item.qty;
         total += subtotal;
-        html += `
-          <div class="item">
-            ${item.name} - RM ${item.price} × ${item.qty} = RM ${subtotal}
-          </div>
-        `;
+        table += `<tr>
+                    <td>${item.name}</td>
+                    <td>${item.qty}</td>
+                    <td>${item.price}</td>
+                    <td>${subtotal}</td>
+                  </tr>`;
       });
 
-      html += `<div class="item">Shipping Fee: RM ${SHIPPING_FEE}</div>`;
-      let grandTotal = total + SHIPPING_FEE;
-      html += `<div class="total">Grand Total: RM ${grandTotal}</div>`;
+      const shipping = 8;
+      total += shipping;
 
-      summary.innerHTML = html;
+      table += `</table>`;
+      summaryDiv.innerHTML = table;
+      totalDiv.innerHTML = `Shipping: RM ${shipping} <br>Total: <strong>RM ${total.toFixed(2)}</strong>`;
     }
 
     function confirmOrder() {
-      if(cart.length === 0) {
-        alert("Your cart is empty!");
+      let name = document.getElementById("custName").value.trim();
+      let phone = document.getElementById("custPhone").value.trim();
+      let address = document.getElementById("custAddress").value.trim();
+
+      if (!name || !phone || !address) {
+        alert("Please fill in all delivery details.");
         return;
       }
 
-      let name = document.getElementById("name").value.trim();
-      let phone = document.getElementById("phone").value.trim();
-      let address = document.getElementById("address").value.trim();
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let totalText = document.getElementById("order-total").innerText;
 
-      if(!name || !phone || !address) {
-        alert("⚠ Please fill in all delivery details.");
-        return;
-      }
-
-      let orderDetails = {
-        customer: { name, phone, address },
+      let order = {
+        id: "ORD" + Date.now(),
+        name,
+        phone,
+        address,
         items: cart,
-        shippingFee: SHIPPING_FEE,
-        orderTime: new Date().toLocaleString()
+        total: totalText,
+        time: new Date().toLocaleString()
       };
 
-      // For now, store in localStorage (later can be sent to backend / Firebase)
-      localStorage.setItem("lastOrder", JSON.stringify(orderDetails));
+      localStorage.setItem("lastOrder", JSON.stringify(order));
+      localStorage.removeItem("cartItems");
+      alert("✅ Order confirmed! Thank you for your purchase.");
 
-      alert("✅ Thank you! Your order has been placed.");
-      localStorage.removeItem("cartItems"); // clear cart
-      window.location.href = "shop.html"; // back to shop
+      window.location.href = "index.html";
     }
 
-    renderSummary();
-  </script>
+    function viewLastOrder() {
+      let order = JSON.parse(localStorage.getItem("lastOrder"));
+      let div = document.getElementById("lastOrderDisplay");
 
-  <!-- ⬇️ 2nd script: shared cart counter logic -->
-  <script src="js/cart-utils.js"></script>
-  
+      if (!order) {
+        div.innerHTML = "<p>No past order found.</p>";
+        return;
+      }
+
+      let html = `
+        <p><strong>Order ID:</strong> ${order.id}</p>
+        <p><strong>Name:</strong> ${order.name}</p>
+        <p><strong>Phone:</strong> ${order.phone}</p>
+        <p><strong>Address:</strong> ${order.address}</p>
+        <p><strong>Date:</strong> ${order.time}</p>
+        <p><strong>Total:</strong> ${order.total}</p>
+      `;
+      div.innerHTML = html;
+    }
+
+    loadOrder();
+  </script>
 </body>
-</html>
+  </html>
