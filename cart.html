@@ -5,159 +5,265 @@
   <title>Cart - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
-    .container { padding:20px; max-width:800px; margin:auto; }
-    .header { 
-      display:flex; 
-      justify-content:space-between; 
-      align-items:center; 
-      background:#fffbe6;
-      padding:10px 20px;
-      border-bottom:2px solid #ddd;
+    :root{
+      --bg:#f4ecd6;
+      --panel:#fffbe6;
+      --brand:#996600;
+      --accent:#14b47e;
+      --muted:#666;
     }
-    .header-title { 
-      margin:0; 
-      color:#996600; 
-      text-align:center;
-      flex:1;
-    }
-    .home-btn, .cart-btn { 
-      background:#996600; 
-      color:#fff; 
-      text-decoration:none; 
-      padding:8px 16px; 
-      border-radius:8px; 
-      font-weight:bold; 
-    }
-    .cart-btn { background:#14b47e; }
-    .cart-btn span { color:#fff; }
 
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { border-bottom:1px solid #ccc; padding:10px; text-align:left; }
-    th { background:#fffbe6; color:#996600; }
-    td button { background:#14b47e; border:none; color:white; padding:4px 10px; border-radius:6px; cursor:pointer; }
-    td button:disabled { background:gray; cursor:not-allowed; }
-    .total { text-align:right; font-size:18px; margin-top:20px; color:#996600; }
-    .checkout-btn { background:#996600; color:white; padding:10px 20px; border:none; border-radius:8px; cursor:pointer; margin-top:10px; float:right; }
-    .chat-btn { 
-      display:block; 
-      margin-top:80px; 
-      text-align:center; 
-      text-decoration:none; 
-      background:#14b47e; 
-      color:#fff; 
-      padding:12px 24px; 
-      border-radius:10px; 
-      font-weight:bold; 
-      width:fit-content;
-      margin-left:auto;
-      margin-right:auto;
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:var(--bg);
+      color:#222;
+    }
+
+    .container{ padding:20px; max-width:900px; margin:0 auto; }
+
+    /* header */
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      background:var(--panel);
+      padding:10px 18px;
+      border-bottom:2px solid #ddd;
+      position:sticky;
+      top:0;
+      z-index:1000;
+    }
+    .home-btn, .cart-btn{
+      background:var(--brand);
+      color:#fff;
+      text-decoration:none;
+      padding:8px 14px;
+      border-radius:8px;
+      font-weight:600;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .cart-btn{ background:var(--brand); } /* keep same visual as home */
+    .header-title{ margin:0; color:var(--brand); font-size:18px; text-align:center; flex:1; }
+
+    /* table */
+    .cart-table-wrap{ width:100%; overflow-x:auto; margin-top:18px; }
+    table{ width:100%; border-collapse:collapse; min-width:640px; }
+    th, td{ padding:12px 10px; text-align:left; vertical-align:middle; border-bottom:1px solid #e6e2d8; }
+    th{ background:var(--panel); color:var(--brand); font-weight:700; font-size:14px; }
+    td .prod-row{ display:flex; gap:12px; align-items:center; }
+    td .prod-thumb{ width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid #ddd; flex-shrink:0; }
+    td .prod-name{ font-weight:600; color:var(--brand); }
+
+    /* qty controls (centered) */
+    .qty-controls{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
+    .qty-btn{
+      width:34px;
+      height:30px;
+      line-height:28px;
+      border-radius:6px;
+      border:1px solid rgba(0,0,0,0.08);
+      background:#fff;
+      cursor:pointer;
+      font-size:16px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:0;
+    }
+    .qty-btn:active{ transform:translateY(1px); }
+    .qty-count{
+      min-width:38px;
+      display:inline-block;
+      text-align:center;
+      font-weight:600;
+      font-size:15px;
+    }
+
+    /* action buttons */
+    .remove-btn{ background:transparent; border:none; cursor:pointer; font-size:18px; }
+    .remove-btn:hover{ color:#d33; }
+
+    .total-wrap{ margin-top:18px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .total{ font-size:18px; color:var(--brand); font-weight:700; }
+    .checkout-btn{ background:var(--brand); color:#fff; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:700; }
+
+    /* back to chat */
+    .chat-btn{ display:block; margin:36px auto 0; background:var(--accent); color:#fff; padding:12px 24px; border-radius:10px; text-decoration:none; font-weight:700; text-align:center; width:fit-content; }
+
+    /* responsiveness */
+    @media (max-width:680px){
+      table{ min-width:600px; }
+      .prod-thumb{ width:60px; height:60px; }
+      .qty-btn{ width:30px; height:28px; }
+      .qty-count{ min-width:30px; }
+      .header{ padding:10px; }
+      .container{ padding:12px; }
     }
   </style>
 </head>
 <body>
+  <!-- header -->
   <div class="header">
-    <a href="index.html" class="home-btn">Home</a>
+    <a href="index.html" class="home-btn">🏠 Home</a>
     <h2 class="header-title">🛒 Cart</h2>
-    <a href="cart.html" class="cart-btn">Cart (<span id="cart-count">0</span>)</a>
+    <a href="cart.html" class="cart-btn">🛒 Cart (<span id="cart-count">0</span>)</a>
   </div>
 
   <div class="container">
-    <div id="cart-items"></div>
-    <div class="total" id="total"></div>
-    <button class="checkout-btn" onclick="checkout()">Checkout</button>
+    <!-- cart list -->
+    <div class="cart-table-wrap" id="cart-items"></div>
+
+    <div class="total-wrap">
+      <div id="promo" style="color:var(--muted); font-size:14px;"></div>
+      <div>
+        <div id="total" class="total">Total: RM 0</div>
+        <button class="checkout-btn" onclick="checkout()">Proceed to Checkout</button>
+      </div>
+    </div>
 
     <a href="chat.html" class="chat-btn">💬 Back to Chat</a>
   </div>
 
+  <!-- cart utils (shared) -->
   <script src="js/cart-utils.js"></script>
-  <script>
-    function renderCart() {
-      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-      let cartDiv = document.getElementById("cart-items");
-      let totalDiv = document.getElementById("total");
 
-      if (cart.length === 0) {
-        cartDiv.innerHTML = "<p>Your cart is empty.</p>";
-        totalDiv.innerHTML = "";
+  <script>
+    // Render cart table and wire actions.
+    function renderCart() {
+      const cart = JSON.parse(localStorage.getItem('cartItems')) || [];
+      const products = JSON.parse(localStorage.getItem('products')) || [];
+      const container = document.getElementById('cart-items');
+      if (!cart.length) {
+        container.innerHTML = "<p>Your cart is empty.</p>";
+        document.getElementById('total').textContent = "Total: RM 0";
         updateCartCount();
         return;
       }
 
-      let html = `
-        <table>
-          <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th><th></th></tr>
-      `;
+      // Build table
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th style="text-align:center">Qty</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>`;
 
       let total = 0;
       cart.forEach(item => {
-        let sub = item.price * item.qty;
+        const sub = item.price * item.qty;
         total += sub;
+        // find thumbnail if any
+        const prod = products.find(p => p.id === item.id) || {};
+        const thumb = prod.img ? `<img src="${prod.img}" class="prod-thumb" alt="${item.name}">` : '';
         html += `
           <tr>
-            <td>${item.name}</td>
-            <td>RM ${item.price}</td>
             <td>
-              <button onclick="changeQty(${item.id}, -1)">-</button>
-              ${item.qty}
-              <button onclick="changeQty(${item.id}, 1)">+</button>
+              <div class="prod-row">
+                ${thumb}
+                <div>
+                  <div class="prod-name">${item.name}</div>
+                  <div style="color:var(--muted); font-size:13px;">RM ${item.price}</div>
+                </div>
+              </div>
+            </td>
+            <td>RM ${item.price}</td>
+            <td style="text-align:center">
+              <div class="qty-controls" role="group" aria-label="Quantity controls for ${item.name}">
+                <button class="qty-btn" aria-label="Decrease quantity" onclick="changeQty(${item.id}, -1)">−</button>
+                <span class="qty-count" id="qty-${item.id}">${item.qty}</span>
+                <button class="qty-btn" aria-label="Increase quantity" onclick="changeQty(${item.id}, 1)">+</button>
+              </div>
             </td>
             <td>RM ${sub}</td>
-            <td><button onclick="removeItem(${item.id})">🗑️</button></td>
+            <td style="text-align:center">
+              <button class="remove-btn" aria-label="Remove ${item.name}" onclick="removeItem(${item.id})">🗑️</button>
+            </td>
           </tr>
         `;
       });
 
-      html += "</table>";
-      cartDiv.innerHTML = html;
-      totalDiv.innerHTML = `<b>Total: RM ${total}</b>`;
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+
+      document.getElementById('total').textContent = `Total: RM ${total}`;
       updateCartCount();
     }
 
+    // delta = +1 or -1
     function changeQty(id, delta) {
-      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-      let products = JSON.parse(localStorage.getItem("products")) || [];
+      let cart = JSON.parse(localStorage.getItem('cartItems')) || [];
+      let products = JSON.parse(localStorage.getItem('products')) || [];
       let item = cart.find(i => i.id === id);
       let product = products.find(p => p.id === id);
+
       if (!item || !product) return;
 
-      if (delta > 0 && product.stock <= 0) {
-        alert("Out of stock!");
-        return;
+      if (delta === 1) {
+        // increase - ensure product stock is available
+        if (product.stock <= 0) { alert('Out of stock!'); return; }
+        item.qty += 1;
+        product.stock -= 1;
+      } else if (delta === -1) {
+        // decrease - return stock back
+        item.qty -= 1;
+        product.stock += 1;
+        if (item.qty <= 0) {
+          cart = cart.filter(i => i.id !== id);
+        }
       }
 
-      item.qty += delta;
-      if (item.qty <= 0) {
-        cart = cart.filter(i => i.id !== id);
-      } else {
-        product.stock -= delta;
-      }
-
-      localStorage.setItem("cartItems", JSON.stringify(cart));
-      localStorage.setItem("products", JSON.stringify(products));
+      localStorage.setItem('cartItems', JSON.stringify(cart));
+      localStorage.setItem('products', JSON.stringify(products));
       renderCart();
     }
 
     function removeItem(id) {
-      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let cart = JSON.parse(localStorage.getItem('cartItems')) || [];
+      let products = JSON.parse(localStorage.getItem('products')) || [];
+      const item = cart.find(i => i.id === id);
+      if (!item) return;
+      // restore stock
+      const product = products.find(p => p.id === id);
+      if (product) product.stock = (product.stock || 0) + item.qty;
+
       cart = cart.filter(i => i.id !== id);
-      localStorage.setItem("cartItems", JSON.stringify(cart));
+      localStorage.setItem('cartItems', JSON.stringify(cart));
+      localStorage.setItem('products', JSON.stringify(products));
       renderCart();
     }
 
     function checkout() {
-      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-      if (cart.length === 0) {
-        alert("Cart is empty!");
-        return;
-      }
+      let cart = JSON.parse(localStorage.getItem('cartItems')) || [];
+      if (!cart.length) { alert('Cart is empty!'); return; }
 
-      alert("Thank you for your purchase!");
-      localStorage.removeItem("cartItems");
+      // Here you would normally create order, push to backend, etc.
+      // For demo, we'll just clear cart and say thanks.
+      alert('Thank you! Your order has been placed.');
+      localStorage.removeItem('cartItems');
       renderCart();
     }
 
+    // init
     renderCart();
+
+    // also refresh count every second (keeps count updated if changed in another tab)
+    setInterval(() => { 
+      updateCartCount();
+    }, 1000);
   </script>
 </body>
-</html>
+  </html>
