@@ -54,6 +54,20 @@
       cursor:pointer; 
       text-decoration:none;
       font-size:14px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .cart-btn span {
+      background:white;
+      color:#14b47e;
+      border-radius:50%;
+      padding:2px 6px;
+      font-size:12px;
+      font-weight:bold;
+      min-width:18px;
+      text-align:center;
     }
 
     h2.header-title {
@@ -126,7 +140,9 @@
   <div class="header">
     <a href="index.html" class="home-btn">Home</a>
     <h2 class="header-title">🛍️ Shop</h2>
-    <a href="cart.html" class="cart-btn">Cart</a>
+    <a href="cart.html" class="cart-btn">
+      🛒 Cart <span id="cart-count">0</span>
+    </a>
   </div>
 
   <div class="container">
@@ -179,6 +195,7 @@
 
         list.appendChild(section);
       });
+      updateCartCount();
     }
 
     function openProduct(id) {
@@ -199,6 +216,12 @@
       product.stock--;
       localStorage.setItem("products", JSON.stringify(products));
       renderProducts();
+    }
+
+    function updateCartCount() {
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let count = cart.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById("cart-count").textContent = count;
     }
 
     renderProducts();
