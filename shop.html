@@ -7,84 +7,58 @@
   <style>
     body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
     .container { padding:20px; max-width:800px; margin:auto; }
-    .header {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:20px;
-      position:relative;
-    }
+    .header { display:flex; justify-content:center; align-items:center; margin-bottom:20px; position:relative; }
     .home-btn {
-      position:absolute;
-      left:50%;
-      transform:translateX(-50%);
-      background:#996600;
-      color:#fff;
-      padding:8px 16px;
-      border-radius:8px;
-      text-decoration:none;
-      font-weight:500;
+      position:absolute; left:20px;
+      background:#996600; color:white; border:none; padding:6px 14px;
+      border-radius:8px; cursor:pointer; text-decoration:none;
     }
     .category { margin-top:30px; }
     .category h2 { color:#996600; border-bottom:2px solid #ddd; padding-bottom:6px; }
     .product {
-      background:#fffbe6;
-      padding:16px;
-      border-radius:16px;
-      margin:12px 0;
-      display:flex;
-      gap:14px;
-      align-items:center;
+      background:#fffbe6; padding:16px; border-radius:16px; margin:12px 0;
+    }
+    .product-content {
+      display:flex; gap:14px; align-items:center;
     }
     .product img {
-      width:100px;
-      height:100px;
-      object-fit:cover;
-      border-radius:12px;
-      cursor:pointer;
-      transition: transform 0.2s;
+      width:110px; height:110px; object-fit:cover;
+      border-radius:12px; border:1px solid #ccc; cursor:pointer;
     }
-    .product img:hover { transform:scale(1.05); }
-    .product-info { flex:1; }
-    .product h3 { margin:0 0 6px; color:#996600; font-size:16px; }
-    .product p { margin:3px 0; font-size:14px; }
-    .btn { background:#14b47e; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; }
+    .product h3 { margin:0 0 6px; color:#996600; }
+    .product p { margin:4px 0; }
+    .btn { background:#14b47e; color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; }
     .btn:disabled { background:gray; cursor:not-allowed; }
-    .link-btn { text-decoration:none; background:#996600; color:#fff; padding:8px 16px; border-radius:8px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h2>🛍️ Shop</h2>
       <a href="index.html" class="home-btn">Home</a>
-      <a href="cart.html" class="link-btn">🛒 Cart</a>
+      <h2>🛍️ Shop</h2>
     </div>
 
     <div id="product-list"></div>
   </div>
 
   <script>
-    // Reset undefined data
-    let old = JSON.parse(localStorage.getItem("products"));
-    if (old && old.some(p => !p.desc)) {
-      localStorage.removeItem("products");
-    }
-
-    // Product data
-    let products = JSON.parse(localStorage.getItem("products")) || [
+    // Reset products list always
+    localStorage.removeItem("products");
+    
+    let products = [
       { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma.", img: "img/coffee_s.jpg" },
-      { id: 2, name: "Greenzhi Tea", price: 38, stock: 6, category: "Beverage", desc: "Green tea with Ganoderma extract.", img: "img/tea.jpg" },
-      { id: 3, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product", desc: "Supports immune system and vitality.", img: "img/ganoderma.jpg" },
-      { id: 4, name: "Lacto Berry", price: 150, stock: 4, category: "Health Food", desc: "Antioxidant-rich blend for inner wellness.", img: "img/lacto.jpg" },
-      { id: 5, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care", desc: "Natural herbal formula for oral care.", img: "img/toothpaste.jpg" },
-      { id: 6, name: "Natural Soap", price: 12, stock: 8, category: "Household Product", desc: "Mild natural soap suitable for daily use.", img: "img/soap.jpg" }
+      { id: 2, name: "Greenzhi Tea", price: 38, stock: 6, category: "Beverage", desc: "A herbal tea rich in antioxidants.", img: "img/tea_s.jpg" },
+      { id: 3, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product", desc: "Supports immunity and overall health.", img: "img/ganoderma_s.jpg" },
+      { id: 4, name: "Lacto Berry", price: 150, stock: 4, category: "Health Food", desc: "Probiotic and antioxidant drink mix.", img: "img/lacto_s.jpg" },
+      { id: 5, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care", desc: "Natural toothpaste for healthy gums.", img: "img/toothpaste_s.jpg" },
+      { id: 6, name: "Natural Soap", price: 12, stock: 8, category: "Household Product", desc: "Organic soap for smooth, fresh skin.", img: "img/soap_s.jpg" }
     ];
     localStorage.setItem("products", JSON.stringify(products));
 
     function renderProducts() {
       let list = document.getElementById("product-list");
       list.innerHTML = "";
+
       let categories = [...new Set(products.map(p => p.category))];
 
       categories.forEach(cat => {
@@ -96,13 +70,14 @@
           let div = document.createElement("div");
           div.className = "product";
           div.innerHTML = `
-            <img src="${p.img}" alt="${p.name}" onclick="openMenu(${p.id})">
-            <div class="product-info">
-              <h3>${p.name}</h3>
-              <p>${p.desc}</p>
-              <p>Price: RM ${p.price}</p>
-              <p>In Stock: <span id="stock-${p.id}">${p.stock}</span></p>
-              <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
+            <div class="product-content">
+              <img src="${p.img}" alt="${p.name}" onclick="openProduct(${p.id})">
+              <div>
+                <h3>${p.name}</h3>
+                <p>${p.desc}</p>
+                <p>RM ${p.price} | In stock: <span id="stock-${p.id}">${p.stock}</span></p>
+                <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
+              </div>
             </div>
           `;
           section.appendChild(div);
@@ -112,23 +87,24 @@
       });
     }
 
+    function openProduct(id) {
+      localStorage.setItem("selectedProductId", id);
+      window.location.href = "menu.html";
+    }
+
     function addToCart(id) {
       let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
       let product = products.find(p => p.id === id);
-      if(!product || product.stock<=0) { alert("Out of stock!"); return; }
+      if (!product || product.stock <= 0) return alert("Out of stock!");
 
       let item = cart.find(i => i.id === id);
-      if(item) { item.qty++; }
-      else { cart.push({ id: product.id, name: product.name, price: product.price, qty:1 }); }
+      if (item) item.qty++;
+      else cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
       localStorage.setItem("cartItems", JSON.stringify(cart));
 
       product.stock--;
       localStorage.setItem("products", JSON.stringify(products));
       renderProducts();
-    }
-
-    function openMenu(id) {
-      window.location.href = `menu.html?id=${id}`;
     }
 
     renderProducts();
