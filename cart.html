@@ -7,93 +7,130 @@
   <style>
     body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
     .container { padding:20px; max-width:800px; margin:auto; }
-    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-    .cart-item { background:#fffbe6; padding:16px; border-radius:16px; margin:12px 0; display:flex; justify-content:space-between; align-items:center; }
-    .item-info { flex:1; }
-    .item-info h3 { margin:0 0 8px; color:#996600; }
-    .qty-controls { display:flex; align-items:center; gap:8px; }
-    .qty-btn { padding:4px 10px; border:none; border-radius:6px; background:#996600; color:#fff; cursor:pointer; font-size:1rem; }
-    .remove-btn { background:#e74c3c; padding:4px 10px; border:none; border-radius:6px; color:#fff; cursor:pointer; }
-    .summary { margin-top:20px; background:#fff; padding:16px; border-radius:12px; }
-    .summary h3 { margin:0 0 10px; color:#333; }
-    .btn-checkout { display:block; margin-top:12px; text-align:center; background:#14b47e; color:#fff; padding:12px; border-radius:8px; text-decoration:none; font-weight:bold; }
-    .btn-checkout:hover { background:#11996a; }
-    .link-btn { text-decoration:none; background:#996600; color:#fff; padding:8px 16px; border-radius:8px; }
+    .header { 
+      display:flex; 
+      justify-content:space-between; 
+      align-items:center; 
+      background:#fffbe6;
+      padding:10px 20px;
+      border-bottom:2px solid #ddd;
+    }
+    .header-title { 
+      margin:0; 
+      color:#996600; 
+      text-align:center;
+      flex:1;
+    }
+    .home-btn, .cart-btn { 
+      background:#996600; 
+      color:#fff; 
+      text-decoration:none; 
+      padding:8px 16px; 
+      border-radius:8px; 
+      font-weight:bold; 
+    }
+    .cart-btn { background:#14b47e; }
+    .cart-btn span { color:#fff; }
+
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { border-bottom:1px solid #ccc; padding:10px; text-align:left; }
+    th { background:#fffbe6; color:#996600; }
+    td button { background:#14b47e; border:none; color:white; padding:4px 10px; border-radius:6px; cursor:pointer; }
+    td button:disabled { background:gray; cursor:not-allowed; }
+    .total { text-align:right; font-size:18px; margin-top:20px; color:#996600; }
+    .checkout-btn { background:#996600; color:white; padding:10px 20px; border:none; border-radius:8px; cursor:pointer; margin-top:10px; float:right; }
+    .chat-btn { 
+      display:block; 
+      margin-top:80px; 
+      text-align:center; 
+      text-decoration:none; 
+      background:#14b47e; 
+      color:#fff; 
+      padding:12px 24px; 
+      border-radius:10px; 
+      font-weight:bold; 
+      width:fit-content;
+      margin-left:auto;
+      margin-right:auto;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h2>🛒 Your Cart</h2>
-      <a href="shop.html" class="link-btn">⬅ Back to Shop</a>
-    </div>
-
-    <div id="cart-list"></div>
-
-    <div class="summary" id="summary"></div>
+  <div class="header">
+    <a href="index.html" class="home-btn">Home</a>
+    <h2 class="header-title">🛒 Cart</h2>
+    <a href="cart.html" class="cart-btn">Cart (<span id="cart-count">0</span>)</a>
   </div>
 
+  <div class="container">
+    <div id="cart-items"></div>
+    <div class="total" id="total"></div>
+    <button class="checkout-btn" onclick="checkout()">Checkout</button>
+
+    <a href="chat.html" class="chat-btn">💬 Back to Chat</a>
+  </div>
+
+  <script src="js/cart-utils.js"></script>
   <script>
-    let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-    let products = JSON.parse(localStorage.getItem("products")) || [];
-
     function renderCart() {
-      let list = document.getElementById("cart-list");
-      let summary = document.getElementById("summary");
-      list.innerHTML = "";
-      summary.innerHTML = "";
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let cartDiv = document.getElementById("cart-items");
+      let totalDiv = document.getElementById("total");
 
-      if(cart.length === 0) {
-        list.innerHTML = "<p>Your cart is empty.</p>";
+      if (cart.length === 0) {
+        cartDiv.innerHTML = "<p>Your cart is empty.</p>";
+        totalDiv.innerHTML = "";
+        updateCartCount();
         return;
       }
 
+      let html = `
+        <table>
+          <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th><th></th></tr>
+      `;
+
       let total = 0;
-
       cart.forEach(item => {
-        let div = document.createElement("div");
-        div.className = "cart-item";
-        let subtotal = item.price * item.qty;
-        total += subtotal;
-
-        div.innerHTML = `
-          <div class="item-info">
-            <h3>${item.name}</h3>
-            <p>RM ${item.price} x ${item.qty} = RM ${subtotal}</p>
-          </div>
-          <div class="qty-controls">
-            <button class="qty-btn" onclick="updateQty(${item.id}, -1)">-</button>
-            <span>${item.qty}</span>
-            <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
-            <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
-          </div>
+        let sub = item.price * item.qty;
+        total += sub;
+        html += `
+          <tr>
+            <td>${item.name}</td>
+            <td>RM ${item.price}</td>
+            <td>
+              <button onclick="changeQty(${item.id}, -1)">-</button>
+              ${item.qty}
+              <button onclick="changeQty(${item.id}, 1)">+</button>
+            </td>
+            <td>RM ${sub}</td>
+            <td><button onclick="removeItem(${item.id})">🗑️</button></td>
+          </tr>
         `;
-        list.appendChild(div);
       });
 
-      summary.innerHTML = `
-        <h3>Total: RM ${total}</h3>
-        <a href="checkout.html" class="btn-checkout">Proceed to Checkout</a>
-      `;
+      html += "</table>";
+      cartDiv.innerHTML = html;
+      totalDiv.innerHTML = `<b>Total: RM ${total}</b>`;
+      updateCartCount();
     }
 
-    function updateQty(id, change) {
+    function changeQty(id, delta) {
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let products = JSON.parse(localStorage.getItem("products")) || [];
       let item = cart.find(i => i.id === id);
       let product = products.find(p => p.id === id);
-      if(!item || !product) return;
+      if (!item || !product) return;
 
-      if(change === 1 && product.stock > 0) {
-        item.qty++;
-        product.stock--;
-      } else if(change === -1 && item.qty > 1) {
-        item.qty--;
-        product.stock++;
-      } else if(change === -1 && item.qty === 1) {
-        removeItem(id);
-        return;
-      } else {
+      if (delta > 0 && product.stock <= 0) {
         alert("Out of stock!");
         return;
+      }
+
+      item.qty += delta;
+      if (item.qty <= 0) {
+        cart = cart.filter(i => i.id !== id);
+      } else {
+        product.stock -= delta;
       }
 
       localStorage.setItem("cartItems", JSON.stringify(cart));
@@ -102,23 +139,25 @@
     }
 
     function removeItem(id) {
-      let item = cart.find(i => i.id === id);
-      let product = products.find(p => p.id === id);
-      if(item && product) {
-        product.stock += item.qty; // return stock
-      }
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
       cart = cart.filter(i => i.id !== id);
       localStorage.setItem("cartItems", JSON.stringify(cart));
-      localStorage.setItem("products", JSON.stringify(products));
+      renderCart();
+    }
+
+    function checkout() {
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      if (cart.length === 0) {
+        alert("Cart is empty!");
+        return;
+      }
+
+      alert("Thank you for your purchase!");
+      localStorage.removeItem("cartItems");
       renderCart();
     }
 
     renderCart();
   </script>
-
-  <!-- ⬇️ 2nd script: shared cart counter logic -->
-  <script src="js/cart-utils.js"></script>
-  
 </body>
 </html>
-
