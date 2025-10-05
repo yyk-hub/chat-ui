@@ -30,9 +30,7 @@
       border-bottom:2px solid #d1c4a1;
     }
 
-    .home-btn {
-      position:absolute; 
-      left:20px;
+    .home-btn, .cart-btn {
       background:#996600; 
       color:white; 
       border:none; 
@@ -41,33 +39,16 @@
       cursor:pointer; 
       text-decoration:none;
       font-size:14px;
+      font-weight:500;
     }
 
-    .cart-btn {
-      position:absolute; 
-      right:20px;
-      background:#14b47e; 
-      color:white; 
-      border:none; 
-      padding:6px 14px;
-      border-radius:8px; 
-      cursor:pointer; 
-      text-decoration:none;
-      font-size:14px;
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
+    .home-btn { position:absolute; left:20px; }
+    .cart-btn { position:absolute; right:20px; }
 
     .cart-btn span {
-      background:white;
-      color:#14b47e;
-      border-radius:50%;
-      padding:2px 6px;
-      font-size:12px;
       font-weight:bold;
-      min-width:18px;
-      text-align:center;
+      color:#fff;
+      margin-left:4px;
     }
 
     h2.header-title {
@@ -138,11 +119,9 @@
 </head>
 <body>
   <div class="header">
-    <a href="index.html" class="home-btn">Home</a>
+    <a href="index.html" class="home-btn">🏠 Home</a>
     <h2 class="header-title">🛍️ Shop</h2>
-    <a href="cart.html" class="cart-btn">
-      🛒 Cart <span id="cart-count">0</span>
-    </a>
+    <a href="cart.html" class="cart-btn">🛒 Cart (<span id="cart-count">0</span>)</a>
   </div>
 
   <div class="container">
@@ -227,4 +206,4 @@
     renderProducts();
   </script>
 </body>
-</html>
+  </html>
