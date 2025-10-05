@@ -46,13 +46,15 @@
     localStorage.removeItem("products");
     
     let products = [
-      { id: 1, name: "CEO Coffee 4 in 1", price: 45, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma.", img: "img/coffee_s.jpg" },
-      { id: 2, name: "Greenzhi Tea", price: 38, stock: 6, category: "Beverage", desc: "A herbal tea rich in antioxidants.", img: "img/tea_s.jpg" },
-      { id: 3, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product", desc: "Supports immunity and overall health.", img: "img/ganoderma_s.jpg" },
-      { id: 4, name: "Lacto Berry", price: 150, stock: 4, category: "Health Food", desc: "Probiotic and antioxidant drink mix.", img: "img/lacto_s.jpg" },
-      { id: 5, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care", desc: "Natural toothpaste for healthy gums.", img: "img/toothpaste_s.jpg" },
-      { id: 6, name: "Natural Soap", price: 12, stock: 8, category: "Household Product", desc: "Organic soap for smooth, fresh skin.", img: "img/soap_s.jpg" }
+      { id: 1, name: "CEO Coffee 4 in 1", price: 50, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma.", img: "img/coffee_s.jpg" },
+      { id: 2, name: "CEO Coffee 3 in 1", price: 50, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma.", img: "img/coffee_s.jpg" },
+      { id: 3, name: "Oolong Tea", price: 55, stock: 6, category: "Beverage", desc: "A herbal tea rich in antioxidants.", img: "img/tea.jpg" },
+      { id: 4, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product", desc: "Supports immunity and overall health.", img: "img/lingzhi.jpg" },
+      { id: 5, name: "Lacto Berry", price: 80, stock: 4, category: "Health Food", desc: "Probiotic and antioxidant drink mix.", img: "img/berry.jpg" },
+      { id: 6, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care", desc: "Natural toothpaste for healthy gums, and soothes mouth irritation.", img: "img/toothpaste.jpg" },
+      { id: 7, name: "Eco Bio Cleaner", price: 25, stock: 8, category: "Household Product", desc: "All-purpose cleaner for safe, environment friendly and hygiene wash.", img: "img/cleaner.jpg" }
     ];
+
     localStorage.setItem("products", JSON.stringify(products));
 
     function renderProducts() {
