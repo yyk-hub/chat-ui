@@ -5,54 +5,146 @@
   <title>Shop - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { background:#f4ecd6; font-family:Segoe UI, Arial, sans-serif; margin:0; }
-    .container { padding:20px; max-width:800px; margin:auto; }
-    .header { display:flex; justify-content:center; align-items:center; margin-bottom:20px; position:relative; }
+    body { 
+      background:#f4ecd6; 
+      font-family:Segoe UI, Arial, sans-serif; 
+      margin:0; 
+    }
+
+    .container { 
+      padding:20px; 
+      max-width:800px; 
+      margin:auto; 
+    }
+
+    /* Sticky Header */
+    .header {
+      position:sticky;
+      top:0;
+      background:#f4ecd6;
+      z-index:1000;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:12px 0;
+      border-bottom:2px solid #d1c4a1;
+    }
+
     .home-btn {
-      position:absolute; left:20px;
-      background:#996600; color:white; border:none; padding:6px 14px;
-      border-radius:8px; cursor:pointer; text-decoration:none;
+      position:absolute; 
+      left:20px;
+      background:#996600; 
+      color:white; 
+      border:none; 
+      padding:6px 14px;
+      border-radius:8px; 
+      cursor:pointer; 
+      text-decoration:none;
+      font-size:14px;
     }
-    .category { margin-top:30px; }
-    .category h2 { color:#996600; border-bottom:2px solid #ddd; padding-bottom:6px; }
+
+    .cart-btn {
+      position:absolute; 
+      right:20px;
+      background:#14b47e; 
+      color:white; 
+      border:none; 
+      padding:6px 14px;
+      border-radius:8px; 
+      cursor:pointer; 
+      text-decoration:none;
+      font-size:14px;
+    }
+
+    h2.header-title {
+      color:#996600;
+      margin:0;
+      font-size:20px;
+    }
+
+    .category { 
+      margin-top:30px; 
+    }
+
+    .category h3 { 
+      color:#996600; 
+      border-bottom:2px solid #ddd; 
+      padding-bottom:6px; 
+    }
+
     .product {
-      background:#fffbe6; padding:16px; border-radius:16px; margin:12px 0;
+      background:#fffbe6; 
+      padding:16px; 
+      border-radius:16px; 
+      margin:12px 0;
     }
+
     .product-content {
-      display:flex; gap:14px; align-items:center;
+      display:flex; 
+      gap:14px; 
+      align-items:center;
     }
+
     .product img {
-      width:110px; height:110px; object-fit:cover;
-      border-radius:12px; border:1px solid #ccc; cursor:pointer;
+      width:110px; 
+      height:110px; 
+      object-fit:cover;
+      border-radius:12px; 
+      border:1px solid #ccc; 
+      cursor:pointer;
+      flex-shrink:0;
     }
-    .product h3 { margin:0 0 6px; color:#996600; }
-    .product p { margin:4px 0; }
-    .btn { background:#14b47e; color:#fff; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; }
-    .btn:disabled { background:gray; cursor:not-allowed; }
+
+    .product h4 { 
+      margin:0 0 6px; 
+      color:#996600; 
+      font-size:16px;
+    }
+
+    .product p { 
+      margin:4px 0; 
+      font-size:14px;
+    }
+
+    .btn { 
+      background:#14b47e; 
+      color:#fff; 
+      border:none; 
+      padding:6px 12px; 
+      border-radius:8px; 
+      cursor:pointer; 
+      font-size:14px;
+    }
+
+    .btn:disabled { 
+      background:gray; 
+      cursor:not-allowed; 
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <a href="index.html" class="home-btn">Home</a>
-      <h2>🛍️ Shop</h2>
-    </div>
+  <div class="header">
+    <a href="index.html" class="home-btn">Home</a>
+    <h2 class="header-title">🛍️ Shop</h2>
+    <a href="cart.html" class="cart-btn">Cart</a>
+  </div>
 
+  <div class="container">
     <div id="product-list"></div>
   </div>
 
   <script>
-    // Reset products list always
+    // Clear old product data
     localStorage.removeItem("products");
     
     let products = [
-      { id: 1, name: "CEO Coffee 4 in 1", price: 50, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma.", img: "img/coffee_s.jpg" },
-      { id: 2, name: "CEO Coffee 3 in 1", price: 50, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma.", img: "img/coffee_ns.jpg" },
+      { id: 1, name: "CEO Coffee 4 in 1", price: 50, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma with sugar.", img: "img/coffee_s.jpg" },
+      { id: 2, name: "CEO Coffee 3 in 1", price: 50, stock: 5, category: "Beverage", desc: "Smooth coffee blend with Lingzhi extract without sugar.", img: "img/coffee_ns.jpg" },
       { id: 3, name: "Oolong Tea", price: 55, stock: 6, category: "Beverage", desc: "A herbal tea rich in antioxidants.", img: "img/tea.jpg" },
-      { id: 4, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product", desc: "Supports immunity and overall health.", img: "img/lingzhi.jpg" },
+      { id: 4, name: "Ganoderma Capsule", price: 120, stock: 3, category: "Biotech Product", desc: "Boost immunity and overall health.", img: "img/lingzhi.jpg" },
       { id: 5, name: "Lacto Berry", price: 80, stock: 4, category: "Health Food", desc: "Probiotic and antioxidant drink mix.", img: "img/berry.jpg" },
-      { id: 6, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care", desc: "Natural toothpaste for healthy gums, and soothes mouth irritation.", img: "img/toothpaste.jpg" },
-      { id: 7, name: "Eco Bio Cleaner", price: 25, stock: 8, category: "Household Product", desc: "All-purpose cleaner for safe, environment friendly and hygiene wash.", img: "img/cleaner.jpg" }
+      { id: 6, name: "Herbal Toothpaste", price: 18, stock: 10, category: "Personal Care", desc: "Natural toothpaste for healthy gums and freshness.", img: "img/toothpaste.jpg" },
+      { id: 7, name: "Eco Bio Cleaner", price: 25, stock: 8, category: "Household Product", desc: "All-purpose cleaner for eco-friendly hygiene.", img: "img/cleaner.jpg" }
     ];
 
     localStorage.setItem("products", JSON.stringify(products));
@@ -66,7 +158,7 @@
       categories.forEach(cat => {
         let section = document.createElement("div");
         section.className = "category";
-        section.innerHTML = `<h2>${cat}</h2>`;
+        section.innerHTML = `<h3>${cat}</h3>`;
 
         products.filter(p => p.category === cat).forEach(p => {
           let div = document.createElement("div");
@@ -75,9 +167,9 @@
             <div class="product-content">
               <img src="${p.img}" alt="${p.name}" onclick="openProduct(${p.id})">
               <div>
-                <h3>${p.name}</h3>
+                <h4>${p.name}</h4>
                 <p>${p.desc}</p>
-                <p>RM ${p.price} | In stock: <span id="stock-${p.id}">${p.stock}</span></p>
+                <p><strong>RM ${p.price}</strong> | Stock: <span id="stock-${p.id}">${p.stock}</span></p>
                 <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
               </div>
             </div>
