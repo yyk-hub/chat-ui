@@ -2,268 +2,221 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cart - CEO Products</title>
+  <title>🛒 Cart - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root{
-      --bg:#f4ecd6;
-      --panel:#fffbe6;
-      --brand:#996600;
-      --accent:#14b47e;
-      --muted:#666;
+    body {
+      background: #f4ecd6;
+      font-family: Segoe UI, Arial, sans-serif;
+      margin: 0;
     }
 
-    html,body{
-      height:100%;
-      margin:0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      background:var(--bg);
-      color:#222;
+    .container {
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
     }
 
-    .container{ padding:20px; max-width:900px; margin:0 auto; }
-
-    /* header */
-    .header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      background:var(--panel);
-      padding:10px 18px;
-      border-bottom:2px solid #ddd;
-      position:sticky;
-      top:0;
-      z-index:1000;
-    }
-    .home-btn, .cart-btn{
-      background:var(--brand);
-      color:#fff;
-      text-decoration:none;
-      padding:8px 14px;
-      border-radius:8px;
-      font-weight:600;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-    }
-    .cart-btn{ background:var(--brand); } /* keep same visual as home */
-    .header-title{ margin:0; color:var(--brand); font-size:18px; text-align:center; flex:1; }
-
-    /* table */
-    .cart-table-wrap{ width:100%; overflow-x:auto; margin-top:18px; }
-    table{ width:100%; border-collapse:collapse; min-width:640px; }
-    th, td{ padding:12px 10px; text-align:left; vertical-align:middle; border-bottom:1px solid #e6e2d8; }
-    th{ background:var(--panel); color:var(--brand); font-weight:700; font-size:14px; }
-    td .prod-row{ display:flex; gap:12px; align-items:center; }
-    td .prod-thumb{ width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid #ddd; flex-shrink:0; }
-    td .prod-name{ font-weight:600; color:var(--brand); }
-
-    /* qty controls (centered) */
-    .qty-controls{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-    }
-    .qty-btn{
-      width:34px;
-      height:30px;
-      line-height:28px;
-      border-radius:6px;
-      border:1px solid rgba(0,0,0,0.08);
-      background:#fff;
-      cursor:pointer;
-      font-size:16px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:0;
-    }
-    .qty-btn:active{ transform:translateY(1px); }
-    .qty-count{
-      min-width:38px;
-      display:inline-block;
-      text-align:center;
-      font-weight:600;
-      font-size:15px;
+    /* Sticky Header */
+    .header {
+      position: sticky;
+      top: 0;
+      background: #f4ecd6;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 2px solid #d1c4a1;
     }
 
-    /* action buttons */
-    .remove-btn{ background:transparent; border:none; cursor:pointer; font-size:18px; }
-    .remove-btn:hover{ color:#d33; }
+    .home-btn {
+      position: absolute;
+      left: 20px;
+      background: #996600;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
 
-    .total-wrap{ margin-top:18px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
-    .total{ font-size:18px; color:var(--brand); font-weight:700; }
-    .checkout-btn{ background:var(--brand); color:#fff; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:700; }
+    .cart-btn {
+      position: absolute;
+      right: 20px;
+      background: #14b47e;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
 
-    /* back to chat */
-    .chat-btn{ display:block; margin:36px auto 0; background:var(--accent); color:#fff; padding:12px 24px; border-radius:10px; text-decoration:none; font-weight:700; text-align:center; width:fit-content; }
+    h2.header-title {
+      color: #996600;
+      margin: 0;
+      font-size: 20px;
+    }
 
-    /* responsiveness */
-    @media (max-width:680px){
-      table{ min-width:600px; }
-      .prod-thumb{ width:60px; height:60px; }
-      .qty-btn{ width:30px; height:28px; }
-      .qty-count{ min-width:30px; }
-      .header{ padding:10px; }
-      .container{ padding:12px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fffbe6;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background: #e9d8a6;
+      color: #654321;
+    }
+
+    .qty-btn {
+      background: #996600;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .total {
+      text-align: right;
+      font-weight: bold;
+      margin-top: 20px;
+      color: #996600;
+      font-size: 18px;
+    }
+
+    .checkout-btn {
+      background: #14b47e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: block;
+      margin: 25px auto;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .empty {
+      text-align: center;
+      margin-top: 40px;
+      color: #777;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <!-- header -->
   <div class="header">
-    <a href="index.html" class="home-btn">🏠 Home</a>
+    <a href="index.html" class="home-btn">Home</a>
     <h2 class="header-title">🛒 Cart</h2>
-    <a href="cart.html" class="cart-btn">🛒 Cart (<span id="cart-count">0</span>)</a>
+    <a href="cart.html" class="cart-btn">Cart (<span id="cart-count">0</span>)</a>
   </div>
 
   <div class="container">
-    <!-- cart list -->
-    <div class="cart-table-wrap" id="cart-items"></div>
-
-    <div class="total-wrap">
-      <div id="promo" style="color:var(--muted); font-size:14px;"></div>
-      <div>
-        <div id="total" class="total">Total: RM 0</div>
-        <button class="checkout-btn" onclick="checkout()">Proceed to Checkout</button>
-      </div>
-    </div>
-
-    <a href="chat.html" class="chat-btn">💬 Back to Chat</a>
+    <div id="cart-container"></div>
   </div>
 
-  <!-- cart utils (shared) -->
-  <script src="js/cart-utils.js"></script>
-
   <script>
-    // Render cart table and wire actions.
+    function updateCartCount() {
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let count = cart.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById("cart-count").textContent = count;
+    }
+
     function renderCart() {
-      const cart = JSON.parse(localStorage.getItem('cartItems')) || [];
-      const products = JSON.parse(localStorage.getItem('products')) || [];
-      const container = document.getElementById('cart-items');
-      if (!cart.length) {
-        container.innerHTML = "<p>Your cart is empty.</p>";
-        document.getElementById('total').textContent = "Total: RM 0";
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let container = document.getElementById("cart-container");
+
+      if (cart.length === 0) {
+        container.innerHTML = `<p class="empty">Your cart is empty.</p>`;
         updateCartCount();
         return;
       }
 
-      // Build table
-      let html = `<table>
-        <thead>
+      let total = 0;
+      let table = `
+        <table>
           <tr>
             <th>Product</th>
-            <th>Price</th>
-            <th style="text-align:center">Qty</th>
-            <th>Subtotal</th>
-            <th></th>
+            <th>Price (RM)</th>
+            <th>Quantity</th>
+            <th>Subtotal (RM)</th>
           </tr>
-        </thead>
-        <tbody>`;
+      `;
 
-      let total = 0;
-      cart.forEach(item => {
-        const sub = item.price * item.qty;
-        total += sub;
-        // find thumbnail if any
-        const prod = products.find(p => p.id === item.id) || {};
-        const thumb = prod.img ? `<img src="${prod.img}" class="prod-thumb" alt="${item.name}">` : '';
-        html += `
+      cart.forEach((item, index) => {
+        let subtotal = item.price * item.qty;
+        total += subtotal;
+        table += `
           <tr>
+            <td>${item.name}</td>
+            <td>${item.price}</td>
             <td>
-              <div class="prod-row">
-                ${thumb}
-                <div>
-                  <div class="prod-name">${item.name}</div>
-                  <div style="color:var(--muted); font-size:13px;">RM ${item.price}</div>
-                </div>
-              </div>
+              <button class="qty-btn" onclick="changeQty(${index}, -1)">−</button>
+              <span style="display:inline-block;width:30px;text-align:center;">${item.qty}</span>
+              <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
             </td>
-            <td>RM ${item.price}</td>
-            <td style="text-align:center">
-              <div class="qty-controls" role="group" aria-label="Quantity controls for ${item.name}">
-                <button class="qty-btn" aria-label="Decrease quantity" onclick="changeQty(${item.id}, -1)">−</button>
-                <span class="qty-count" id="qty-${item.id}">${item.qty}</span>
-                <button class="qty-btn" aria-label="Increase quantity" onclick="changeQty(${item.id}, 1)">+</button>
-              </div>
-            </td>
-            <td>RM ${sub}</td>
-            <td style="text-align:center">
-              <button class="remove-btn" aria-label="Remove ${item.name}" onclick="removeItem(${item.id})">🗑️</button>
-            </td>
+            <td>${subtotal}</td>
           </tr>
         `;
       });
 
-      html += `</tbody></table>`;
-      container.innerHTML = html;
+      table += `</table>
+        <div class="total">Total: RM ${total.toFixed(2)}</div>
+        <button class="checkout-btn" onclick="proceedCheckout()">Proceed to Checkout</button>
+      `;
 
-      document.getElementById('total').textContent = `Total: RM ${total}`;
+      container.innerHTML = table;
       updateCartCount();
     }
 
-    // delta = +1 or -1
-    function changeQty(id, delta) {
-      let cart = JSON.parse(localStorage.getItem('cartItems')) || [];
-      let products = JSON.parse(localStorage.getItem('products')) || [];
-      let item = cart.find(i => i.id === id);
-      let product = products.find(p => p.id === id);
+    function changeQty(index, delta) {
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let products = JSON.parse(localStorage.getItem("products")) || [];
 
-      if (!item || !product) return;
+      if (!cart[index]) return;
 
-      if (delta === 1) {
-        // increase - ensure product stock is available
-        if (product.stock <= 0) { alert('Out of stock!'); return; }
-        item.qty += 1;
-        product.stock -= 1;
+      let product = products.find(p => p.id === cart[index].id);
+      if (!product) return;
+
+      if (delta === 1 && product.stock > 0) {
+        cart[index].qty++;
+        product.stock--;
       } else if (delta === -1) {
-        // decrease - return stock back
-        item.qty -= 1;
-        product.stock += 1;
-        if (item.qty <= 0) {
-          cart = cart.filter(i => i.id !== id);
-        }
+        cart[index].qty--;
+        product.stock++;
+        if (cart[index].qty <= 0) cart.splice(index, 1);
+      } else {
+        alert("Out of stock!");
+        return;
       }
 
-      localStorage.setItem('cartItems', JSON.stringify(cart));
-      localStorage.setItem('products', JSON.stringify(products));
+      localStorage.setItem("cartItems", JSON.stringify(cart));
+      localStorage.setItem("products", JSON.stringify(products));
       renderCart();
     }
 
-    function removeItem(id) {
-      let cart = JSON.parse(localStorage.getItem('cartItems')) || [];
-      let products = JSON.parse(localStorage.getItem('products')) || [];
-      const item = cart.find(i => i.id === id);
-      if (!item) return;
-      // restore stock
-      const product = products.find(p => p.id === id);
-      if (product) product.stock = (product.stock || 0) + item.qty;
-
-      cart = cart.filter(i => i.id !== id);
-      localStorage.setItem('cartItems', JSON.stringify(cart));
-      localStorage.setItem('products', JSON.stringify(products));
-      renderCart();
+    function proceedCheckout() {
+      // ✅ Navigate to Checkout page
+      window.location.href = "checkout.html";
     }
 
-    function checkout() {
-      let cart = JSON.parse(localStorage.getItem('cartItems')) || [];
-      if (!cart.length) { alert('Cart is empty!'); return; }
-
-      // Here you would normally create order, push to backend, etc.
-      // For demo, we'll just clear cart and say thanks.
-      alert('Thank you! Your order has been placed.');
-      localStorage.removeItem('cartItems');
-      renderCart();
-    }
-
-    // init
     renderCart();
-
-    // also refresh count every second (keeps count updated if changed in another tab)
-    setInterval(() => { 
-      updateCartCount();
-    }, 1000);
   </script>
 </body>
-  </html>
+      </html>
