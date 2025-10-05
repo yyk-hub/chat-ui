@@ -1,146 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cart</title>
+  <meta charset="UTF-8">
+  <title>🛒 Cart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f9f9f9;
-      color: #333;
+      background:#f4ecd6;
+      font-family: Segoe UI, Arial, sans-serif;
+      margin:0;
+    }
+
+    .container {
+      padding:20px;
+      max-width:800px;
+      margin:auto;
     }
 
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
+      position: sticky;
+      top:0;
+      background:#f4ecd6;
+      z-index:1000;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:12px 0;
+      border-bottom:2px solid #d1c4a1;
     }
 
-    .header-title {
-      margin: 0;
-      font-size: 1.4em;
+    .home-btn, .shop-btn {
+      background:#996600;
+      color:white;
+      border:none;
+      padding:6px 14px;
+      border-radius:8px;
+      cursor:pointer;
+      text-decoration:none;
+      font-size:14px;
+      position:absolute;
     }
 
-    .btn {
-      background: #4CAF50;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
+    .home-btn { left:20px; }
+    .shop-btn { right:20px; }
+
+    h2.header-title {
+      color:#996600;
+      margin:0;
+      font-size:20px;
     }
 
-    .btn:hover {
-      background: #45a049;
-    }
-
-    .cart-table {
-      width: 100%;
+    table {
+      width:100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
+      margin-top:20px;
+      background:white;
+      border-radius:12px;
+      overflow:hidden;
     }
 
-    .cart-table th,
-    .cart-table td {
-      border-bottom: 1px solid #ddd;
-      padding: 10px 15px;
-      text-align: center;
+    th, td {
+      border-bottom:1px solid #ddd;
+      padding:10px 15px;
+      text-align:center;
     }
 
-    .cart-table th:first-child,
-    .cart-table td:first-child {
-      text-align: left;
-      padding-left: 15px;
+    th:first-child, td:first-child {
+      text-align:left;
     }
 
-    .cart-table th:last-child,
-    .cart-table td:last-child {
-      text-align: right;
-      padding-right: 25px;
+    th:last-child, td:last-child {
+      padding-right:25px;
+      text-align:right;
     }
 
     .qty-controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
     }
 
     .qty-controls button {
-      padding: 3px 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background: #eee;
-      cursor: pointer;
-      font-size: 14px;
+      background:#eee;
+      border:1px solid #ccc;
+      border-radius:5px;
+      cursor:pointer;
+      padding:3px 8px;
+      font-size:14px;
     }
 
     .qty-controls button:hover {
-      background: #ddd;
+      background:#ddd;
     }
 
     .total-container {
-      text-align: right;
-      font-weight: bold;
-      margin-right: 25px;
-      font-size: 1.2em;
+      text-align:right;
+      margin-top:20px;
+      font-weight:bold;
+      font-size:18px;
+      padding-right:25px;
     }
 
     .checkout-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      margin-top: 20px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+      margin-top:25px;
     }
 
-    .empty-msg {
-      text-align: center;
-      font-size: 1.1em;
-      margin: 30px 0;
-      color: #666;
+    .btn {
+      background:#14b47e;
+      color:white;
+      border:none;
+      padding:10px 20px;
+      border-radius:8px;
+      cursor:pointer;
+      text-decoration:none;
+      font-size:15px;
+      font-weight:bold;
+    }
+
+    .btn:hover {
+      background:#119e70;
+    }
+
+    .back-btn {
+      background:#008CBA;
+    }
+
+    .empty {
+      text-align:center;
+      font-size:16px;
+      color:#666;
+      margin-top:40px;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <a href="index.html" class="btn">Home</a>
+    <a href="index.html" class="home-btn">Home</a>
     <h2 class="header-title">🛒 Cart</h2>
-    <a href="shop.html" class="btn">Shop</a>
+    <a href="shop.html" class="shop-btn">Shop</a>
   </div>
 
-  <table class="cart-table" id="cart-table">
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Qty</th>
-        <th>Price (Pi)</th>
-        <th>Subtotal (Pi)</th>
-      </tr>
-    </thead>
-    <tbody id="cart-body"></tbody>
-  </table>
+  <div class="container">
+    <table id="cart-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="cart-body"></tbody>
+    </table>
 
-  <p class="empty-msg" id="empty-msg">Your cart is empty.</p>
+    <p class="empty" id="empty">Your cart is empty.</p>
 
-  <div class="total-container" id="cart-total">Total: 0.00 Pi</div>
+    <div class="total-container" id="cart-total">Total: 0.00</div>
 
-  <div class="checkout-section">
-    <a href="checkout.html" class="btn">Proceed to Checkout</a>
-    <a href="index.html" class="btn" style="background:#008CBA;">💬 Back to Chat</a>
+    <div class="checkout-section">
+      <a href="checkout.html" class="btn">Proceed to Checkout</a>
+      <a href="index.html" class="btn back-btn">💬 Back to Chat</a>
+    </div>
   </div>
 
   <script>
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+
     const cartBody = document.getElementById("cart-body");
-    const totalDisplay = document.getElementById("cart-total");
-    const emptyMsg = document.getElementById("empty-msg");
+    const totalText = document.getElementById("cart-total");
+    const emptyMsg = document.getElementById("empty");
 
     function renderCart() {
       cartBody.innerHTML = "";
@@ -156,8 +189,8 @@
         const subtotal = item.price * item.qty;
         total += subtotal;
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+        const row = document.createElement("tr");
+        row.innerHTML = `
           <td>${item.name}</td>
           <td>
             <div class="qty-controls">
@@ -169,11 +202,11 @@
           <td>${item.price.toFixed(2)}</td>
           <td>${subtotal.toFixed(2)}</td>
         `;
-        cartBody.appendChild(tr);
+        cartBody.appendChild(row);
       });
 
-      totalDisplay.textContent = "Total: " + total.toFixed(2) + " Pi";
-      localStorage.setItem("cart", JSON.stringify(cart));
+      totalText.textContent = "Total: " + total.toFixed(2);
+      localStorage.setItem("cartItems", JSON.stringify(cart));
     }
 
     function updateQty(index, change) {
@@ -187,4 +220,4 @@
     renderCart();
   </script>
 </body>
-    </html>
+</html>
