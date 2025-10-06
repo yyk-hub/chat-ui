@@ -1,221 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>🛒 Cart</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cart</title>
   <style>
     body {
-      background:#f4ecd6;
-      font-family:Segoe UI, Arial, sans-serif;
-      margin:0;
-    }
-
-    .container {
-      padding:15px;
-      max-width:600px;  /* slightly narrower for phones */
-      margin:auto;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
     }
 
     .header {
-      position:sticky;
-      top:0;
-      background:#f4ecd6;
-      z-index:1000;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      padding:12px 0;
-      border-bottom:2px solid #d1c4a1;
+      background: #007b5e;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .home-btn, .shop-btn {
-      background:#996600;
-      color:white;
-      border:none;
-      padding:6px 14px;
-      border-radius:8px;
-      cursor:pointer;
-      text-decoration:none;
-      font-size:14px;
-      position:absolute;
+    .home-btn, .cart-btn {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      background: #005f46;
+      padding: 5px 10px;
+      border-radius: 5px;
     }
 
-    .home-btn { left:15px; }
-    .shop-btn { right:15px; }
+    .cart-btn {
+      background: #008c6f;
+    }
 
-    h2.header-title {
-      color:#996600;
-      margin:0;
-      font-size:20px;
+    .cart-container {
+      max-width: 420px;
+      margin: 15px auto;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     table {
-      width:100%;
-      border-collapse:collapse;
-      margin-top:20px;
-      background:white;
-      border-radius:12px;
-      overflow:hidden;
+      width: 100%;
+      border-collapse: collapse;
     }
 
     th, td {
-      border-bottom:1px solid #ddd;
-      padding:10px 12px;
-      text-align:center;
-      font-size:14px;
+      text-align: center;
+      padding: 8px;
     }
 
-    th:first-child, td:first-child { text-align:left; }
-    th:last-child, td:last-child { text-align:right; padding-right:20px; }
-
-    .qty-controls {
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
+    th {
+      background: #f8f8f8;
     }
 
-    .qty-controls button {
-      background:#eee;
-      border:1px solid #ccc;
-      border-radius:5px;
-      cursor:pointer;
-      padding:3px 8px;
-      font-size:14px;
-    }
-    .qty-controls button:hover { background:#ddd; }
-
-    .total-container {
-      display:flex;
-      justify-content:flex-end;
-      margin-top:20px;
-      font-weight:bold;
-      font-size:18px;
-      padding-right:20px;
+    .qty-control button {
+      padding: 4px 8px;
+      margin: 0 3px;
+      background: #007b5e;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
 
-    @media (max-width:500px) {
-      th, td { font-size:13px; padding:8px 10px; }
-      .total-container { justify-content:center; } /* center total for small screens */
+    .checkout-btn {
+      display: block;
+      width: 90%;
+      margin: 15px auto;
+      padding: 10px;
+      background: #007b5e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
     }
 
-    .checkout-section {
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:12px;
-      margin-top:25px;
-    }
-
-    .btn {
-      background:#14b47e;
-      color:white;
-      border:none;
-      padding:10px 20px;
-      border-radius:8px;
-      cursor:pointer;
-      text-decoration:none;
-      font-size:15px;
-      font-weight:bold;
-    }
-
-    .btn:hover { background:#119e70; }
-
-    .back-btn { background:#008CBA; }
-
-    .empty {
-      text-align:center;
-      font-size:16px;
-      color:#666;
-      margin-top:40px;
+    .total {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 17px;
     }
   </style>
 </head>
 <body>
   <div class="header">
     <a href="index.html" class="home-btn">Home</a>
-    <h2 class="header-title">🛒 Cart (<span id="cart-count">0</span>)</h2>
-    <a href="shop.html" class="shop-btn">Shop</a>
+    <h2 style="font-size: 16px;">Cart</h2>
+    <a href="cart.html" class="cart-btn">🛒 (<span id="cart-count">0</span>)</a>
   </div>
 
-  <div class="container">
-    <table id="cart-table">
+  <div class="cart-container">
+    <table id="cart-items">
       <thead>
         <tr>
-          <th>Product</th>
+          <th>Item</th>
           <th>Qty</th>
           <th>Price</th>
-          <th>Subtotal</th>
         </tr>
       </thead>
-      <tbody id="cart-body"></tbody>
+      <tbody></tbody>
     </table>
 
-    <p class="empty" id="empty">Your cart is empty.</p>
-
-    <div class="total-container" id="cart-total">Total: 0.00</div>
-
-    <div class="checkout-section">
-      <a href="checkout.html" class="btn">Proceed to Checkout</a>
-      <a href="index.html" class="btn back-btn">💬 Back to Chat</a>
-    </div>
+    <div class="total" id="cart-total">Total: 0.00</div>
+    <button class="checkout-btn" onclick="window.location.href='checkout.html'">Proceed to Checkout</button>
   </div>
 
   <script>
-    let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-    const cartBody = document.getElementById("cart-body");
-    const totalText = document.getElementById("cart-total");
-    const emptyMsg = document.getElementById("empty");
-    const cartCount = document.getElementById("cart-count");
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
     function renderCart() {
-      cartBody.innerHTML = "";
+      const tbody = document.querySelector('#cart-items tbody');
+      const totalEl = document.getElementById('cart-total');
+      const cartCount = document.getElementById('cart-count');
+
+      tbody.innerHTML = '';
       let total = 0;
-      let totalItems = 0;
+      let count = 0;
 
-      if (cart.length === 0) {
-        emptyMsg.style.display = "block";
-      } else {
-        emptyMsg.style.display = "none";
-      }
-
-      cart.forEach((item, index) => {
+      cart.forEach((item, i) => {
         const subtotal = item.price * item.qty;
         total += subtotal;
-        totalItems += item.qty;
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${item.name}</td>
-          <td>
-            <div class="qty-controls">
-              <button onclick="updateQty(${index}, -1)">−</button>
-              <span>${item.qty}</span>
-              <button onclick="updateQty(${index}, 1)">+</button>
-            </div>
-          </td>
-          <td>${item.price.toFixed(2)}</td>
-          <td>${subtotal.toFixed(2)}</td>
+        count += item.qty;
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td class="qty-control">
+              <button onclick="updateQty(${i}, -1)">-</button>
+              ${item.qty}
+              <button onclick="updateQty(${i}, 1)">+</button>
+            </td>
+            <td>${subtotal.toFixed(2)}</td>
+          </tr>
         `;
-        cartBody.appendChild(row);
       });
 
-      totalText.textContent = "Total: RM " + total.toFixed(2);
-      cartCount.textContent = totalItems;
-      localStorage.setItem("cartItems", JSON.stringify(cart));
+      totalEl.textContent = 'Total: ' + total.toFixed(2);
+      cartCount.textContent = count;
     }
 
-    function updateQty(index, change) {
-      cart[index].qty += change;
-      if (cart[index].qty <= 0) {
-        cart.splice(index, 1);
-      }
+    function updateQty(index, delta) {
+      cart[index].qty += delta;
+      if (cart[index].qty <= 0) cart.splice(index, 1);
+      localStorage.setItem('cart', JSON.stringify(cart));
       renderCart();
     }
 
     renderCart();
   </script>
 </body>
-</html>
+  </html>
