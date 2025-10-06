@@ -1,158 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cart</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🛒 Cart</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      background: #f4ecd6;
+      font-family: Segoe UI, Arial, sans-serif;
       margin: 0;
-      padding: 0;
     }
 
+    .container {
+      padding: 20px;
+      max-width: 480px;
+      margin: auto;
+    }
+
+    /* Sticky Header */
     .header {
-      background: #007b5e;
-      color: white;
-      text-align: center;
-      padding: 10px;
+      position: sticky;
+      top: 0;
+      background: #f4ecd6;
+      z-index: 1000;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
+      padding: 12px 0;
+      border-bottom: 2px solid #d1c4a1;
     }
 
-    .home-btn, .cart-btn {
+    .home-btn {
+      position: absolute;
+      left: 20px;
+      background: #996600;
       color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
       text-decoration: none;
       font-size: 14px;
-      background: #005f46;
-      padding: 5px 10px;
-      border-radius: 5px;
     }
 
     .cart-btn {
-      background: #008c6f;
+      position: absolute;
+      right: 20px;
+      background: #14b47e;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
     }
 
-    .cart-container {
-      max-width: 420px;
-      margin: 15px auto;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    h2.header-title {
+      color: #996600;
+      margin: 0;
+      font-size: 18px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
     }
 
     th, td {
       text-align: center;
       padding: 8px;
+      border-bottom: 1px solid #ddd;
+      font-size: 14px;
     }
 
-    th {
-      background: #f8f8f8;
-    }
-
-    .qty-control button {
-      padding: 4px 8px;
-      margin: 0 3px;
-      background: #007b5e;
+    .qty-controls button {
+      background: #14b47e;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
+      padding: 3px 7px;
+      margin: 0 4px;
       cursor: pointer;
+      font-size: 14px;
     }
 
     .checkout-btn {
-      display: block;
-      width: 90%;
-      margin: 15px auto;
-      padding: 10px;
-      background: #007b5e;
+      background: #996600;
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 16px;
+      padding: 10px 18px;
+      font-size: 15px;
       cursor: pointer;
+      display: block;
+      margin: 20px auto;
     }
 
     .total {
-      text-align: center;
-      margin-top: 15px;
+      text-align: right;
       font-weight: bold;
-      font-size: 17px;
+      margin-top: 14px;
+      font-size: 16px;
+    }
+
+    @media (max-width: 480px) {
+      .total {
+        text-align: center;
+      }
     }
   </style>
 </head>
 <body>
   <div class="header">
     <a href="index.html" class="home-btn">Home</a>
-    <h2 style="font-size: 16px;">Cart</h2>
+    <h2 class="header-title">Cart</h2>
     <a href="cart.html" class="cart-btn">🛒 (<span id="cart-count">0</span>)</a>
   </div>
 
-  <div class="cart-container">
-    <table id="cart-items">
+  <div class="container">
+    <table id="cart-table">
       <thead>
         <tr>
           <th>Item</th>
           <th>Qty</th>
-          <th>Price</th>
+          <th>Price (RM)</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
 
-    <div class="total" id="cart-total">Total: 0.00</div>
+    <div class="total" id="cart-total">Total: RM 0.00</div>
+
     <button class="checkout-btn" onclick="window.location.href='checkout.html'">Proceed to Checkout</button>
   </div>
 
   <script>
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
-
     function renderCart() {
-      const tbody = document.querySelector('#cart-items tbody');
-      const totalEl = document.getElementById('cart-total');
-      const cartCount = document.getElementById('cart-count');
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let tbody = document.querySelector("#cart-table tbody");
+      let total = 0, count = 0;
+      tbody.innerHTML = "";
 
-      tbody.innerHTML = '';
-      let total = 0;
-      let count = 0;
-
-      cart.forEach((item, i) => {
-        const subtotal = item.price * item.qty;
+      cart.forEach((item, index) => {
+        let subtotal = item.price * item.qty;
         total += subtotal;
         count += item.qty;
+
         tbody.innerHTML += `
           <tr>
             <td>${item.name}</td>
-            <td class="qty-control">
-              <button onclick="updateQty(${i}, -1)">-</button>
+            <td class="qty-controls">
+              <button onclick="updateQty(${index}, -1)">-</button>
               ${item.qty}
-              <button onclick="updateQty(${i}, 1)">+</button>
+              <button onclick="updateQty(${index}, 1)">+</button>
             </td>
             <td>${subtotal.toFixed(2)}</td>
           </tr>
         `;
       });
 
-      totalEl.textContent = 'Total: ' + total.toFixed(2);
-      cartCount.textContent = count;
+      document.getElementById("cart-total").textContent = "Total: RM " + total.toFixed(2);
+      document.getElementById("cart-count").textContent = count;
     }
 
     function updateQty(index, delta) {
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      if (!cart[index]) return;
+
       cart[index].qty += delta;
       if (cart[index].qty <= 0) cart.splice(index, 1);
-      localStorage.setItem('cart', JSON.stringify(cart));
+
+      localStorage.setItem("cartItems", JSON.stringify(cart));
       renderCart();
     }
 
     renderCart();
   </script>
 </body>
-  </html>
+</html>
