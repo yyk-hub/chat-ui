@@ -2,22 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Cart</title>
+  <title>Cart - CEO Products</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
-      background: #f4ecd6;
+      background:#f4ecd6;
       font-family: Segoe UI, Arial, sans-serif;
       margin: 0;
     }
 
     .container {
       padding: 20px;
-      max-width: 480px;
+      max-width: 800px;
       margin: auto;
     }
 
-    /* Sticky Header */
+    /* --- Sticky Header --- */
     .header {
       position: sticky;
       top: 0;
@@ -30,154 +30,183 @@
       border-bottom: 2px solid #d1c4a1;
     }
 
-    .home-btn {
+    .home-btn, .shop-btn {
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
       position: absolute;
+      top: 10px;
+    }
+
+    .home-btn {
       left: 20px;
       background: #996600;
       color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      font-size: 14px;
     }
 
-    .cart-btn {
-      position: absolute;
+    .shop-btn {
       right: 20px;
       background: #14b47e;
       color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      font-size: 14px;
     }
 
-    h2.header-title {
+    .header-title {
       color: #996600;
       margin: 0;
-      font-size: 18px;
+      font-size: 20px;
     }
 
+    /* --- Cart Table --- */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      background: #fffbe6;
+      border-radius: 12px;
+      overflow: hidden;
     }
 
     th, td {
+      padding: 10px;
       text-align: center;
-      padding: 8px;
+      font-size: 14px;
+    }
+
+    th {
+      background: #d1c4a1;
+      color: #333;
+    }
+
+    td {
       border-bottom: 1px solid #ddd;
-      font-size: 14px;
     }
 
-    .qty-controls button {
+    .qty-btn {
       background: #14b47e;
-      color: white;
+      color: #fff;
       border: none;
+      padding: 3px 8px;
       border-radius: 6px;
-      padding: 3px 7px;
-      margin: 0 4px;
       cursor: pointer;
       font-size: 14px;
     }
 
-    .checkout-btn {
-      background: #996600;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 18px;
-      font-size: 15px;
-      cursor: pointer;
-      display: block;
-      margin: 20px auto;
+    .qty {
+      display: inline-block;
+      min-width: 30px;
+      text-align: center;
     }
 
     .total {
       text-align: right;
       font-weight: bold;
-      margin-top: 14px;
+      color: #996600;
+      margin-top: 15px;
       font-size: 16px;
     }
 
-    @media (max-width: 480px) {
-      .total {
-        text-align: center;
-      }
+    .checkout-btn {
+      display: block;
+      width: 100%;
+      background: #14b47e;
+      color: #fff;
+      text-align: center;
+      padding: 10px 0;
+      border-radius: 8px;
+      text-decoration: none;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #666;
+      margin-top: 50px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
+
+  <!-- Header -->
   <div class="header">
-  <a href="index.html" class="home-btn">Home</a>
-  <h2 class="header-title">🛒 Cart (<span id="cart-count">0</span>)</h2>
-  <a href="shop.html" class="cart-btn">Shop</a>
+    <a href="index.html" class="home-btn">Home</a>
+    <h2 class="header-title">🛒 Cart (<span id="cart-count">0</span>)</h2>
+    <a href="shop.html" class="shop-btn">🛍️ Shop</a>
   </div>
 
   <div class="container">
-    <table id="cart-table">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Qty</th>
-          <th>Price (RM)</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <div class="total" id="cart-total">Total: RM 0.00</div>
-
-    <button class="checkout-btn" onclick="window.location.href='checkout.html'">Proceed to Checkout</button>
+    <div id="cart-container"></div>
   </div>
 
   <script>
+    function updateCartCount() {
+      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      let totalItems = cart.reduce((sum, i) => sum + i.qty, 0);
+      document.getElementById("cart-count").textContent = totalItems;
+    }
+
     function renderCart() {
       let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-      let tbody = document.querySelector("#cart-table tbody");
-      let total = 0, count = 0;
-      tbody.innerHTML = "";
+      let container = document.getElementById("cart-container");
 
+      if (cart.length === 0) {
+        container.innerHTML = `<p class="empty">Your cart is empty.</p>`;
+        updateCartCount();
+        return;
+      }
+
+      let table = `
+        <table>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price (RM)</th>
+            <th>Subtotal</th>
+          </tr>
+      `;
+
+      let total = 0;
       cart.forEach((item, index) => {
         let subtotal = item.price * item.qty;
         total += subtotal;
-        count += item.qty;
-
-        tbody.innerHTML += `
+        table += `
           <tr>
             <td>${item.name}</td>
-            <td class="qty-controls">
-              <button onclick="updateQty(${index}, -1)">-</button>
-              ${item.qty}
-              <button onclick="updateQty(${index}, 1)">+</button>
+            <td>
+              <button class="qty-btn" onclick="updateQty(${index}, -1)">−</button>
+              <span class="qty">${item.qty}</span>
+              <button class="qty-btn" onclick="updateQty(${index}, 1)">+</button>
             </td>
+            <td>${item.price.toFixed(2)}</td>
             <td>${subtotal.toFixed(2)}</td>
           </tr>
         `;
       });
 
-      document.getElementById("cart-total").textContent = "Total: RM " + total.toFixed(2);
-      document.getElementById("cart-count").textContent = count;
+      table += `</table>`;
+      container.innerHTML = `
+        ${table}
+        <p class="total">Total: RM ${total.toFixed(2)}</p>
+        <a href="checkout.html" class="checkout-btn">Proceed to Checkout</a>
+      `;
+      updateCartCount();
     }
 
-    function updateQty(index, delta) {
+    function updateQty(index, change) {
       let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-      if (!cart[index]) return;
+      cart[index].qty += change;
 
-      cart[index].qty += delta;
       if (cart[index].qty <= 0) cart.splice(index, 1);
-
       localStorage.setItem("cartItems", JSON.stringify(cart));
+
       renderCart();
     }
 
-    renderCart();
+    document.addEventListener("DOMContentLoaded", renderCart);
   </script>
-</body>
-</html>
 
+</body>
+                                       </html>
