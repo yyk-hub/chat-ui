@@ -1,189 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>CEO Coffee Product Card</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menu - Shuang Hor</title>
   <style>
     body {
-      background: #f4ecd6;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      font-family: Segoe UI, Arial, sans-serif;
+      margin: 0;
+      background-color: #fffaf0;
+      color: #333;
+      padding-bottom: 70px;
     }
-    .catalog-container {
-      background: #fffbe6;
-      margin: 24px auto;
-      padding: 0;
-      border-radius: 24px;
-      width: 95%;
-      max-width: 350px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    }
-    .header {
-      background: #996600;
-      color: #fff;
-      padding: 18px 28px 14px 28px; /* Increased left and right padding */
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      background-color: rgba(244, 236, 214, 0.95);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      border-radius: 24px 24px 0 0;
+      justify-content: center;
+      padding: 10px 0;
+      border-bottom: 2px solid #d1c4a1;
+      z-index: 1000;
     }
-    .header .menu {
-      font-size: 1.2rem;
-      font-weight: bold;
-      letter-spacing: 0.01em;
-    }
-    .header .back {
-      font-size: 1rem;
-      font-weight: 500;
-      color: #fff;
-      background: none;
+
+    .home-btn, .shop-btn {
+      background-color: #996600;
+      color: white;
       border: none;
-      cursor: pointer;
-      padding: 0;
+      padding: 6px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+      position: absolute;
+      top: 10px;
+    }
+
+    .home-btn {
+      left: 20px;
+    }
+
+    .shop-btn {
+      right: 20px;
+      background-color: #14b47e;
+    }
+
+    h1.header-title {
+      color: #996600;
+      font-size: 20px;
       margin: 0;
     }
-    .product-card {
-      padding: 20px 16px 16px 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #fff;
-      border-radius: 0 0 24px 24px;
+
+    /* Content */
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
     }
-    .product-image {
-      width: 100%;
-      max-width: 220px;
-      height: auto;
-      aspect-ratio: 11/6;
-      object-fit: cover;
-      border-radius: 16px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .product-title,
-    .product-price,
-    .product-desc {
-      width: 100%;
-      text-align: left;
-    }
-    .product-title {
-      font-size: 1.2rem;
-      font-weight: 700;
+
+    h2 {
       color: #996600;
-      margin-bottom: 6px;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 5px;
     }
-    .product-price {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 10px;
+
+    p, li {
+      line-height: 1.6;
+      font-size: 15px;
     }
-    .product-desc {
-      font-size: 0.97rem;
-      color: #444;
-      margin-bottom: 18px;
-      line-height: 1.5;
+
+    .product {
+      margin: 20px 0;
+      background: #fffbe6;
+      padding: 15px;
+      border-radius: 12px;
     }
-    .add-cart-btn {
-      background: #14b47e;
-      color: #fff;
-      font-size: 0.98rem;
-      font-weight: 600;
+
+    .product img {
+      width: 100%;
+      max-width: 250px;
+      border-radius: 10px;
+      display: block;
+      margin: 10px auto;
+    }
+
+    /* WhatsApp Floating Button */
+    .whatsapp-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #25d366;
+      color: white;
       border: none;
-      border-radius: 20px;
-      padding: 8px 0;
-      width: 110px;
+      border-radius: 50%;
+      padding: 14px 16px;
+      font-size: 24px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(20,180,126,0.10);
-      transition: background 0.2s;
-      margin-top: 0;
-      align-self: center; /* Center the button horizontally in the flex container */
-    }
-    .add-cart-btn:hover {
-      background: #11996a;
+      z-index: 999;
     }
 
-    @media (max-width: 720px) {
-      .catalog-container {
-        max-width: 98vw;
-        border-radius: 16px;
-      }
-      .header {
-        padding-left: 14px;  /* Increased from 8px for mobile */
-        padding-right: 14px;
-      }
-      .product-card {
-        padding-left: 8px;
-        padding-right: 8px;
-      }
-      .product-image {
-        max-width: 100vw;
-      }
-      .add-cart-btn {
-        width: 100px;
-        font-size: 0.93rem;
-      }
+    .whatsapp-btn:hover {
+      background-color: #20b358;
     }
-
-
-  @media (min-width: 800px) {
-    .catalog-container {
-      max-width: 720px;
-      padding: 0;
-    }
-    .header {
-      padding: 24px 36px 16px 36px;
-      font-size: 1.3rem;
-    }
-    .product-card {
-      padding: 32px 24px 24px 24px;
-    }
-    .product-title {
-      font-size: 1.5rem;
-    }
-    .product-price {
-      font-size: 1.2rem;
-    }
-    .product-desc {
-      font-size: 1.08rem;
-    }
-    .product-image {
-      max-width: 500px;
-      margin-bottom: 28px;
-    }
-    .add-cart-btn {
-      width: 130px;
-      font-size: 1.05rem;
-      padding: 10px 0;
-    }
-  }
-
-    
   </style>
 </head>
 <body>
-  <div class="catalog-container">
-    <div class="header">
-      <span class="menu">Menu</span>
-      <button class="back" onclick="window.history.back()">Back to Chat</button>
-    </div>
-    <div class="product-card">
-      <img src="img/coffee_4in1.jpg"
-           alt="CEO Coffee" class="product-image" />
-      <div class="product-title">CEO Coffee 4 in 1</div>
-      <div class="product-price">Price: RM 50</div>
-      <div class="product-desc">
-        A rich coffee premix blended (with sugar) with Ganoderma (Lingzhi). It's designed to boost energy, focus, and immunity.
+
+  <header>
+    <a href="index.html" class="home-btn">Home</a>
+    <h1 class="header-title">🌿 Shuang Hor Product Menu</h1>
+    <a href="shop.html" class="shop-btn">Shop</a>
+  </header>
+
+  <div class="container">
+    <section>
+      <h2>About Shuang Hor</h2>
+      <p>
+        Shuang Hor is a trusted brand in health and wellness, offering premium products derived from natural bioactive ingredients such as Ganoderma, Spirulina, and herbal extracts. Our mission is to promote holistic wellbeing and empower individuals to achieve balance in body and mind.
+      </p>
+    </section>
+
+    <section>
+      <h2>Product Highlights</h2>
+
+      <div class="product">
+        <h3>☕ CEO Coffee 4 in 1</h3>
+        <img src="img/coffee_s.jpg" alt="CEO Coffee 4 in 1">
+        <p>
+          A premium instant coffee blend infused with Ganoderma extract. Enjoy smooth taste and natural vitality in every cup.
+        </p>
       </div>
-      <button class="add-cart-btn">Add to Cart</button>
-    </div>
+
+      <div class="product">
+        <h3>🍵 Lu Chun Tea</h3>
+        <img src="img/luchun.jpg" alt="Lu Chun Tea">
+        <p>
+          A refreshing green tea with Lingzhi extract that helps rejuvenate your body and mind.
+        </p>
+      </div>
+
+      <div class="product">
+        <h3>🍄 Lingzhi Capsules</h3>
+        <img src="img/lingzhi.jpg" alt="Lingzhi Capsules">
+        <p>
+          100% pure Ganoderma supplement that supports immune system health and overall wellbeing.
+        </p>
+      </div>
+
+      <div class="product">
+        <h3>🍇 Lacto Berry</h3>
+        <img src="img/berry.jpg" alt="Lacto Berry">
+        <p>
+          A delicious probiotic drink enriched with antioxidants from berries to support gut health and radiant skin.
+        </p>
+      </div>
+
+      <div class="product">
+        <h3>🪥 Greenzhi Toothgel</h3>
+        <img src="img/toothpaste.jpg" alt="Greenzhi Toothgel">
+        <p>
+          A natural herbal toothpaste with Ganoderma and Aloe Vera to maintain healthy gums and fresh breath.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>How to Join as a Member</h2>
+      <p>
+        Join Shuang Hor today and enjoy exclusive member benefits, product discounts, wellness programs, and exciting business opportunities.
+      </p>
+      <ul>
+        <li>✔ Exclusive member pricing</li>
+        <li>✔ Training and health education</li>
+        <li>✔ Business and personal development support</li>
+      </ul>
+      <p>
+        <b>Ready to start?</b> Contact us on WhatsApp to learn more or register your membership today!
+      </p>
+    </section>
+
+    <section>
+      <h2>Customer Testimonials</h2>
+      <p>
+        “I’ve been drinking CEO Coffee for 6 months and feel more energetic every morning!” — <i>Jason Tan, Facebook Review</i><br><br>
+        “Lacto Berry has helped with my digestion and my skin looks better than before!” — <i>Elaine Wong, Instagram</i><br><br>
+        “I trust Shuang Hor products for my family’s daily wellness.” — <i>Ahmad Z., Facebook</i>
+      </p>
+    </section>
   </div>
+
+  <!-- WhatsApp Contact -->
+  <a href="https://wa.me/60123456789" target="_blank">
+    <button class="whatsapp-btn">💬</button>
+  </a>
+
 </body>
-</html>
-
-
-
-
-
-
-
+  </html>
