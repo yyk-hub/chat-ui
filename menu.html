@@ -7,204 +7,198 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #fff8f0;
       margin: 0;
       padding: 0;
-      background: #f9f9f9;
-      color: #333;
     }
 
-    /* Header */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(0, 128, 0, 0.8);
-      color: white;
+      background: #ffe4e1;
       padding: 10px 15px;
+      border-bottom: none; /* removed line */
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 1000;
     }
 
     .header a {
-      color: white;
       text-decoration: none;
+      color: #333;
       font-weight: bold;
-      margin: 0 8px;
+      background: rgba(255,255,255,0.8);
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: background 0.2s ease;
     }
 
-    .header-title {
-      font-size: 20px;
+    .header a:hover {
+      background: #ffcccc;
+    }
+
+    .header h2 {
+      margin: 0;
+      font-size: 1.2rem;
       text-align: center;
-      flex-grow: 1;
+      color: #333;
+      flex: 1;
     }
 
-    /* Banner */
     .banner {
       width: 100%;
-      height: 180px;
-      background: url('https://cdn.pixabay.com/photo/2016/04/01/12/16/tea-1291458_1280.jpg') no-repeat center center/cover;
+      height: 120px; /* reduced banner height */
+      background: url('https://i.imgur.com/5Xv9N2w.jpg') center/cover no-repeat;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 26px;
-      font-weight: bold;
-      text-shadow: 1px 1px 3px #000;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 1.2s ease-out forwards;
-    }
-
-    @keyframes fadeInUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      font-size: 1.5rem;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
     }
 
     .container {
-      max-width: 900px;
-      margin: 20px auto;
       padding: 15px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      max-width: 700px;
+      margin: 0 auto;
     }
 
-    h2 {
-      color: #006400;
-      border-bottom: 2px solid #ccc;
-      padding-bottom: 5px;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 1s ease-out forwards;
+    h3 {
+      color: #b5651d;
+      border-left: 4px solid #b5651d;
+      padding-left: 8px;
     }
 
     .product {
-      margin-bottom: 20px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px;
+      margin: 10px 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
-    .product h3 {
-      color: #444;
+    .product h4 {
+      color: #333;
       margin-bottom: 5px;
     }
 
     .product p {
-      line-height: 1.5;
+      color: #555;
+      font-size: 0.95rem;
+      margin: 0;
     }
 
     .testimonials {
-      background: #f2fff2;
+      background: #fffaf5;
       padding: 15px;
-      border-radius: 8px;
-      margin-top: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
-    .testimonials p {
+    .testimonial {
+      border-left: 3px solid #25D366;
+      margin: 10px 0;
+      padding-left: 10px;
       font-style: italic;
-      color: #555;
     }
 
-    /* WhatsApp Button */
-    .btn {
+    .whatsapp {
       display: flex;
-      align-items: center;
-      gap: 6px;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      color: #25D366;
-      font-weight: bold;
-      text-decoration: none;
+      justify-content: center;
       margin-top: 20px;
     }
 
-    .btn svg {
-      flex-shrink: 0;
+    .whatsapp .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      background: #e8ffe8;
+      padding: 10px 16px;
+      border-radius: 10px;
+      transition: background 0.3s;
+    }
+
+    .whatsapp .btn:hover {
+      background: #ccffcc;
     }
 
     footer {
       text-align: center;
-      font-size: 14px;
-      padding: 20px;
-      color: #777;
+      padding: 15px;
+      background: #fff0e0;
+      color: #555;
+      font-size: 0.9rem;
+      margin-top: 20px;
     }
   </style>
 </head>
-
 <body>
-  <!-- Header -->
   <div class="header">
-    <a href="index.html">🏠 Home</a>
-    <h2 class="header-title">📖 Menu</h2>
-    <a href="shop.html">🛍️ Shop</a>
+    <a href="index.html">Home</a>
+    <h2>Menu</h2>
+    <a href="shop.html">Shop</a>
   </div>
 
-  <!-- Banner -->
-  <div class="banner">
-    Shuang Hor Wellness & Prosperity
-  </div>
+  <div class="banner">🌿 Shuang Hor Wellness & Coffee</div>
 
-  <!-- Content -->
   <div class="container">
-    <h2>Introduction to Shuang Hor</h2>
-    <p>Shuang Hor is a trusted wellness brand dedicated to improving health and quality of life through premium herbal and nutritional products. Our mission is to help people achieve balance, vitality, and prosperity through natural health solutions.</p>
+    <h3>About Shuang Hor</h3>
+    <p>Shuang Hor is a global health and wellness brand offering premium nutritional and herbal products. Our philosophy is to nurture wellness through Ganoderma, Lingzhi, and advanced biotechnology.</p>
 
-    <h2>Product Descriptions</h2>
+    <h3>Product Highlights</h3>
 
     <div class="product">
-      <h3>☕ CEO Coffee</h3>
-      <p>A rich blend of coffee infused with Ganoderma Lucidum for natural energy and enhanced mental clarity.</p>
+      <h4>☕ CEO Coffee</h4>
+      <p>Rich, aromatic coffee blended with Lingzhi extract. Boost energy naturally without caffeine crash.</p>
     </div>
 
     <div class="product">
-      <h3>🍵 Lu Chun Tea</h3>
-      <p>Refreshing green tea that supports detoxification, metabolism, and a calm, relaxed mind.</p>
+      <h4>🍵 Lu Chun Tea</h4>
+      <p>Premium green tea rich in antioxidants, supports metabolism and relaxation.</p>
     </div>
 
     <div class="product">
-      <h3>🍄 Lingzhi Capsules</h3>
-      <p>Made from premium Ganoderma Lucidum to strengthen immunity, balance body functions, and improve vitality.</p>
+      <h4>🍄 Lingzhi Capsules</h4>
+      <p>Pure Ganoderma extract that helps strengthen immunity and restore body balance.</p>
     </div>
 
     <div class="product">
-      <h3>🍇 Lacto Berry</h3>
-      <p>Probiotic-rich formula blended with natural berries to improve gut health and overall digestion.</p>
+      <h4>🍇 Lacto Berry</h4>
+      <p>Powerful berry probiotics blend to promote gut health and skin glow.</p>
     </div>
 
     <div class="product">
-      <h3>🪥 Greenzhi Toothgel</h3>
-      <p>Natural herbal toothgel for gum protection, fresh breath, and gentle daily cleansing.</p>
+      <h4>🌿 Greenzhi Toothgel</h4>
+      <p>Natural herbal toothgel with Ganoderma and mint for fresh breath and gum care.</p>
     </div>
 
-    <h2>How to Join Membership</h2>
-    <p>Join Shuang Hor and start your wellness journey today. As a member, you enjoy exclusive product discounts, health education, and entrepreneurship opportunities. Contact us via WhatsApp to register easily.</p>
+    <h3>Join Membership</h3>
+    <p>Join Shuang Hor to enjoy exclusive member prices, rewards, and product updates. Members enjoy wellness talks, training, and special promotions throughout the year.</p>
 
-    <!-- WhatsApp Contact Button -->
-    <a href="https://wa.me/60168101358?text=Hello%2C%20I%20am%20contacting%20you%20from%20Customer%20Service%20Chat"
-       target="_blank" class="btn">
-      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 48 48">
-        <!-- Outer green bubble with tail -->
-        <path fill="#25D366" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
-        <!-- White outline -->
-        <path fill="none" stroke="#fff" stroke-width="2" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
-        <!-- Phone handset -->
-        <path fill="#fff" d="M31 27.5c-.4-.2-2.3-1.1-2.6-1.2-.3-.1-.6-.2-.9.2s-1 1.2-1.3 1.5c-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.5-.2-.3 0-.6.2-.8.2-.2.5-.5.7-.8.2-.3.3-.5.5-.8.1-.3 0-.5 0-.7 0-.2-.9-2.2-1.3-3-.3-.8-.7-.7-1-.7h-.8c-.3 0-.8.1-1.2.6s-1.6 1.5-1.6 3.6 1.6 4.1 1.9 4.4c.2.3 3.2 5 7.8 6.9 3.9 1.6 4.7 1.2 5.6 1.1.9-.1 2.3-1 2.6-1.9.3-.9.3-1.6.2-1.9-.1-.3-.3-.4-.7-.6z"/>
-      </svg>
-      <span>WhatsApp</span>
-    </a>
+    <div class="whatsapp">
+      <!-- WhatsApp official-style logo -->
+      <a href="https://wa.me/60168101358?text=Hello%2C%20I%20am%20interested%20in%20joining%20Shuang%20Hor" target="_blank" class="btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 48 48">
+          <path fill="#25D366" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
+          <path fill="none" stroke="#fff" stroke-width="2" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
+          <path fill="#fff" d="M31 27.5c-.4-.2-2.3-1.1-2.6-1.2-.3-.1-.6-.2-.9.2s-1 1.2-1.3 1.5c-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.5-.2-.3 0-.6.2-.8.2-.2.5-.5.7-.8.2-.3.3-.5.5-.8.1-.3 0-.5 0-.7 0-.2-.9-2.2-1.3-3-.3-.8-.7-.7-1-.7h-.8c-.3 0-.8.1-1.2.6s-1.6 1.5-1.6 3.6 1.6 4.1 1.9 4.4c.2.3 3.2 5 7.8 6.9 3.9 1.6 4.7 1.2 5.6 1.1.9-.1 2.3-1 2.6-1.9.3-.9.3-1.6.2-1.9-.1-.3-.3-.4-.7-.6z"/>
+        </svg>
+        <span>Join Now on WhatsApp</span>
+      </a>
+    </div>
 
+    <h3>Testimonials</h3>
     <div class="testimonials">
-      <h2>Testimonials</h2>
-      <p>"I’ve been drinking CEO Coffee every morning — more energy and focus!" – Facebook Review</p>
-      <p>"Lingzhi Capsules boosted my health and stamina!" – Facebook Comment</p>
-      <p>"Greenzhi Toothgel leaves my mouth fresh all day." – Instagram Feedback</p>
+      <div class="testimonial">"CEO Coffee gave me energy all day without the caffeine crash!" — Facebook user</div>
+      <div class="testimonial">"Lacto Berry improved my digestion and skin health." — Community feedback</div>
+      <div class="testimonial">"Lu Chun Tea has become my daily favorite, calming and refreshing." — Verified user</div>
     </div>
   </div>
 
-  <footer>
-    © 2025 Shuang Hor Malaysia. All rights reserved.
-  </footer>
+  <footer>© 2025 Shuang Hor Wellness — All rights reserved.</footer>
 </body>
 </html>
