@@ -6,18 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
-      background:#f4ecd6;
+      background: #f4ecd6;
       font-family: Segoe UI, Arial, sans-serif;
       margin: 0;
     }
 
     .container {
-      padding: 20px;
+      padding: 16px;
       max-width: 800px;
       margin: auto;
     }
 
-    /* --- Sticky Header --- */
+    /* Header */
     .header {
       position: sticky;
       top: 0;
@@ -56,10 +56,10 @@
     .header-title {
       color: #996600;
       margin: 0;
-      font-size: 20px;
+      font-size: 18px;
     }
 
-    /* --- Cart Table --- */
+    /* Table */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -69,7 +69,7 @@
     }
 
     th, td {
-      padding: 10px;
+      padding: 8px;
       text-align: center;
       font-size: 14px;
     }
@@ -83,7 +83,14 @@
       border-bottom: 1px solid #ddd;
     }
 
-    /* --- Qty buttons (horizontal layout, transparent brown) --- */
+    /* Qty horizontal layout */
+    .qty-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+    }
+
     .qty-btn {
       background: transparent;
       color: #996600;
@@ -93,7 +100,7 @@
       cursor: pointer;
       font-size: 14px;
       font-weight: bold;
-      margin: 0 4px;
+      line-height: 1;
     }
 
     .qty-btn:hover {
@@ -103,7 +110,7 @@
 
     .qty {
       display: inline-block;
-      min-width: 24px;
+      min-width: 20px;
       text-align: center;
       color: #333;
     }
@@ -114,6 +121,7 @@
       color: #996600;
       margin-top: 15px;
       font-size: 16px;
+      margin-right: 8px;
     }
 
     .checkout-btn {
@@ -172,7 +180,7 @@
           <tr>
             <th>Item</th>
             <th>Qty</th>
-            <th>Price (RM)</th>
+            <th>Price</th>
             <th>Subtotal</th>
           </tr>
       `;
@@ -185,9 +193,11 @@
           <tr>
             <td>${item.name}</td>
             <td>
-              <button class="qty-btn" onclick="updateQty(${index}, -1)">−</button>
-              <span class="qty">${item.qty}</span>
-              <button class="qty-btn" onclick="updateQty(${index}, 1)">+</button>
+              <div class="qty-container">
+                <button class="qty-btn" onclick="updateQty(${index}, -1)">−</button>
+                <span class="qty">${item.qty}</span>
+                <button class="qty-btn" onclick="updateQty(${index}, 1)">+</button>
+              </div>
             </td>
             <td>${item.price.toFixed(2)}</td>
             <td>${subtotal.toFixed(2)}</td>
