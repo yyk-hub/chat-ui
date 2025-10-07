@@ -160,7 +160,7 @@
           div.className = "product";
           div.innerHTML = `
             <div class="product-content">
-              <img src="${p.img}" alt="${p.name}" onclick="openProduct(${p.id})">
+              <img src="${p.img}" alt="${p.name}" loading="lazy" onclick="openProduct(${p.id})">
               <div>
                 <h4>${p.name}</h4>
                 <p>${p.desc}</p>
