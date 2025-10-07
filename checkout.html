@@ -41,6 +41,9 @@
       cursor: pointer;
       text-decoration: none;
       font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .shop-btn {
@@ -54,6 +57,9 @@
       cursor: pointer;
       text-decoration: none;
       font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .header-title {
@@ -99,24 +105,28 @@
       margin-top: 10px;
     }
 
-    /* Adjusted QR section horizontally */
+    /* Adjusted QR section horizontally with better centering */
     .qr-section {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 30px;
+      gap: 15px;
       margin-top: 10px;
       flex-wrap: nowrap;
+      padding: 0 10px;
+      box-sizing: border-box;
     }
 
     .qr-box {
       text-align: center;
       margin: 5px;
+      flex: 1 1 0;
+      max-width: 160px;
     }
 
     .qr-box img {
-      width: 150px;
-      height: 150px;
+      width: 140px;
+      height: 140px;
       border: 1px solid #ccc;
       border-radius: 12px;
     }
@@ -172,9 +182,9 @@
 </head>
 <body>
   <div class="header">
-    <a href="cart.html" class="home-btn">Cart</a>
+    <a href="cart.html" class="home-btn">🛒 Cart</a>
     <h2 class="header-title">Checkout</h2>
-    <a href="shop.html" class="shop-btn">Shop</a>
+    <a href="shop.html" class="shop-btn">🏬 Shop</a>
   </div>
 
   <div class="container">
@@ -310,4 +320,4 @@
     loadOrder();
   </script>
 </body>
-</html>
+  </html>
