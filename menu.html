@@ -1,159 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Menu - Shuang Hor</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f8f4ef; /* warmer brown-white background */
-      color: #333;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu - Shuang Hor</title>
+<style>
+  body {
+    font-family: Segoe UI, Arial, sans-serif;
+    margin: 0;
+    background: #faf3e0;
+  }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #5c4033;
-      padding: 10px 15px;
-      color: white;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
+  /* Header */
+  .header {
+    position: sticky;
+    top: 0;
+    background: #f4ecd6;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 2px solid #d1c4a1;
+  }
 
-    header h1 {
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 0;
-    }
+  .home-btn, .shop-btn {
+    position: absolute;
+    background: #996600;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+  }
 
-    .icon {
-      width: 22px;
-      height: 22px;
-      vertical-align: middle;
-    }
+  .home-btn { left: 20px; }
+  .shop-btn {
+    right: 20px;
+    background: #14b47e;
+  }
 
-    nav a {
-      color: white;
-      text-decoration: none;
-      font-size: 16px;
-      margin-left: 10px;
-      padding: 6px 10px;
-      border-radius: 6px;
-      transition: background 0.2s;
-    }
+  .header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #996600;
+  }
 
-    nav a:hover {
-      background-color: rgba(255,255,255,0.2);
-    }
+  /* Main content */
+  .container {
+    max-width: 850px;
+    margin: auto;
+    padding: 20px;
+  }
 
-    main {
-      padding: 15px;
-      background-color: rgba(255,255,255,0.7);
-      border-radius: 10px;
-      margin: 15px;
-    }
+  section {
+    background: #fff9f0;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
 
-    h2 {
-      color: #5c4033;
-      font-size: 16px; /* updated */
-      margin-top: 20px;
-    }
+  section h3 {
+    color: #996600;
+    font-size: 18px;
+    margin-top: 0;
+  }
 
-    section {
-      margin-bottom: 25px;
-    }
+  p {
+    font-size: 15px;
+    line-height: 1.5;
+    color: #333;
+  }
 
-    .whatsapp {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background-color: #25D366;
-      color: white;
-      text-decoration: none;
-      padding: 8px 12px;
-      border-radius: 20px;
-      font-size: 14px;
-    }
+  ul {
+    padding-left: 20px;
+  }
 
-    .whatsapp svg {
-      width: 24px;
-      height: 24px;
-    }
+  .testimonial {
+    background: #fff9f0;
+    padding: 14px;
+    border-left: 4px solid #14b47e;
+    border-radius: 8px;
+    margin: 10px 0;
+  }
 
-    footer {
-      text-align: center;
-      background-color: #5c4033;
-      color: white;
-      padding: 10px 0;
-      font-size: 14px;
-      margin-top: 30px;
-    }
-  </style>
+  .testimonial strong {
+    color: #996600;
+  }
+
+  /* WhatsApp Button */
+  .whatsapp-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #25D366;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    text-decoration: none;
+    font-size: 15px;
+    margin: 20px auto;
+    width: fit-content;
+  }
+
+  .whatsapp-btn svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-top: 20px;
+  }
+</style>
 </head>
 <body>
-  <header>
-    <h1>
-      <!-- Green Shop Icon -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="#25D366" viewBox="0 0 24 24"><path d="M7 2L3 6v16h18V6l-4-4H7zm0 2h10l2 2H5l2-2zm5 5c1.65 0 3 1.35 3 3s-1.35 3-3 3a3 3 0 010-6zm-7 9v-1c0-2.67 5.33-4 8-4s8 1.33 8 4v1H5z"/></svg>
-      Shop
-    </h1>
-    <nav>
-      <a href="index.html">🏠 Home</a>
-      <a href="shop.html">🛍️ Shop</a>
-      <a href="cart.html">🛒 Cart</a>
-    </nav>
-  </header>
 
-  <main>
-    <section>
-      <h2>About Shuang Hor</h2>
-      <p>Shuang Hor specializes in health and wellness products derived from natural ingredients. Its philosophy centers on harmony between body and mind, offering high-quality supplements, beverages, and personal care items trusted worldwide.</p>
-    </section>
+<div class="header">
+  <a href="index.html" class="home-btn">🏠 Home</a>
+  <h2>📋 Menu</h2>
+  <a href="shop.html" class="shop-btn">🛍️ Shop</a>
+</div>
 
-    <section>
-      <h2>Our Products</h2>
-      <ul>
-        <li><strong>CEO Coffee</strong> — premium Lingzhi coffee blend for focus and energy.</li>
-        <li><strong>Lu Chun Tea</strong> — traditional green tea with refreshing aroma and antioxidants.</li>
-        <li><strong>Lingzhi Capsules</strong> — supports immune system and vitality through Ganoderma extract.</li>
-        <li><strong>Lacto Berry</strong> — probiotic fruit drink supporting digestion and inner balance.</li>
-        <li><strong>Greenzhi Toothgel</strong> — herbal toothgel with Lingzhi and peppermint for oral health.</li>
-      </ul>
-    </section>
+<div class="container">
 
-    <section>
-      <h2>How to Join Membership</h2>
-      <p>Become a Shuang Hor member to enjoy exclusive discounts, rewards, and product knowledge sessions. Simply contact us via WhatsApp below for registration and guidance.</p>
-    </section>
+  <section>
+    <h3>About Shuang Hor</h3>
+    <p>Shuang Hor is a trusted wellness brand offering a range of products promoting health, beauty, and quality of life. 
+       With over three decades of innovation, Shuang Hor has combined traditional herbal wisdom with modern biotechnology 
+       to produce effective and natural health supplements.</p>
+  </section>
 
-    <section>
-      <h2>Customer Testimonials</h2>
-      <p>“Shuang Hor’s Lingzhi capsules have greatly improved my energy levels.” — <em>Facebook User</em></p>
-      <p>“I love the CEO Coffee! Great taste and keeps me alert all day.” — <em>Instagram Feedback</em></p>
-    </section>
+  <section>
+    <h3>Product Descriptions</h3>
+    <ul>
+      <li><strong>CEO Coffee:</strong> Premium coffee mix infused with Ganoderma for a refreshing daily boost.</li>
+      <li><strong>Lu Chun Tea:</strong> High-quality oolong tea known for antioxidants and smooth taste.</li>
+      <li><strong>Lingzhi Capsules:</strong> Enhance immunity and vitality with 100% Ganoderma extract.</li>
+      <li><strong>Lacto Berry:</strong> Probiotic and antioxidant blend to support digestion and youthful energy.</li>
+      <li><strong>Greenzhi Toothgel:</strong> Herbal toothpaste for gum health and freshness.</li>
+    </ul>
+  </section>
 
-    <section style="text-align:center; margin-top:25px;">
-      <!-- WhatsApp official-style logo -->
-      <a href="https://wa.me/60168101358?text=Hello%2C%20I%20am%20interested%20in%20joining%20Shuang%20Hor" 
-         target="_blank" class="whatsapp">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-          <path fill="#25D366" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
-          <path fill="none" stroke="#fff" stroke-width="2" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
-          <path fill="#fff" d="M31 27.5c-.4-.2-2.3-1.1-2.6-1.2-.3-.1-.6-.2-.9.2s-1 1.2-1.3 1.5c-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.5-.2-.3 0-.6.2-.8.2-.2.5-.5.7-.8.2-.3.3-.5.5-.8.1-.3 0-.5 0-.7 0-.2-.9-2.2-1.3-3-.3-.8-.7-.7-1-.7h-.8c-.3 0-.8.1-1.2.6s-1.6 1.5-1.6 3.6 1.6 4.1 1.9 4.4c.2.3 3.2 5 7.8 6.9 3.9 1.6 4.7 1.2 5.6 1.1.9-.1 2.3-1 2.6-1.9.3-.9.3-1.6.2-1.9-.1-.3-.3-.4-.7-.6z"/>
-        </svg>
-        Join via WhatsApp
-      </a>
-    </section>
-  </main>
+  <section>
+    <h3>How to Join Membership</h3>
+    <p>Join Shuang Hor as a member to enjoy exclusive prices, promotions, and rewards. 
+       Members can purchase directly, share products, and earn income.</p>
+    <ul>
+      <li>Step 1: Contact our representative via WhatsApp.</li>
+      <li>Step 2: Fill out a simple registration form.</li>
+      <li>Step 3: Start enjoying member benefits immediately!</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>User Menu & Guide</h3>
+    <ul>
+      <li>Chat screen – Start messaging with support.</li>
+      <li>Menu – Read About Us, Introduction, Products, Testimonials.</li>
+      <li>Shop – Add to Cart, Checkout, Enter Name & Address, Make Payments.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>Testimonials</h3>
+    <div class="testimonial"><strong>Mary (KL):</strong> “CEO Coffee gives me energy every morning. Love the smooth taste!”</div>
+    <div class="testimonial"><strong>Jason (Penang):</strong> “Lacto Berry improved my digestion. Highly recommended!”</div>
+    <div class="testimonial"><strong>Mei Ling (Johor):</strong> “The Lingzhi Capsules help me sleep better and stay active.”</div>
+    <div class="testimonial"><strong>Ahmad (Selangor):</strong> “Greenzhi Toothgel keeps my mouth fresh naturally.”</div>
+    <div class="testimonial"><strong>Tan (Ipoh):</strong> “Great service and fast delivery via the online shop.”</div>
+  </section>
+
+  <section>
+    <h3>Payment Methods</h3>
+    <p>Make payment conveniently via:</p>
+    <ul>
+      <li><strong>Bank QR:</strong> Scan our official bank QR to complete payment securely.</li>
+      <li><strong>Touch ’n Go (TNG):</strong> Pay using your TNG eWallet with instant confirmation.</li>
+    </ul>
+    <p>Payment details and QR codes will be displayed during checkout.</p>
+  </section>
+
+  <!-- WhatsApp -->
+  <a href="https://wa.me/60168101358?text=Hello%2C%20I%20am%20contacting%20you%20from%20Customer%20Service%20Chat" 
+     target="_blank" class="whatsapp-btn">
+     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+       <path fill="#25D366" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
+       <path fill="none" stroke="#fff" stroke-width="2" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
+       <path fill="#fff" d="M31 27.5c-.4-.2-2.3-1.1-2.6-1.2-.3-.1-.6-.2-.9.2s-1 1.2-1.3 1.5c-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.5-.2-.3 0-.6.2-.8.2-.2.5-.5.7-.8.2-.3.3-.5.5-.8.1-.3 0-.5 0-.7 0-.2-.9-2.2-1.3-3-.3-.8-.7-.7-1-.7h-.8c-.3 0-.8.1-1.2.6s-1.6 1.5-1.6 3.6 1.6 4.1 1.9 4.4c.2.3 3.2 5 7.8 6.9 3.9 1.6 4.7 1.2 5.6 1.1.9-.1 2.3-1 2.6-1.9.3-.9.3-1.6.2-1.9-.1-.3-.3-.4-.7-.6z"/>
+     </svg>
+     <span>WhatsApp</span>
+  </a>
 
   <footer>
-    © 2025 Shuang Hor Wellness
+    © 2025 Shuang Hor | Wellness & Innovation
   </footer>
+
+</div>
 </body>
-            </html>
+                                                                                                                   </html>
