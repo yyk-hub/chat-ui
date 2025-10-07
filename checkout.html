@@ -30,14 +30,9 @@
       border-bottom: 2px solid #d1c4a1;
     }
 
-    .header-title {
-      color: #996600;
-      margin: 0;
-      font-size: 20px;
-    }
-
-    .cart-btn, .shop-btn {
+    .home-btn {
       position: absolute;
+      left: 20px;
       background: #996600;
       color: white;
       border: none;
@@ -46,17 +41,25 @@
       cursor: pointer;
       text-decoration: none;
       font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
 
-    .cart-btn { left: 20px; }
-    .shop-btn { right: 20px; }
+    .shop-btn {
+      position: absolute;
+      right: 20px;
+      background: #14b47e;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
 
-    .shop-btn svg {
-      width: 18px;
-      height: 18px;
+    .header-title {
+      color: #996600;
+      margin: 0;
+      font-size: 20px;
     }
 
     .section {
@@ -96,27 +99,26 @@
       margin-top: 10px;
     }
 
-    /* Refined QR Section */
+    /* Adjusted QR section horizontally */
     .qr-section {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
+      gap: 30px;
       margin-top: 10px;
+      flex-wrap: nowrap;
     }
 
     .qr-box {
       text-align: center;
+      margin: 5px;
     }
 
     .qr-box img {
-      width: 140px;
-      height: 140px;
+      width: 150px;
+      height: 150px;
       border: 1px solid #ccc;
       border-radius: 12px;
-      background: #fff;
-      padding: 6px;
     }
 
     label {
@@ -148,20 +150,20 @@
     }
 
     .confirm-btn:disabled {
-      background: #88c8ab;
+      background: #ccc;
       cursor: not-allowed;
     }
 
     .last-order {
       text-align: center;
       margin-top: 20px;
-      background: transparent;
     }
 
+    /* Transparent view last order button */
     .last-order button {
-      background: #996600;
-      color: white;
-      border: none;
+      background: transparent;
+      color: #996600;
+      border: 2px solid #996600;
       padding: 8px 16px;
       border-radius: 8px;
       cursor: pointer;
@@ -170,16 +172,9 @@
 </head>
 <body>
   <div class="header">
-    <a href="cart.html" class="cart-btn">🛒 Cart</a>
+    <a href="cart.html" class="home-btn">Cart</a>
     <h2 class="header-title">Checkout</h2>
-
-    <!-- Right Shop Button with green icon -->
-    <a href="shop.html" class="shop-btn">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#25D366">
-        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-      </svg>
-      Shop
-    </a>
+    <a href="shop.html" class="shop-btn">Shop</a>
   </div>
 
   <div class="container">
@@ -256,37 +251,40 @@
     }
 
     function confirmOrder() {
-      const btn = document.getElementById("confirmBtn");
+      let btn = document.getElementById("confirmBtn");
       btn.disabled = true;
-      setTimeout(() => { btn.disabled = false; }, 3000); // re-enable after 3s
+      btn.innerText = "Processing...";
 
-      let name = document.getElementById("custName").value.trim();
-      let phone = document.getElementById("custPhone").value.trim();
-      let address = document.getElementById("custAddress").value.trim();
+      setTimeout(() => {
+        let name = document.getElementById("custName").value.trim();
+        let phone = document.getElementById("custPhone").value.trim();
+        let address = document.getElementById("custAddress").value.trim();
 
-      if (!name || !phone || !address) {
-        alert("Please fill in all delivery details.");
-        return;
-      }
+        if (!name || !phone || !address) {
+          alert("Please fill in all delivery details.");
+          btn.disabled = false;
+          btn.innerText = "✅ Confirm Order";
+          return;
+        }
 
-      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-      let totalText = document.getElementById("order-total").innerText;
+        let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+        let totalText = document.getElementById("order-total").innerText;
 
-      let order = {
-        id: "ORD" + Date.now(),
-        name,
-        phone,
-        address,
-        items: cart,
-        total: totalText,
-        time: new Date().toLocaleString()
-      };
+        let order = {
+          id: "ORD" + Date.now(),
+          name,
+          phone,
+          address,
+          items: cart,
+          total: totalText,
+          time: new Date().toLocaleString()
+        };
 
-      localStorage.setItem("lastOrder", JSON.stringify(order));
-      localStorage.removeItem("cartItems");
-      alert("✅ Order confirmed! Thank you for your purchase.");
-
-      window.location.href = "index.html";
+        localStorage.setItem("lastOrder", JSON.stringify(order));
+        localStorage.removeItem("cartItems");
+        alert("✅ Order confirmed! Thank you for your purchase.");
+        window.location.href = "index.html";
+      }, 1500);
     }
 
     function viewLastOrder() {
@@ -312,4 +310,4 @@
     loadOrder();
   </script>
 </body>
-  </html>
+</html>
