@@ -1,0 +1,39 @@
+name: Optimize Product Images
+
+on:
+  push:
+    paths:
+      - 'img/**'    # Only run when image files are added/changed
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install imagemin tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick webp
+
+      - name: Resize and optimize images
+        run: |
+          mkdir -p optimized
+          find img -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) | while read IMG; do
+            echo "Optimizing $IMG ..."
+            # Resize to max 800px wide while keeping aspect ratio
+            convert "$IMG" -resize 800x800\> -strip -quality 80 "optimized/$(basename "$IMG")"
+          done
+
+          # Replace originals with optimized versions
+          mv optimized/* img/
+
+      - name: Commit optimized images
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add img/
+          git commit -m "🔧 Optimized product images" || echo "No images changed"
+          git push
