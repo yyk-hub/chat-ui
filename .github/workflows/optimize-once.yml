@@ -3,6 +3,9 @@ name: 🪄 Optimize Images Once
 on:
   workflow_dispatch:  # You will run this manually from the Actions tab
 
+permissions:
+  contents: write
+
 jobs:
   optimize:
     runs-on: ubuntu-latest
