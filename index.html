@@ -3,140 +3,147 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Customer Service Chat</title>
+<title>CEO Online Store Chat</title>
 <style>
 :root {
-  --bg:#ffffff;
-  --card:#f9f9f9;
-  --muted:#555;
-  --accent:#10b981;
-  --bubble:#eaeaea;
-  --bubble-user:#10b981;
-  --bubble-user-text:#fff;
-  --bubble-text:#222;
-  --link:#10b981;
+  --bg: #f5f5f5;
+  --card: #ffffff;
+  --muted: #555;
+  --accent: #b87333; /* CEO light brown */
+  --bubble: #e9e4dc; /* light brown-gray for chat */
+  --bubble-user: #b87333;
+  --bubble-user-text: #fff;
+  --bubble-text: #222;
+  --link: #b87333;
 }
+
 body.dark {
-  --bg:#0f172a;
-  --card:#1e293b;
-  --muted:#94a3b8;
-  --accent:#10b981;
-  --bubble:#334155;
-  --bubble-text:#f1f5f9;
-  --bubble-user:#10b981;
-  --bubble-user-text:#fff;
-  --link:#34d399;
+  --bg: #0f172a;
+  --card: #1e293b;
+  --muted: #94a3b8;
+  --accent: #d1a87d;
+  --bubble: #334155;
+  --bubble-text: #f1f5f9;
+  --bubble-user: #d1a87d;
+  --bubble-user-text: #fff;
+  --link: #d1a87d;
 }
-*{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
-body{
-  margin:0;background:var(--bg);color:#222;
-  display:flex;align-items:center;justify-content:center;height:100vh;
+
+* {
+  box-sizing: border-box;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
   transition: background .3s ease, color .3s ease;
 }
-body.dark{color:#f1f5f9;}
-.app{width:100%;max-width:720px;padding:20px}
-.card{
-  background:var(--card);
-  border-radius:12px;
-  padding:18px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.15);
-  transition: background .3s ease;
-}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.header-left{display:flex;align-items:center;gap:12px}
-.logo{
-  width:44px;height:44px;border-radius:10px;
-  background:linear-gradient(135deg,var(--accent),#7c3aed);
-  display:flex;align-items:center;justify-content:center;font-weight:700;color:white;
-}
-h1{font-size:18px;margin:0}
-.theme-toggle{
-  background:none;border:0;cursor:pointer;font-size:18px;
-}
-.messages{
-  height:420px;overflow:auto;padding:12px;border-radius:8px;
-  background:#fff;margin-bottom:12px;border:1px solid #eee;
-  transition: background .3s ease;
-}
-body.dark .messages{background:#0f172a;border:1px solid #334155;}
-.msg{display:flex;margin-bottom:10px}
-.msg.user{justify-content:flex-end}
-.bubble{
-  max-width:78%;padding:10px 14px;border-radius:12px;
-  background:var(--bubble);color:var(--bubble-text);line-height:1.4;
-}
-.msg.user .bubble{background:var(--bubble-user);color:var(--bubble-user-text);}
-.controls{display:flex;gap:8px}
-input[type=text]{
-  flex:1;padding:10px 12px;border-radius:10px;
-  border:1px solid #ccc;background:#fff;color:#222;
-  transition: background .3s ease,color .3s ease;
-}
-body.dark input[type=text]{background:#1e293b;border:1px solid #475569;color:#f1f5f9;}
-button{
-  padding:10px 14px;border-radius:10px;border:0;cursor:pointer;
-  background:var(--accent);color:#fff;font-weight:600;
-}
-.muted{color:var(--muted);font-size:13px;margin-top:8px}
-.loader{
-  display:inline-block;width:8px;height:8px;border-radius:999px;
-  background:#666;margin-left:8px;animation:blink 1s linear infinite;
-}
-body.dark .loader{background:#f1f5f9;}
-@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0.2}}
-footer{margin-top:12px;color:var(--muted);font-size:13px;text-align:center}
-footer a {
-  color: var(--link);
-  text-decoration: none;
-}
-footer a:hover {
-  text-decoration: underline;
-}
-.empty{opacity:0.6;text-align:center;padding:36px 12px}
+body.dark { color: #f1f5f9; }
 
-/* bottom nav bar */
-  .bottom-nav {
+.app { width: 100%; max-width: 720px; padding: 20px; }
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: background .3s ease;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; color: white; font-size: 18px;
+}
+
+.messages {
+  height: 420px; overflow: auto; padding: 12px; border-radius: 8px;
+  background: #fff; margin-bottom: 12px; border: 1px solid #eee;
+  transition: background .3s ease;
+}
+body.dark .messages { background: #0f172a; border: 1px solid #334155; }
+
+.msg { display: flex; margin-bottom: 10px; }
+.msg.user { justify-content: flex-end; }
+.bubble {
+  max-width: 78%; padding: 10px 14px; border-radius: 12px;
+  background: var(--bubble); color: var(--bubble-text); line-height: 1.4;
+}
+.msg.user .bubble { background: var(--bubble-user); color: var(--bubble-user-text); }
+
+.controls { display: flex; gap: 8px; }
+input[type=text] {
+  flex: 1; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid #ccc; background: #fff; color: #222;
+  transition: background .3s ease, color .3s ease;
+}
+body.dark input[type=text] { background: #1e293b; border: 1px solid #475569; color: #f1f5f9; }
+button {
+  padding: 10px 14px; border-radius: 10px; border: 0; cursor: pointer;
+  background: var(--accent); color: #fff; font-weight: 600;
+}
+.muted { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+footer { margin-top: 12px; color: var(--muted); font-size: 13px; text-align: center; }
+footer a { color: var(--link); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+.empty { opacity: 0.6; text-align: center; padding: 36px 12px; }
+
+/* bottom nav */
+.bottom-nav {
   display: flex;
   justify-content: space-around;
   margin-top: 16px;
 }
-
 .bottom-nav a {
   flex: 1;
   text-align: center;
   text-decoration: none;
   color: var(--accent);
-  font-size: 11px;      /* smaller label */
+  font-size: 11px;
+  position: relative;
 }
-
 .bottom-nav svg {
   display: block;
   margin: 0 auto 4px auto;
-  width: 30px;          /* bigger icons */
+  width: 30px;
   height: 30px;
 }
+.bottom-nav a.whatsapp svg { fill: #25D366; }
 
-.bottom-nav a.whatsapp svg {
-  fill: #25D366;        /* keep WhatsApp brand green */
+/* cart count badge */
+.cart-count {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  background: #b87333;
+  color: #fff;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
 }
-
 </style>
 </head>
+
 <body>
 <div class="app card">
-  <div class="header">
-    <div class="header-left">
-      <div class="logo">CEO</div>
-      <div>
-        <h1>CEO Online Store</h1>
-        <div class="muted">Connects to Render backend API</div>
-      </div>
+  <div class="header-left">
+    <div class="logo">CEO</div>
+    <div>
+      <h1 style="font-size:18px;margin:0;">CEO Online Store</h1>
+      <div class="muted">Connects to Render backend API</div>
     </div>
-    <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
   </div>
 
   <div id="messages" class="messages">
-    <div class="empty">Welcome to Shuang Hor (双鹤) distributor online store👋. We offer healthy F&B, Personal/Skin Care and Household products. Get more benefits when you join as a member.</div>
+    <div class="empty">Welcome to Shuang Hor (双鹤) distributor online store 👋<br>We offer healthy F&B, Personal/Skin Care and Household products.</div>
   </div>
 
   <div class="controls">
@@ -146,58 +153,50 @@ footer a:hover {
 
   <div id="status" class="muted"></div>
 
-<!-- Bottom navigation -->
-<div class="bottom-nav">
-  <!-- Menu -->
-  <a href="menu.html" class="btn">
-    <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="4" y1="6" x2="20" y2="6"/>
-      <line x1="4" y1="12" x2="20" y2="12"/>
-      <line x1="4" y1="18" x2="20" y2="18"/>
-    </svg>
-    <span>Menu</span>
-  </a>
-  
-<!-- Shop -->
-  <a href="shop.html" class="btn">
-    <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M6 2l1 5h10l1-5z"/>
-      <path d="M3 7h18l-1.68 12.05a2 2 0 0 1-2 1.95H6.68a2 2 0 0 1-2-1.95z"/>
-    </svg>
-    <span>Shop</span>
-  </a>
-  
-  <!-- Cart -->
-  <a href="cart.html" class="btn">
-    <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="9" cy="21" r="1"/>
-      <circle cx="20" cy="21" r="1"/>
-      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-    </svg>
-    <span>Cart</span>
-  </a>
+  <!-- Bottom navigation -->
+  <div class="bottom-nav">
+    <a href="menu.html" class="btn">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="6" x2="20" y2="6"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="18" x2="20" y2="18"/>
+      </svg>
+      <span>Menu</span>
+    </a>
 
-  <!-- WhatsApp official-style logo (fixed tail + full white outline) -->
-  <a href="https://wa.me/60168101358?text=Hello%2C%20I%20am%20contacting%20you%20from%20Customer%20Service%20Chat" 
-   target="_blank" class="btn">
-  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 48 48">
-    <!-- Outer green bubble with tail -->
-    <path fill="#25D366" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
-    <!-- White outline around bubble -->
-    <path fill="none" stroke="#fff" stroke-width="2" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
-    <!-- Phone handset -->
-    <path fill="#fff" d="M31 27.5c-.4-.2-2.3-1.1-2.6-1.2-.3-.1-.6-.2-.9.2s-1 1.2-1.3 1.5c-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.5-.2-.3 0-.6.2-.8.2-.2.5-.5.7-.8.2-.3.3-.5.5-.8.1-.3 0-.5 0-.7 0-.2-.9-2.2-1.3-3-.3-.8-.7-.7-1-.7h-.8c-.3 0-.8.1-1.2.6s-1.6 1.5-1.6 3.6 1.6 4.1 1.9 4.4c.2.3 3.2 5 7.8 6.9 3.9 1.6 4.7 1.2 5.6 1.1.9-.1 2.3-1 2.6-1.9.3-.9.3-1.6.2-1.9-.1-.3-.3-.4-.7-.6z"/>
-  </svg>
-  <span>WhatsApp</span>
-</a>
-</div>
+    <a href="shop.html" class="btn">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2l1 5h10l1-5z"/>
+        <path d="M3 7h18l-1.68 12.05a2 2 0 0 1-2 1.95H6.68a2 2 0 0 1-2-1.95z"/>
+      </svg>
+      <span>Shop</span>
+    </a>
+
+    <a href="cart.html" class="btn cart-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"/>
+        <circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+      </svg>
+      <span>Cart</span>
+      <span class="cart-count" id="cartCount">0</span>
+    </a>
+
+    <a href="https://wa.me/60168101358?text=Hello%20from%20CEO%20Store" target="_blank" class="btn whatsapp">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 48 48">
+        <path fill="#25D366" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
+        <path fill="none" stroke="#fff" stroke-width="2" d="M24 4C13 4 4 13 4 24c0 4.3 1.2 8.2 3.4 11.6L4 44l8.8-2.9C16 43.6 19.9 45 24 45c11 0 20-9 20-20S35 4 24 4z"/>
+        <path fill="#fff" d="M31 27.5c-.4-.2-2.3-1.1-2.6-1.2-.3-.1-.6-.2-.9.2s-1 1.2-1.3 1.5c-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.5-.2-.3 0-.6.2-.8.2-.2.5-.5.7-.8.2-.3.3-.5.5-.8.1-.3 0-.5 0-.7 0-.2-.9-2.2-1.3-3-.3-.8-.7-.7-1-.7h-.8c-.3 0-.8.1-1.2.6s-1.6 1.5-1.6 3.6 1.6 4.1 1.9 4.4c.2.3 3.2 5 7.8 6.9 3.9 1.6 4.7 1.2 5.6 1.1.9-.1 2.3-1 2.6-1.9.3-.9.3-1.6.2-1.9-.1-.3-.3-.4-.7-.6z"/>
+      </svg>
+      <span>WhatsApp</span>
+    </a>
+  </div>
 
   <footer>
-  © 2025 Customer Service Chat · All Rights Reserved · 
-  <a href="privacy.html">Privacy Policy</a> · 
-  <a href="terms.html">Terms&nbsp;of&nbsp;Service</a>
-</footer>
-  
+    © 2025 CEO Chat · All Rights Reserved · 
+    <a href="privacy.html">Privacy Policy</a> · 
+    <a href="terms.html">Terms&nbsp;of&nbsp;Service</a>
+  </footer>
 </div>
 
 <script>
@@ -208,70 +207,48 @@ const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const statusEl = document.getElementById('status');
-const themeToggle = document.getElementById('themeToggle');
 
 function appendMessage(text, sender='bot'){
   const empty = messagesEl.querySelector('.empty'); if(empty) empty.remove();
-  const m = document.createElement('div'); m.className = 'msg ' + (sender==='user'?'user':'bot');
-  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text;
+  const m = document.createElement('div');
+  m.className = 'msg ' + (sender==='user'?'user':'bot');
+  const b = document.createElement('div');
+  b.className = 'bubble'; b.textContent = text;
   m.appendChild(b); messagesEl.appendChild(m);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function setStatus(text, loading=false){
-  statusEl.textContent = text || '';
-  if(loading){
-    const loader = document.createElement('span'); loader.className='loader'; statusEl.appendChild(loader);
-  }
-}
+function setStatus(text){ statusEl.textContent = text || ''; }
 
 async function sendMessage(){
   const text = inputEl.value.trim(); if(!text) return;
-  appendMessage(text, 'user'); inputEl.value = ''; inputEl.focus();
-  setStatus('Sending...', true);
+  appendMessage(text, 'user'); inputEl.value = '';
+  setStatus('Sending...');
   try{
     const res = await fetch(CHAT_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: text })
     });
-    if(!res.ok){ const errText = await res.text(); throw new Error(errText || res.statusText); }
     const data = await res.json();
-    const reply = (data && (data.reply || data.response || data.answer)) || JSON.stringify(data);
-    appendMessage(reply, 'bot'); setStatus('');
+    appendMessage(data.reply || data.response || data.answer || 'No reply', 'bot');
+    setStatus('');
   }catch(err){
-    console.error(err);
-    appendMessage('Error: ' + (err.message||'Failed to reach backend'), 'bot');
-    setStatus('Error communicating with backend');
+    appendMessage('Error: ' + err.message, 'bot');
+    setStatus('Backend error');
   }
 }
 
+// --- Cart count sync ---
+const cartCountEl = document.getElementById('cartCount');
+function updateCartCount(){
+  const count = parseInt(localStorage.getItem('cartCount') || '0', 10);
+  cartCountEl.textContent = count;
+}
+updateCartCount();
+
 sendBtn.addEventListener('click', sendMessage);
-inputEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') sendMessage(); });
-
-(async function healthCheck(){
-  try{
-    const res = await fetch(BACKEND_URL + '/health');
-    if(res.ok) setStatus('Backend online'); else setStatus('Backend reachable but returned ' + res.status);
-  }catch(e){ setStatus('Backend unreachable (check CORS and URL)'); }
-})();
-
-// Theme toggle
-themeToggle.addEventListener('click', ()=>{
-  document.body.classList.toggle('dark');
-  const isDark = document.body.classList.contains('dark');
-  themeToggle.textContent = isDark ? '☀️' : '🌙';
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
-});
-
-// Load saved theme
-(function(){
-  const saved = localStorage.getItem('theme');
-  if(saved === 'dark'){
-    document.body.classList.add('dark');
-    themeToggle.textContent = '☀️';
-  }
-})();
+inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendMessage(); });
 </script>
 </body>
 </html>
