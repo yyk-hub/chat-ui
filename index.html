@@ -112,13 +112,20 @@ footer a:hover { text-decoration: underline; }
   width: 30px;
   height: 30px;
 }
+/* Dark mode bottom icons white */
+body.dark .bottom-nav a {
+  color: #fff;
+}
+body.dark .bottom-nav svg {
+  stroke: #fff;
+  }
 
-/* Cart count badge */
+  /* Cart count badge - gradient brown */
 .cart-count {
   position: absolute;
   top: -4px;
   right: 14px;
-  background: #8b5a2b;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: #fff;
   font-size: 10px;
   font-weight: 600;
@@ -127,7 +134,7 @@ footer a:hover { text-decoration: underline; }
   line-height: 1;
   min-width: 16px;
   text-align: center;
-}
+  }
 
 .bottom-nav a.whatsapp svg { fill: #25D366; }
 
