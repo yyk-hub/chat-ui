@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Orders - CEO Coffee</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: #f4ecd6;
+      font-family: Segoe UI, Arial, sans-serif;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      background: #f4ecd6;
+      border-bottom: 2px solid #d1c4a1;
+      padding: 10px 0;
+      text-align: center;
+    }
+
+    .header-title {
+      color: #996600;
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .home-btn {
+      position: absolute;
+      left: 20px;
+      top: 10px;
+      background: #996600;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .section {
+      background: #fffbe6;
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #654321;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 4px;
+      font-size: 14px;
+    }
+
+    button {
+      background: #14b47e;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: block;
+      margin: 15px auto;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #e9d8a6;
+      color: #654321;
+    }
+
+    .paid {
+      color: green;
+      font-weight: bold;
+    }
+
+    .pending {
+      color: red;
+      font-weight: bold;
+    }
+
+    a.track-link {
+      color: #14b47e;
+      text-decoration: none;
+    }
+
+    a.track-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="home-btn">🏠 Home</a>
+    <h2 class="header-title">📦 My Orders</h2>
+  </div>
+
+  <div class="container">
+    <div class="section">
+      <label>Name</label>
+      <input type="text" id="custName" placeholder="Enter your name">
+      <label>Phone</label>
+      <input type="text" id="custPhone" placeholder="Enter phone number">
+      <button onclick="loadOrders()">🔍 View My Orders</button>
+    </div>
+
+    <div id="ordersList" class="section" style="display:none;">
+      <h3>Order History</h3>
+      <table id="ordersTable">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Product</th>
+            <th>Total (RM)</th>
+            <th>Courier</th>
+            <th>Track</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = 'https://customer-service-qbwg.onrender.com';
+
+    async function loadOrders() {
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      if (!name || !phone) return alert('⚠️ Please fill in both name and phone.');
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/orders?phone=${encodeURIComponent(phone)}`);
+        const data = await res.json();
+        const tableBody = document.querySelector('#ordersTable tbody');
+        tableBody.innerHTML = '';
+
+        if (!data.length) {
+          tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No orders found.</td></tr>`;
+        } else {
+          data.forEach(o => {
+            const row = `<tr>
+              <td>${o.order_id}</td>
+              <td>${o.prod_name}</td>
+              <td>${o.total_amt.toFixed(2)}</td>
+              <td>${o.courier_name}</td>
+              <td><a href="${o.tracking_link}" target="_blank" class="track-link">Track</a></td>
+              <td class="${o.pymt_status === 'Paid' ? 'paid' : 'pending'}">${o.pymt_status}</td>
+              <td>${o.created_at}</td>
+            </tr>`;
+            tableBody.insertAdjacentHTML('beforeend', row);
+          });
+        }
+
+        document.getElementById('ordersList').style.display = 'block';
+      } catch (err) {
+        alert('❌ Failed to load orders: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
