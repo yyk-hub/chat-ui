@@ -1,0 +1,8 @@
+name = "chat-ui"
+main = "functions/_worker.js"
+compatibility_date = "2024-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ceo_orders"
+database_id = "fdc684fb-d1c5-426c-b6c4-a00402afea12"
