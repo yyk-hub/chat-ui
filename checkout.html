@@ -236,123 +236,133 @@
   </div>
 
   <script>
-  const BACKEND_URL = 'https://customer-service-qbwg.onrender.com';
+const BACKEND_URL = "https://customer-service-qbwg.onrender.com";
 
-  function calculateShipping(state, weight) {
-    const sabahRates = [9, 11, 12, 13, 15];
-    const otherRates = [18, 27, 35, 44, 52];
-    const kg = Math.ceil(weight);
-    const index = Math.min(kg, 5) - 1;
-    if (state === "Sabah") return sabahRates[index];
-    return otherRates[index];
+function calculateShipping(state, weight) {
+  const sabahRates = [9, 11, 12, 13, 15];
+  const otherRates = [18, 27, 35, 44, 52];
+  const kg = Math.ceil(weight);
+  const index = Math.min(kg, 5) - 1;
+  if (state === "Sabah") return sabahRates[index];
+  return otherRates[index];
+}
+
+function loadOrder() {
+  let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+  let summaryDiv = document.getElementById("order-summary");
+  let totalDiv = document.getElementById("order-total");
+
+  if (cart.length === 0) {
+    summaryDiv.innerHTML = "<p>No items in cart.</p>";
+    return;
   }
 
-  function loadOrder() {
-    let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-    let summaryDiv = document.getElementById("order-summary");
-    let totalDiv = document.getElementById("order-total");
+  let total = 0, totalWeight = 0;
+  let table = "<table><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr>";
 
-    if (cart.length === 0) {
-      summaryDiv.innerHTML = "<p>No items in cart.</p>";
-      return;
-    }
+  cart.forEach(item => {
+    let subtotal = item.price * item.qty;
+    total += subtotal;
+    totalWeight += (item.weight || 0) * item.qty;
+    table += `<tr>
+                <td>${item.name}</td>
+                <td>${item.qty}</td>
+                <td>RM ${item.price.toFixed(2)}</td>
+                <td>RM ${subtotal.toFixed(2)}</td>
+              </tr>`;
+  });
 
-    let total = 0, totalWeight = 0;
-    let table = "<table><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr>";
+  table += `</table>`;
+  summaryDiv.innerHTML = table;
+  totalDiv.innerHTML = `Total Weight: ${totalWeight.toFixed(2)} kg<br><strong>RM ${total.toFixed(2)}</strong>`;
+}
 
-    cart.forEach(item => {
-      let subtotal = item.price * item.qty;
-      total += subtotal;
-      totalWeight += (item.weight || 0) * item.qty;
-      table += `<tr>
-                  <td>${item.name}</td>
-                  <td>${item.qty}</td>
-                  <td>RM ${item.price.toFixed(2)}</td>
-                  <td>RM ${subtotal.toFixed(2)}</td>
-                </tr>`;
+async function confirmOrder() {
+  const btn = document.getElementById("confirmBtn");
+  btn.disabled = true;
+  btn.innerText = "Processing...";
+
+  const name = document.getElementById("custName").value.trim();
+  const phone = document.getElementById("custPhone").value.trim();
+  const address = document.getElementById("custAddress").value.trim();
+  const postcode = document.getElementById("custPostcode").value.trim();
+  const state_to = document.getElementById("custState").value.trim();
+  const country = document.getElementById("custCountry").value.trim();
+
+  if (!name || !phone || !address || !postcode || !state_to) {
+    alert("⚠️ Please fill in all delivery details.");
+    btn.disabled = false;
+    btn.innerText = "✅ Confirm Order";
+    return;
+  }
+
+  const cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+  if (cart.length === 0) {
+    alert("Cart is empty!");
+    btn.disabled = false;
+    btn.innerText = "✅ Confirm Order";
+    return;
+  }
+
+  const totalWeight = cart.reduce((sum, i) => sum + (i.weight || 0) * i.qty, 0);
+  const shipping_cost = calculateShipping(state_to, totalWeight);
+  const total_amt = cart.reduce((sum, i) => sum + i.price * i.qty, 0) + shipping_cost;
+  const order_id = "ORD" + Date.now();
+
+  const orderData = {
+    order_id,
+    cus_name: name,
+    cus_address: address,
+    postcode,
+    state_to,
+    country,
+    phone,
+    prod_name: cart.map(i => i.name).join(", "),
+    quantity: cart.reduce((sum, i) => sum + i.qty, 0),
+    total_amt,
+    shipping_wt: totalWeight,
+    shipping_cost,
+    pymt_method: "FPX",
+    pymt_status: "Paid",
+    courier_name: "Pos Laju",
+    tracking_link: `https://poslaju.com/track/${order_id}`
+  };
+
+  console.log("📦 Sending order to backend:", orderData);
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData)
     });
 
-    table += `</table>`;
-    summaryDiv.innerHTML = table;
-    totalDiv.innerHTML = `Total Weight: ${totalWeight.toFixed(2)} kg<br><strong>RM ${total.toFixed(2)}</strong>`;
+    console.log("🔍 Raw response:", res);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    console.log("✅ Backend response:", data);
+
+    if (data.success) {
+      localStorage.removeItem("cartItems");
+      alert("✅ Order recorded successfully!");
+      window.location.href = "index.html";
+    } else {
+      throw new Error(data.error || "Backend failed to record order.");
+    }
+  } catch (err) {
+    console.error("❌ Order submission error:", err);
+    alert("❌ Failed: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "✅ Confirm Order";
   }
+}
 
-  async function confirmOrder() {
-    const btn = document.getElementById("confirmBtn");
-    btn.disabled = true;
-    btn.innerText = "Processing...";
-
-    const name = document.getElementById("custName").value.trim();
-    const phone = document.getElementById("custPhone").value.trim();
-    const address = document.getElementById("custAddress").value.trim();
-    const postcode = document.getElementById("custPostcode").value.trim();
-    const state_to = document.getElementById("custState").value.trim();
-    const country = document.getElementById("custCountry").value.trim();
-
-    if (!name || !phone || !address || !postcode || !state_to) {
-      alert("⚠️ Please fill in all delivery details.");
-      btn.disabled = false;
-      btn.innerText = "✅ Confirm Order";
-      return;
-    }
-
-    const cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-    if (cart.length === 0) {
-      alert("Cart is empty!");
-      btn.disabled = false;
-      btn.innerText = "✅ Confirm Order";
-      return;
-    }
-
-    const totalWeight = cart.reduce((sum, i) => sum + (i.weight || 0) * i.qty, 0);
-    const shipping_cost = calculateShipping(state_to, totalWeight);
-    const total_amt = cart.reduce((sum, i) => sum + i.price * i.qty, 0) + shipping_cost;
-
-    const order_id = "ORD" + Date.now();
-
-    const orderData = {
-      order_id,
-      cus_name: name,
-      cus_address: address,
-      postcode,
-      state_to,
-      country,
-      phone,
-      prod_name: cart.map(i => i.name).join(", "),
-      quantity: cart.reduce((sum, i) => sum + i.qty, 0),
-      total_amt,
-      shipping_wt: totalWeight,
-      shipping_cost,
-      pymt_method: "FPX",
-      pymt_status: "Paid",
-      courier_name: "Pos Laju",
-      tracking_link: `https://poslaju.com/track/${order_id}`
-    };
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/orders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData)
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        localStorage.removeItem("cartItems");
-        alert("✅ Order recorded successfully!");
-        window.location.href = "index.html";
-      } else {
-        throw new Error(data.error || "Failed to record order.");
-      }
-    } catch (err) {
-      alert("❌ " + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.innerText = "✅ Confirm Order";
-    }
-  }
-
-  loadOrder();
-          </script>
+loadOrder();
+</script>
 </body>
   </html>
