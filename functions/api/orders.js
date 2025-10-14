@@ -1,49 +1,121 @@
-export async function onRequestPost(context) {
-  try {
-    const data = await context.request.json();
-    const db = context.env.DB; // D1 binding
+// functions/api/orders.js
 
-    // Basic validation
-    if (!data.order_id || !data.cus_name || !data.total_amt) {
-      return new Response(JSON.stringify({ success: false, error: "Missing required fields" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      });
+export async function onRequestPost(context) {
+  const { request, env } = context;
+  
+  // CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  try {
+    const order = await request.json();
+    
+    // Validate
+    if (!order.order_id || !order.cus_name || !order.prod_name) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing required fields' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    // Insert into ceo_orders table
-    await db
-      .prepare(`INSERT INTO ceo_orders 
-        (order_id, cus_name, cus_address, postcode, state_to, country, phone, prod_name, quantity, total_amt, shipping_wt, shipping_cost, pymt_method, pymt_status, courier_name, tracking_link)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(
-        data.order_id,
-        data.cus_name,
-        data.cus_address,
-        data.postcode,
-        data.state_to,
-        data.country,
-        data.phone,
-        data.prod_name,
-        data.quantity,
-        data.total_amt,
-        data.shipping_wt,
-        data.shipping_cost,
-        data.pymt_method,
-        data.pymt_status,
-        data.courier_name,
-        data.tracking_link
+    // Insert into D1
+    await env.DB.prepare(`
+      INSERT INTO ceo_orders (
+        order_id, cus_name, cus_address, postcode, state_to, country, phone,
+        prod_name, quantity, total_amt, shipping_wt,
+        state_from, shipping_method, shipping_cost, delivery_eta,
+        pymt_method, pymt_status, courier_name, tracking_link
       )
-      .run();
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      order.order_id,
+      order.cus_name,
+      order.cus_address,
+      order.postcode,
+      order.state_to,
+      order.country || 'Malaysia',
+      order.phone,
+      order.prod_name,
+      order.quantity || 1,
+      order.total_amt,
+      order.shipping_wt,
+      order.state_from || 'Sabah',
+      order.shipping_method || 'Pos Laju',
+      order.shipping_cost || 0,
+      order.delivery_eta || '3 working days',
+      order.pymt_method,
+      order.pymt_status,
+      order.courier_name || 'Pos Laju',
+      order.tracking_link
+    ).run();
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true, order_id: order.order_id }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+
   } catch (err) {
-    console.error("❌ Order error:", err);
-    return new Response(JSON.stringify({ success: false, error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error('Order save error:', err);
+    return new Response(
+      JSON.stringify({ success: false, error: err.message }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   }
+}
+
+// Handle GET requests (retrieve orders)
+export async function onRequestGet(context) {
+  const { env, request } = context;
+  
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Content-Type': 'application/json',
+  };
+
+  try {
+    const url = new URL(request.url);
+    const phone = url.searchParams.get('phone');
+
+    let query;
+    if (phone) {
+      query = env.DB.prepare(
+        'SELECT * FROM ceo_orders WHERE phone = ? ORDER BY created_at DESC'
+      ).bind(phone);
+    } else {
+      query = env.DB.prepare(
+        'SELECT * FROM ceo_orders ORDER BY created_at DESC LIMIT 10'
+      );
+    }
+
+    const { results } = await query.all();
+
+    return new Response(JSON.stringify(results), { headers: corsHeaders });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ success: false, error: err.message }),
+      { status: 500, headers: corsHeaders }
+    );
+  }
+}
+
+// Handle OPTIONS (CORS preflight)
+export async function onRequestOptions() {
+  return new Response(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    }
+  });
       }
