@@ -1,1 +1,12 @@
+# Node.js dependencies
 node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build artifacts
+dist/
+build/
+.env
+
+# Cloudflare / deployment artifacts
+wrangler.toml.local
