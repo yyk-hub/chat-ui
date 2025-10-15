@@ -1,5 +1,14 @@
-// functions/api/orders.js
+// ===== Shipping Cost Calculator =====
+function calculateShipping(state, weight) {
+  const sabahRates = [9, 11, 12, 13, 15];
+  const otherRates = [18, 27, 35, 44, 52];
+  const kg = Math.ceil(weight);
+  const index = Math.min(kg, 5) - 1;
+  if (state === "Sabah") return sabahRates[index];
+  return otherRates[index];
+}
 
+// ===== Handle POST: Create Order =====
 export async function onRequestPost(context) {
   const { request, env } = context;
   
