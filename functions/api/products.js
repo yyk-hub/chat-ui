@@ -1,11 +1,12 @@
-// functions/api/products.js
+// Update ceo_products D1 Database
 
 export async function onRequest(context) {
   const { request, env } = context;
+  
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
   // Handle CORS preflight
@@ -14,39 +15,44 @@ export async function onRequest(context) {
   }
 
   try {
-    // 🟢 GET — fetch all products
+    // ==========================
+    // 🟢 GET — Fetch all products
+    // ==========================
     if (request.method === 'GET') {
-      const { results } = await env.DB.prepare(
-        'SELECT * FROM ceo_products ORDER BY created_at DESC'
-      ).all();
+      const { results } = await env.DB
+        .prepare('SELECT * FROM ceo_products ORDER BY created_at DESC')
+        .all();
+
       return new Response(JSON.stringify(results), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 🟢 POST — update product details
+    // ==========================
+    // 🟡 POST — Update product details
+    // ==========================
     if (request.method === 'POST') {
       const data = await request.json();
 
       if (!data.prod_id) {
-        return new Response(JSON.stringify({ success: false, error: 'Missing product ID' }), {
-          status: 400,
-          headers: corsHeaders,
-        });
+        return new Response(
+          JSON.stringify({ success: false, error: 'Missing product ID' }),
+          { status: 400, headers: corsHeaders }
+        );
       }
-      // Admin authentication 
-const ADMIN_TOKEN = env.ADMIN_TOKEN || "changeme123";
 
-// Inside POST request block, before running the update query:
-const authHeader = request.headers.get("Authorization");
-if (!authHeader || authHeader !== `Bearer ${ADMIN_TOKEN}`) {
-  return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
-    status: 401,
-    headers: corsHeaders,
-  });
-}
+      // ✅ Admin authentication
+      const ADMIN_TOKEN = env.ADMIN_TOKEN || 'changeme123';
+      const authHeader = request.headers.get('Authorization');
 
-      // Build update query dynamically
+      if (!authHeader || authHeader !== `Bearer ${ADMIN_TOKEN}`) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Unauthorized' }),
+          { status: 401, headers: corsHeaders }
+        );
+      }
+
+      // ✅ Dynamic update fields
       const fields = [];
       const values = [];
 
@@ -84,12 +90,14 @@ if (!authHeader || authHeader !== `Bearer ${ADMIN_TOKEN}`) {
       });
     }
 
+    // Unsupported methods
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: corsHeaders,
     });
+
   } catch (err) {
-    console.error('Product API error:', err);
+    console.error('❌ Product API error:', err);
     return new Response(
       JSON.stringify({ success: false, error: err.message }),
       { status: 500, headers: corsHeaders }
