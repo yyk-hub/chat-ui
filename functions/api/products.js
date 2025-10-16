@@ -34,6 +34,17 @@ export async function onRequest(context) {
           headers: corsHeaders,
         });
       }
+      // Admin authentication 
+const ADMIN_TOKEN = env.ADMIN_TOKEN || "changeme123";
+
+// Inside POST request block, before running the update query:
+const authHeader = request.headers.get("Authorization");
+if (!authHeader || authHeader !== `Bearer ${ADMIN_TOKEN}`) {
+  return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+    status: 401,
+    headers: corsHeaders,
+  });
+}
 
       // Build update query dynamically
       const fields = [];
