@@ -208,6 +208,67 @@
   
   <!-- ⬇️ 2nd script: shared cart counter logic -->
   <script src="js/cart-utils.js"></script>
-  
+  <script>
+    
+const ADMIN_TOKEN = "changeme123"; // same as Wrangler env for now
+const API_URL = "/api/products";
+
+async function loadProducts() {
+  const res = await fetch(API_URL);
+  const products = await res.json();
+  const isAdmin = window.location.search.includes("admin=1");
+
+  const container = document.getElementById("products");
+  container.innerHTML = "";
+
+  products.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "product-card";
+    card.innerHTML = `
+      <h3>${p.prod_name}</h3>
+      <p>Price: RM ${p.price}</p>
+      <p>Stock: ${p.stock}</p>
+      <p>${p.description || ""}</p>
+      ${isAdmin ? `<button onclick="editProduct('${p.prod_id}', ${p.price}, ${p.stock}, '${p.description || ""}')">✏️ Edit</button>` : ""}
+    `;
+    container.appendChild(card);
+  });
+}
+
+function editProduct(id, price, stock, desc) {
+  const newPrice = prompt("Enter new price:", price);
+  const newStock = prompt("Enter new stock:", stock);
+  const newDesc = prompt("Enter new description:", desc);
+
+  if (newPrice === null || newStock === null) return;
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${ADMIN_TOKEN}`
+    },
+    body: JSON.stringify({
+      prod_id: id,
+      price: parseFloat(newPrice),
+      stock: parseInt(newStock),
+      description: newDesc
+    })
+  })
+  .then(res => res.json())
+  .then(result => {
+    if (result.success) {
+      alert("✅ Product updated!");
+      loadProducts();
+    } else {
+      alert("❌ Update failed: " + result.error);
+    }
+  });
+}
+
+loadProducts();
+</script>
+
+<div id="products"></div>
 </body>
   </html>
