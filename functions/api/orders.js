@@ -32,7 +32,19 @@ export async function onRequestPost(context) {
         }
       );
     }
+// 🟢 Step 1: Lookup product weight from ceo_products
+    const prodQuery = await env.DB.prepare(
+      `SELECT weight FROM ceo_products WHERE prod_name = ?`
+    ).bind(order.prod_name).first();
 
+    const weight = prodQuery ? prodQuery.weight : (order.shipping_wt || 1);
+
+    // 🟢 Step 2: Calculate shipping cost
+    const shippingCost = calculateShipping(order.state_to || 'Sabah', weight);
+
+    // 🟢 Step 3: Default ETA
+    const deliveryETA = order.delivery_eta || '3 working days';
+    
     // Insert into D1
     await env.DB.prepare(`
       INSERT INTO ceo_orders (
