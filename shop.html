@@ -1,193 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <title>CEO Shop</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: #f4efe6;
-      margin: 0;
-      padding: 0;
-      color: #3b2f2f;
+    :root{
+      --bg:#f4ecd6;
+      --accent:#996600;
+      --card:#fffbe6;
+      --muted:#5b4636;
+      --btn:#14b47e;
+      --card-radius:14px;
+      --container-max:800px;
     }
 
-    header {
-      background-color: #5c3a2e;
-      color: #fff8f0;
-      padding: 16px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      font-family:"Segoe UI", Arial, sans-serif;
+      color:#3b2f2f;
     }
 
-    header h1 {
-      margin: 0;
-      font-size: 1.6em;
-      font-weight: bold;
-      letter-spacing: 0.5px;
+    /* Slimmer sticky header with 3 items: Home (left), Title (center), Cart (right) */
+    .header{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      background:var(--bg);
+      padding:8px 0;                /* reduced padding for slimmer row */
+      border-bottom:2px solid #d1c4a1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:48px;                 /* slimmer height */
+      box-sizing:border-box;
     }
 
-    nav a {
-      color: #fff8f0;
-      margin-left: 24px;
-      text-decoration: none;
-      font-weight: 600;
-      transition: color 0.2s ease;
+    .header .home-btn,
+    .header .cart-btn{
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      background:var(--accent);
+      color:#fff;
+      border:0;
+      padding:6px 10px;            /* slightly smaller buttons */
+      border-radius:8px;
+      text-decoration:none;
+      font-weight:600;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:14px;
+    }
+    .header .home-btn{ left:12px; }
+    .header .cart-btn{ right:12px; }
+
+    .header-title{
+      margin:0;
+      color:var(--accent);
+      font-size:16px;              /* slightly reduced */
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:8px;
     }
 
-    nav a:hover {
-      color: #ffe3c0;
+    .container{
+      max-width:var(--container-max);
+      margin:20px auto;            /* a touch tighter to match slimmer header */
+      padding:20px;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 40px auto;
-      padding: 30px;
-      background: #fffdf8;
-      border-radius: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    .category{
+      margin-bottom:24px;
     }
 
-    .category {
-      margin-top: 40px;
+    .category h3{
+      margin:0 0 12px;
+      color:var(--accent);
+      font-size:16px;
+      border-bottom:2px solid #e6dcc0;
+      padding-bottom:8px;
     }
 
-    .category h3 {
-      color: #4b2e23;
-      border-bottom: 2px solid #d1b79f;
-      padding-bottom: 6px;
-      margin-bottom: 24px;
-      text-align: center;
+    /* Each product is a full-width row (100% of .container) */
+    .product{
+      background:var(--card);
+      border-radius:var(--card-radius);
+      padding:12px;
+      margin:10px 0;
+      border:1px solid #e0d5bb;
+      box-sizing:border-box;
     }
 
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
+    /* Two-column layout inside each product: image (left) + content (right) */
+    .product-content{
+      display:grid;
+      grid-template-columns: 110px 1fr; /* slightly smaller image to match compact layout */
+      gap:12px;
+      align-items:center;
     }
 
-    .product-card {
-      background: #fdf8f4;
-      border: 1px solid #d8c6b4;
-      border-radius: 10px;
-      padding: 14px;
-      text-align: center;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    .product img{
+      width:110px;
+      height:110px;
+      object-fit:cover;
+      border-radius:10px;
+      border:1px solid #ccc;
+      display:block;
+      cursor:pointer;
     }
 
-    .product-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    .product h4{
+      margin:0 0 8px 0;
+      color:var(--accent);
+      font-size:15px;
     }
 
-    .product-card img {
-      width: 200px;
-      height: 200px;
-      object-fit: cover;
-      border-radius: 8px;
+    .product p{
+      margin:6px 0;
+      color:var(--muted);
+      line-height:1.3;
+      font-size:14px;
     }
 
-    .product-card h4 {
-      color: #3b2f2f;
-      margin: 10px 0 6px;
+    .product-meta{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:8px;
     }
 
-    .product-card p {
-      margin: 4px 0;
-      color: #5b4636;
+    .btn{
+      background:var(--btn);
+      color:#fff;
+      border:0;
+      padding:8px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+    }
+    .btn:disabled{
+      background:#bbb;
+      cursor:not-allowed;
     }
 
-    .product-card button {
-      margin-top: 8px;
-      padding: 8px 14px;
-      background-color: #7b4b34;
-      color: #fffaf0;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .product-card button:hover {
-      background-color: #5c3a2e;
+    /* Small screens: stack image above text (single column) */
+    @media (max-width:640px){
+      .container{ padding:12px; margin:16px auto; }
+      .product-content{ grid-template-columns: 1fr; }
+      .product img{ width:100%; height:200px; max-height:300px; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>☕ CEO Shop</h1>
-    <nav>
-      <a href="index.html">🏠 Home</a>
-      <a href="cart.html">🛒 Cart (<span id="cart-count">0</span>)</a>
-    </nav>
-  </header>
-
-  <div class="container">
-    <div id="product-sections"></div>
+  <div class="header" role="banner">
+    <a href="index.html" class="home-btn" aria-label="Home">🏠 Home</a>
+    <h2 class="header-title">☕ CEO Shop</h2>
+    <a href="cart.html" class="cart-btn" aria-label="Cart">🛒 Cart (<span id="cart-count">0</span>)</a>
   </div>
 
-  <script src="js/cart-utils.js"></script>
-  <script>
-    async function loadProducts() {
-      try {
-        const response = await fetch('/api/products');
-        const products = await response.json();
-        const productSections = document.getElementById('product-sections');
-        productSections.innerHTML = '';
+  <main class="container" id="main">
+    <div id="product-list" aria-live="polite"></div>
+  </main>
 
-        // Group by category
-        const categories = [...new Set(products.map(p => p.category))];
+  <script>
+    // Simple cart count updater (works even if cart-utils.js isn't present)
+    function updateCartCount(){
+      const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+      const qty = cart.reduce((s,i)=> s + (i.qty||0), 0);
+      const el = document.getElementById('cart-count');
+      if(el) el.textContent = qty;
+    }
+
+    function addToCart(id, name, price){
+      let cart = JSON.parse(localStorage.getItem('cart')||'[]');
+      const found = cart.find(it => it.id === id);
+      if(found) found.qty = (found.qty || 0) + 1;
+      else cart.push({ id, name, price, qty: 1 });
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartCount();
+      setTimeout(()=> alert(`✅ Added "${name}" to cart`), 10);
+    }
+
+    async function loadProducts(){
+      try{
+        const res = await fetch('/api/products');
+        if(!res.ok) throw new Error('Network response not ok');
+        const products = await res.json();
+        const productList = document.getElementById('product-list');
+        productList.innerHTML = '';
+
+        // Group by category preserving order
+        const categories = [...new Set(products.map(p=>p.category))];
 
         categories.forEach(cat => {
-          const section = document.createElement('div');
+          const section = document.createElement('section');
           section.className = 'category';
-
           const header = document.createElement('h3');
           header.textContent = cat;
           section.appendChild(header);
 
-          const grid = document.createElement('div');
-          grid.className = 'product-grid';
-
-          products
-            .filter(p => p.category === cat && p.stock > 0)
+          // filter in-stock only
+          products.filter(p => p.category === cat && p.stock > 0)
             .forEach(p => {
-              const card = document.createElement('div');
-              card.className = 'product-card';
-              const imgSrc = p.image_url?.replace('.png', '.jpg');
-              card.innerHTML = `
-                <img src="${imgSrc}" alt="${p.prod_name}">
-                <h4>${p.prod_name}</h4>
-                <p>${p.description || ''}</p>
-                <p><b>Price:</b> RM ${p.price.toFixed(2)}</p>
-                <p><b>Stock:</b> ${p.stock}</p>
-                <button onclick="addToCart('${p.prod_id}', '${p.prod_name}', ${p.price})">
-                  Add to Cart
-                </button>
+              const prod = document.createElement('article');
+              prod.className = 'product';
+              const imgSrc = p.image_url ? p.image_url.replace('.png', '.jpg') : '';
+              // Image is now wrapped in a link to the requested menu URL
+              prod.innerHTML = `
+                <div class="product-content">
+                  <a href="https://chat-ui-30l.pages.dev/menu" aria-label="Open menu for ${escapeHtml(p.prod_name)}">
+                    <img src="${imgSrc}" alt="${escapeHtml(p.prod_name)}">
+                  </a>
+                  <div class="product-info">
+                    <h4>${escapeHtml(p.prod_name)}</h4>
+                    <p>${escapeHtml(p.description || '')}</p>
+                    <div class="product-meta">
+                      <div><strong>Price:</strong> RM ${Number(p.price).toFixed(2)}</div>
+                      <div><strong>Stock:</strong> ${p.stock}</div>
+                      <button class="btn" ${p.stock<=0?'disabled':''} onclick="addToCart('${p.prod_id}','${escapeAttr(p.prod_name)}',${Number(p.price)})">Add to Cart</button>
+                    </div>
+                  </div>
+                </div>
               `;
-              grid.appendChild(card);
+              section.appendChild(prod);
             });
 
-          section.appendChild(grid);
-          productSections.appendChild(section);
+          productList.appendChild(section);
         });
-      } catch (err) {
-        console.error('Failed to load products:', err);
+
+      }catch(err){
+        console.error('Failed to load products', err);
+        const productList = document.getElementById('product-list');
+        productList.innerHTML = '<p style="color:#a00">Failed to load products.</p>';
       }
     }
 
-    function addToCart(id, name, price) {
-      let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const existing = cart.find(item => item.id === id);
-      if (existing) existing.qty++;
-      else cart.push({ id, name, price, qty: 1 });
-      localStorage.setItem('cart', JSON.stringify(cart));
-      updateCartCount();
-      alert(`✅ Added ${name} (RM${price}) to cart`);
+    // small helpers to avoid breaking HTML when names/descriptions contain quotes
+    function escapeHtml(s){
+      if(!s && s !== 0) return '';
+      return String(s)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
+    function escapeAttr(s){
+      // for use inside single-quoted onclick attributes
+      if(!s && s !== 0) return '';
+      return String(s).replace(/'/g,"\\'");
     }
 
+    // init
+    updateCartCount();
     loadProducts();
   </script>
 </body>
