@@ -1,8 +1,0 @@
-name = "chat-ui"
-account_id= "05c9d5cdff82b1526b1636d94d56d2d8"
-compatibility_date = "2024-10-14"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "ceo_orders"
-database_id = "fdc684fb-d1c5-426c-b6c4-a00402afea12"
