@@ -2,273 +2,173 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Shop - CEO Products</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEO Shop</title>
   <style>
-    body { 
-      background:#f4ecd6; 
-      font-family:Segoe UI, Arial, sans-serif; 
-      margin:0; 
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
     }
 
-    .container { 
-      padding:20px; 
-      max-width:800px; 
-      margin:auto; 
+    header {
+      background: #007bff;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    /* Sticky Header */
-    .header {
-      position:sticky;
-      top:0;
-      background:#f4ecd6;
-      z-index:1000;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      padding:12px 0;
-      border-bottom:2px solid #d1c4a1;
+    header h1 {
+      margin: 0;
+      font-size: 20px;
     }
 
-    .home-btn, .cart-btn {
-      background:#996600; 
-      color:white; 
-      border:none; 
-      padding:6px 14px;
-      border-radius:8px; 
-      cursor:pointer; 
-      text-decoration:none;
-      font-size:14px;
-      font-weight:500;
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 15px;
+      font-weight: bold;
     }
 
-    .home-btn { position:absolute; left:20px; }
-    .cart-btn { position:absolute; right:20px; }
-
-    .cart-btn span {
-      font-weight:bold;
-      color:#fff;
-      margin-left:4px;
+    nav a:hover {
+      text-decoration: underline;
     }
 
-    h2.header-title {
-      color:#996600;
-      margin:0;
-      font-size:20px;
+    .container {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
     }
 
-    .category { 
-      margin-top:30px; 
+    #product-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
     }
 
-    .category h3 { 
-      color:#996600; 
-      border-bottom:2px solid #ddd; 
-      padding-bottom:6px; 
+    .product-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+      width: 200px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
     }
 
-    .product {
-      background:#fffbe6; 
-      padding:16px; 
-      border-radius:16px; 
-      margin:12px 0;
+    .product-card:hover {
+      transform: scale(1.03);
     }
 
-    .product-content {
-      display:flex; 
-      gap:14px; 
-      align-items:center;
+    .product-card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 6px;
     }
 
-    .product img {
-      width:110px; 
-      height:110px; 
-      object-fit:cover;
-      border-radius:12px; 
-      border:1px solid #ccc; 
-      cursor:pointer;
-      flex-shrink:0;
+    .product-card button {
+      margin-top: 6px;
+      padding: 6px 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
 
-    .product h4 { 
-      margin:0 0 6px; 
-      color:#996600; 
-      font-size:16px;
+    .product-card button:hover {
+      background-color: #0056b3;
     }
 
-    .product p { 
-      margin:4px 0; 
-      font-size:14px;
-    }
-
-    .btn { 
-      background:#14b47e; 
-      color:#fff; 
-      border:none; 
-      padding:6px 12px; 
-      border-radius:8px; 
-      cursor:pointer; 
-      font-size:14px;
-    }
-
-    .btn:disabled { 
-      background:gray; 
-      cursor:not-allowed; 
+    .cart-count {
+      background: white;
+      color: #007bff;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-weight: bold;
     }
   </style>
 </head>
+
 <body>
-  <div class="header">
-    <a href="index.html" class="home-btn">🏠 Home</a>
-    <h2 class="header-title">🛍️ Shop</h2>
-    <a href="cart.html" class="cart-btn">🛒 Cart (<span id="cart-count">0</span>)</a>
-  </div>
+  <header>
+    <h1>CEO Shop</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="cart.html">🛒 Cart <span id="cart-count" class="cart-count">0</span></a>
+    </nav>
+  </header>
 
   <div class="container">
+    <h2>Our Products</h2>
     <div id="product-list"></div>
   </div>
 
+  <!-- Shared cart counter logic -->
+  <script src="js/cart-utils.js"></script>
+
   <script>
-    // Clear old product data
-    localStorage.removeItem("products");
-    
-    let products = [
-      { id: 1, name: "CEO Coffee 4 in 1", price: 52, stock: 5, category: "Beverage", desc: "Premium instant coffee mix with Ganoderma with sugar.", img: "img/coffee_s.jpg" },
-      { id: 2, name: "CEO Coffee 3 in 1", price: 52, stock: 5, category: "Beverage", desc: "Smooth coffee blend with Lingzhi extract without sugar.", img: "img/coffee_ns.jpg" },
-      { id: 3, name: "Oolong Tea", price: 56, stock: 6, category: "Beverage", desc: "A herbal tea rich in antioxidants.", img: "img/tea.jpg" },
-      { id: 4, name: "Ganoderma Capsule", price: 310, stock: 3, category: "Biotech Product", desc: "Boost immunity and overall health.", img: "img/lingzhi.jpg" },
-      { id: 5, name: "Lacto Berry", price: 84, stock: 4, category: "Health Food", desc: "Probiotic and antioxidant drink mix.", img: "img/berry.jpg" },
-      { id: 6, name: "Herbal Toothpaste", price: 16, stock: 10, category: "Personal Care", desc: "Natural toothpaste for healthy gums and freshness.", img: "img/toothpaste.jpg" },
-      { id: 7, name: "Eco Bio Cleaner", price: 23, stock: 8, category: "Household Product", desc: "All-purpose cleaner for eco-friendly hygiene.", img: "img/cleaner.jpg" }
-    ];
+    async function loadProducts() {
+      try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
 
-    localStorage.setItem("products", JSON.stringify(products));
+        const listContainer = document.getElementById('product-list');
+        listContainer.innerHTML = '';
 
-    function renderProducts() {
-      let list = document.getElementById("product-list");
-      list.innerHTML = "";
+        products
+          .filter(p => p.stock > 0)
+          .forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+              <img src="/img/${p.image_url || 'placeholder.jpg'}" alt="${p.prod_name}">
+              <h4>${p.prod_name}</h4>
+              <p>${p.description || ''}</p>
+              <p><b>Price:</b> RM ${p.price.toFixed(2)}</p>
+              <p><b>Stock:</b> ${p.stock}</p>
+              <button onclick="addToCart('${p.prod_id}', '${p.prod_name}', ${p.price})">
+                Add to Cart
+              </button>
+            `;
+            listContainer.appendChild(card);
+          });
+      } catch (err) {
+        console.error('❌ Failed to load products:', err);
+      }
+    }
 
-      let categories = [...new Set(products.map(p => p.category))];
+    function addToCart(id, name, price) {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const existing = cart.find(item => item.id === id);
 
-      categories.forEach(cat => {
-        let section = document.createElement("div");
-        section.className = "category";
-        section.innerHTML = `<h3>${cat}</h3>`;
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ id, name, price, qty: 1 });
+      }
 
-        products.filter(p => p.category === cat).forEach(p => {
-          let div = document.createElement("div");
-          div.className = "product";
-          div.innerHTML = `
-            <div class="product-content">
-              <img src="${p.img}" alt="${p.name}" loading="lazy" onclick="openProduct(${p.id})">
-              <div>
-                <h4>${p.name}</h4>
-                <p>${p.desc}</p>
-                <p><strong>RM ${p.price}</strong> | Stock: <span id="stock-${p.id}">${p.stock}</span></p>
-                <button class="btn" onclick="addToCart(${p.id})" ${p.stock<=0?'disabled':''}>Add to Cart</button>
-              </div>
-            </div>
-          `;
-          section.appendChild(div);
-        });
-
-        list.appendChild(section);
-      });
+      localStorage.setItem('cart', JSON.stringify(cart));
       updateCartCount();
-    }
-
-    function openProduct(id) {
-      localStorage.setItem("selectedProductId", id);
-      window.location.href = "menu.html";
-    }
-
-    function addToCart(id) {
-      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-      let product = products.find(p => p.id === id);
-      if (!product || product.stock <= 0) return alert("Out of stock!");
-
-      let item = cart.find(i => i.id === id);
-      if (item) item.qty++;
-      else cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
-      localStorage.setItem("cartItems", JSON.stringify(cart));
-
-      product.stock--;
-      localStorage.setItem("products", JSON.stringify(products));
-      renderProducts();
+      alert(`✅ Added ${name} (RM${price}) to cart`);
     }
 
     function updateCartCount() {
-      let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-      let count = cart.reduce((sum, item) => sum + item.qty, 0);
-      document.getElementById("cart-count").textContent = count;
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const total = cart.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById('cart-count').innerText = total;
     }
 
-    renderProducts();
+    // Initialize page
+    updateCartCount();
+    loadProducts();
   </script>
-  
-  <!-- ⬇️ 2nd script: shared cart counter logic -->
-  <script src="js/cart-utils.js"></script>
-  <script>
-    
-const ADMIN_TOKEN = "changeme123"; // same as Wrangler env for now
-const API_URL = "/api/products";
-
-async function loadProducts() {
-  const res = await fetch(API_URL);
-  const products = await res.json();
-  const isAdmin = window.location.search.includes("admin=1");
-
-  const container = document.getElementById("products");
-  container.innerHTML = "";
-
-  products.forEach(p => {
-    const card = document.createElement("div");
-    card.className = "product-card";
-    card.innerHTML = `
-      <h3>${p.prod_name}</h3>
-      <p>Price: RM ${p.price}</p>
-      <p>Stock: ${p.stock}</p>
-      <p>${p.description || ""}</p>
-      ${isAdmin ? `<button onclick="editProduct('${p.prod_id}', ${p.price}, ${p.stock}, '${p.description || ""}')">✏️ Edit</button>` : ""}
-    `;
-    container.appendChild(card);
-  });
-}
-
-function editProduct(id, price, stock, desc) {
-  const newPrice = prompt("Enter new price:", price);
-  const newStock = prompt("Enter new stock:", stock);
-  const newDesc = prompt("Enter new description:", desc);
-
-  if (newPrice === null || newStock === null) return;
-
-  fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${ADMIN_TOKEN}`
-    },
-    body: JSON.stringify({
-      prod_id: id,
-      price: parseFloat(newPrice),
-      stock: parseInt(newStock),
-      description: newDesc
-    })
-  })
-  .then(res => res.json())
-  .then(result => {
-    if (result.success) {
-      alert("✅ Product updated!");
-      loadProducts();
-    } else {
-      alert("❌ Update failed: " + result.error);
-    }
-  });
-}
-
-loadProducts();
-</script>
-
-<div id="products"></div>
 </body>
   </html>
