@@ -13,6 +13,7 @@
       --btn:#14b47e;
       --card-radius:14px;
       --container-max:800px;
+      --header-h:48px;
     }
 
     html,body{
@@ -23,20 +24,28 @@
       color:#3b2f2f;
     }
 
-    /* Slimmer sticky header with 3 items: Home (left), Title (center), Cart (right) */
+    /* Fixed header (frozen) — always visible while products scroll */
     .header{
-      position:sticky;
+      position:fixed;        /* frozen */
       top:0;
+      left:0;
+      right:0;
       z-index:1000;
       background:var(--bg);
-      padding:8px 0;                /* reduced padding for slimmer row */
+      padding:6px 0;
       border-bottom:2px solid #d1c4a1;
       display:flex;
       align-items:center;
       justify-content:center;
-      height:48px;                 /* slimmer height */
+      height:var(--header-h);
       box-sizing:border-box;
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
+
+    /* Make room for the fixed header so content doesn't hide behind it */
+    body { padding-top: var(--header-h); }
 
     .header .home-btn,
     .header .cart-btn{
@@ -46,7 +55,7 @@
       background:var(--accent);
       color:#fff;
       border:0;
-      padding:6px 10px;            /* slightly smaller buttons */
+      padding:6px 10px;
       border-radius:8px;
       text-decoration:none;
       font-weight:600;
@@ -62,32 +71,39 @@
     .header-title{
       margin:0;
       color:var(--accent);
-      font-size:16px;              /* slightly reduced */
+      font-size:16px;
       font-weight:700;
       display:flex;
       align-items:center;
       gap:8px;
     }
 
+    /* Main container centered and constrained */
     .container{
       max-width:var(--container-max);
-      margin:20px auto;            /* a touch tighter to match slimmer header */
-      padding:20px;
+      margin:20px auto;
+      padding:0 20px 20px;
+      box-sizing:border-box;
     }
 
     .category{
-      margin-bottom:24px;
+      margin-bottom:8px; /* small gap; the header itself has spacing */
     }
 
+    /* Make category heading sticky INSIDE the scrollable product-list */
     .category h3{
-      margin:0 0 12px;
+      margin:0;
+      position:sticky;
+      top:0; /* sticks to the top of the scroll container (#product-list) */
+      z-index:6;
+      background: linear-gradient(180deg, rgba(244,236,214,0.98), rgba(244,236,214,0.95)); /* slight gradient so it separates from products */
       color:var(--accent);
       font-size:16px;
-      border-bottom:2px solid #e6dcc0;
-      padding-bottom:8px;
+      padding:8px 0;
+      border-bottom:1px solid #e6dcc0;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.03);
     }
 
-    /* Each product is a full-width row (100% of .container) */
     .product{
       background:var(--card);
       border-radius:var(--card-radius);
@@ -97,10 +113,9 @@
       box-sizing:border-box;
     }
 
-    /* Two-column layout inside each product: image (left) + content (right) */
     .product-content{
       display:grid;
-      grid-template-columns: 110px 1fr; /* slightly smaller image to match compact layout */
+      grid-template-columns: 110px 1fr;
       gap:12px;
       align-items:center;
     }
@@ -151,11 +166,27 @@
       cursor:not-allowed;
     }
 
+    /* Make the product list area scroll inside the viewport while header stays fixed */
+    #product-list {
+      /* height is viewport minus header and a small bottom gap */
+      max-height: calc(100vh - var(--header-h) - 24px);
+      overflow-y: auto;
+      padding-right: 8px; /* room for scrollbar */
+      padding-top: 6px;   /* space so first category header sits nicely */
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* nicer thin scrollbar on WebKit */
+    #product-list::-webkit-scrollbar { width:10px; }
+    #product-list::-webkit-scrollbar-thumb { background: rgba(91,70,54,0.25); border-radius:8px; }
+
     /* Small screens: stack image above text (single column) */
     @media (max-width:640px){
-      .container{ padding:12px; margin:16px auto; }
+      .container{ padding:0 12px 12px; margin:12px auto; }
       .product-content{ grid-template-columns: 1fr; }
       .product img{ width:100%; height:200px; max-height:300px; }
+      #product-list { max-height: calc(100vh - var(--header-h) - 16px); }
+      .category h3 { top: 0; padding:10px 0; }
     }
   </style>
 </head>
@@ -167,11 +198,11 @@
   </div>
 
   <main class="container" id="main">
+    <!-- product-list is a scrollable region; header stays frozen while products scroll -->
     <div id="product-list" aria-live="polite"></div>
   </main>
 
   <script>
-    // Simple cart count updater (works even if cart-utils.js isn't present)
     function updateCartCount(){
       const cart = JSON.parse(localStorage.getItem('cart')||'[]');
       const qty = cart.reduce((s,i)=> s + (i.qty||0), 0);
@@ -197,7 +228,6 @@
         const productList = document.getElementById('product-list');
         productList.innerHTML = '';
 
-        // Group by category preserving order
         const categories = [...new Set(products.map(p=>p.category))];
 
         categories.forEach(cat => {
@@ -207,13 +237,12 @@
           header.textContent = cat;
           section.appendChild(header);
 
-          // filter in-stock only
           products.filter(p => p.category === cat && p.stock > 0)
             .forEach(p => {
               const prod = document.createElement('article');
               prod.className = 'product';
               const imgSrc = p.image_url ? p.image_url.replace('.png', '.jpg') : '';
-              // Image is now wrapped in a link to the requested menu URL
+
               prod.innerHTML = `
                 <div class="product-content">
                   <a href="https://chat-ui-30l.pages.dev/menu" aria-label="Open menu for ${escapeHtml(p.prod_name)}">
@@ -243,7 +272,6 @@
       }
     }
 
-    // small helpers to avoid breaking HTML when names/descriptions contain quotes
     function escapeHtml(s){
       if(!s && s !== 0) return '';
       return String(s)
@@ -254,7 +282,6 @@
         .replace(/'/g,'&#39;');
     }
     function escapeAttr(s){
-      // for use inside single-quoted onclick attributes
       if(!s && s !== 0) return '';
       return String(s).replace(/'/g,"\\'");
     }
