@@ -187,6 +187,23 @@
       .product img{ width:100%; height:200px; max-height:300px; }
       #product-list { max-height: calc(100vh - var(--header-h) - 16px); }
       .category h3 { top: 0; padding:10px 0; }
+
+      /* Stack product meta vertically and center items on small screens
+         so the "Add to Cart" button appears centered under the product info. */
+      .product-meta{
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      /* Center the textual meta lines (price / stock) when stacked */
+      .product-meta > div{
+        text-align: center;
+        width: 100%;
+      }
+      /* Slightly larger/taller button for easier tapping on mobile */
+      .btn{
+        padding:10px 16px;
+      }
     }
   </style>
 </head>
