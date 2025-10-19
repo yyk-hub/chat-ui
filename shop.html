@@ -188,6 +188,21 @@
       #product-list { max-height: calc(100vh - var(--header-h) - 16px); }
       .category h3 { top: 0; padding:10px 0; }
 
+      /* ✅ Keep Price + Stock inline and centered */
+  .product-meta{
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* ✅ Force the Add to Cart button onto its own line and center it */
+  .product-meta .btn {
+    flex-basis: 100%;
+    text-align: center;
+  }
+
       /* Stack product meta vertically and center items on small screens
          so the "Add to Cart" button appears centered under the product info. */
       .product-meta{
