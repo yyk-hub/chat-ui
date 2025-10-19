@@ -271,8 +271,8 @@
                     <h4>${escapeHtml(p.prod_name)}</h4>
                     <p>${escapeHtml(p.description || '')}</p>
                     <div class="product-meta">
-                      <div><strong>Price:</strong> RM ${Number(p.price).toFixed(2)}</div>
-                      <div><strong>Stock:</strong> ${p.stock}</div>
+                      <span><strong>Price:</strong> RM ${Number(p.price).toFixed(2)}</span>
+                      <span><strong>Stock:</strong> ${p.stock}</span>
                       <button class="btn" ${p.stock<=0?'disabled':''} onclick="addToCart('${p.prod_id}','${escapeAttr(p.prod_name)}',${Number(p.price)})">Add to Cart</button>
                     </div>
                   </div>
