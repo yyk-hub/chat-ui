@@ -231,11 +231,11 @@
       if(el) el.textContent = qty;
     }
 
-    function addToCart(id, name, price){
+    function addToCart(id, name, price, weight){
       let cart = JSON.parse(localStorage.getItem('cartItems')||'[]');
       const found = cart.find(it => it.id === id);
       if(found) found.qty = (found.qty || 0) + 1;
-      else cart.push({ id, name, price, qty: 1 });
+      else cart.push({ id, name, price, weight, qty: 1 });
       localStorage.setItem('cartItems', JSON.stringify(cart));
       updateCartCount();
       setTimeout(()=> alert(`✅ Added "${name}" to cart`), 10);
@@ -277,7 +277,7 @@
                       <span><strong>Stock:</strong> ${p.stock}</span>
                       </div>
                       <button class="btn" ${p.stock<=0?'disabled':''} 
-                      onclick="addToCart('${p.prod_id}','${escapeAttr(p.prod_name)}',${Number(p.price)})"> ${p.stock > 0 ? 'Add to Cart' : 'Out of Stock'}</button>
+                      onclick="addToCart('${p.prod_id}','${escapeAttr(p.prod_name)}',${Number(p.price)},${Number(p.weight)})"> ${p.stock > 0 ? 'Add to Cart' : 'Out of Stock'}</button>
                   </div>
                 </div>
               `;
