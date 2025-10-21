@@ -275,6 +275,8 @@ function loadOrder() {
   table += `</table>`;
   summaryDiv.innerHTML = table;
   totalDiv.innerHTML = `Total Weight: ${totalWeight.toFixed(2)} kg<br><strong>RM ${total.toFixed(2)}</strong>`;
+  totalDiv.innerHTML = `Shipping: RM ${shipping} <br>Total: <strong>RM ${total.toFixed(2)}</strong>`;
+
 }
 
 async function confirmOrder() {
