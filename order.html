@@ -22,20 +22,22 @@
       top: 0;
       background: #f4ecd6;
       border-bottom: 2px solid #d1c4a1;
-      padding: 10px 0;
+      padding: 12px 0;
       text-align: center;
+      z-index: 100;
     }
 
     .header-title {
       color: #996600;
       margin: 0;
       font-size: 22px;
+      font-weight: 600;
     }
 
     .home-btn {
       position: absolute;
       left: 20px;
-      top: 10px;
+      top: 12px;
       background: #996600;
       color: white;
       border: none;
@@ -44,97 +46,124 @@
       cursor: pointer;
       text-decoration: none;
       font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .section {
       background: #fffbe6;
       border-radius: 16px;
-      padding: 16px;
+      padding: 18px;
       margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     label {
       display: block;
-      margin-top: 10px;
+      margin-top: 12px;
       color: #654321;
+      font-weight: 500;
     }
 
     input {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
-      margin-top: 4px;
-      font-size: 14px;
+      margin-top: 6px;
+      font-size: 15px;
+      box-sizing: border-box;
     }
 
     button {
       background: #14b47e;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 10px;
       cursor: pointer;
       display: block;
-      margin: 15px auto;
-      font-size: 15px;
+      margin: 20px auto 10px;
+      font-size: 16px;
       font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #12a16d;
+    }
+
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
+      font-size: 14px;
     }
 
     th, td {
-      padding: 8px;
-      border-bottom: 1px solid #ddd;
+      padding: 10px 8px;
       text-align: left;
+      border-bottom: 1px solid #eee;
     }
 
     th {
       background: #e9d8a6;
       color: #654321;
+      font-weight: 600;
     }
 
-    .paid {
-      color: green;
-      font-weight: bold;
-    }
-
-    .pending {
-      color: red;
-      font-weight: bold;
-    }
+    .paid { color: #0b8b0b; font-weight: bold; }
+    .pending { color: #d32f2f; font-weight: bold; }
 
     a.track-link {
       color: #14b47e;
       text-decoration: none;
+      font-weight: 500;
     }
 
     a.track-link:hover {
       text-decoration: underline;
     }
+
+    .loading {
+      text-align: center;
+      color: #996600;
+      font-style: italic;
+      padding: 20px;
+    }
+
+    .no-orders {
+      text-align: center;
+      color: #999;
+      padding: 20px;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
   <div class="header">
-    <a href="index.html" class="home-btn">🏠 Home</a>
-    <h2 class="header-title">📦 My Orders</h2>
+    <a href="index.html" class="home-btn">Home</a>
+    <h2 class="header-title">My Orders</h2>
   </div>
 
   <div class="container">
+    <!-- Search Form -->
     <div class="section">
-      <label>Name</label>
-      <input type="text" id="custName" placeholder="Enter your name">
-      <label>Phone</label>
-      <input type="text" id="custPhone" placeholder="Enter phone number">
-      <button onclick="loadOrders()">🔍 View My Orders</button>
+      <label>Phone Number <span style="color:#d32f2f;">*</span>
+      <input type="text" id="custPhone" placeholder="e.g. 0123456789">
+      <button id="loadBtn" onclick="loadOrders()">View My Orders</button>
     </div>
 
+    <!-- Results -->
     <div id="ordersList" class="section" style="display:none;">
-      <h3>Order History</h3>
+      <h3 style="margin-top:0; color:#996600;">Order History</h3>
+      <div id="loadingMsg" class="loading" style="display:none;">Loading your orders...</div>
       <table id="ordersTable">
         <thead>
           <tr>
@@ -153,39 +182,71 @@
   </div>
 
   <script>
-    const BACKEND_URL = 'https://chat-ui-30l.pages.dev/api/orders';
+    // Use same origin → /api/orders (same as checkout)
+    const BACKEND_URL = "";
+
+    // Format D1 timestamp → e.g. "22 Oct 2025, 3:45 PM"
+    function formatDate(isoString) {
+      const d = new Date(isoString);
+      return d.toLocaleDateString('en-MY', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      }) + ', ' + d.toLocaleTimeString('en-MY', {
+        hour: 'numeric', minute: '2-digit'
+      });
+    }
 
     async function loadOrders() {
-      const name = document.getElementById('custName').value.trim();
       const phone = document.getElementById('custPhone').value.trim();
-      if (!name || !phone) return alert('⚠️ Please fill in both name and phone.');
+      if (!phone) {
+        alert('Please enter your phone number.');
+        return;
+      }
+
+      const btn = document.getElementById('loadBtn');
+      const list = document.getElementById('ordersList');
+      const loading = document.getElementById('loadingMsg');
+      const tbody = document.querySelector('#ordersTable tbody');
+
+      // UI: show loading
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+      list.style.display = 'block';
+      loading.style.display = 'block';
+      tbody.innerHTML = '';
 
       try {
         const res = await fetch(`${BACKEND_URL}/api/orders?phone=${encodeURIComponent(phone)}`);
-        const data = await res.json();
-        const tableBody = document.querySelector('#ordersTable tbody');
-        tableBody.innerHTML = '';
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        if (!data.length) {
-          tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No orders found.</td></tr>`;
-        } else {
-          data.forEach(o => {
-            const row = `<tr>
-              <td>${o.order_id}</td>
-              <td>${o.prod_name}</td>
-              <td>${o.total_amt.toFixed(2)}</td>
-              <td>${o.courier_name}</td>
-              <td><a href="${o.tracking_link}" target="_blank" class="track-link">Track</a></td>
-              <td class="${o.pymt_status === 'Paid' ? 'paid' : 'pending'}">${o.pymt_status}</td>
-              <td>${o.created_at}</td>
-            </tr>`;
-            tableBody.insertAdjacentHTML('beforeend', row);
-          });
+        const orders = await res.json();
+
+        loading.style.display = 'none';
+
+        if (!orders || orders.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="no-orders">No orders found for this phone.</td></tr>`;
+          return;
         }
 
-        document.getElementById('ordersList').style.display = 'block';
+        orders.forEach(o => {
+          const row = `
+            <tr>
+              <td><strong>${o.order_id}</strong></td>
+              <td>${o.prod_name}</td>
+              <td><strong>RM ${parseFloat(o.total_amt).toFixed(2)}</strong></td>
+              <td>${o.courier_name || 'Pos Laju'}</td>
+              <td><a href="${o.tracking_link}" target="_blank" class="track-link">Track</a></td>
+              <td class="${o.pymt_status === 'Paid' ? 'paid' : 'pending'}">${o.pymt_status}</td>
+              <td>${formatDate(o.created_at)}</td>
+            </tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+
       } catch (err) {
-        alert('❌ Failed to load orders: ' + err.message);
+        loading.style.display = 'none';
+        tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Error: ${err.message}</td></tr>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "View My Orders";
       }
     }
   </script>
