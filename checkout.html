@@ -84,6 +84,8 @@
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 14px;
     }
 
     th, td {
@@ -166,7 +168,13 @@
       margin-top: 5px;
     }
 
-    /* Print-only styles */
+    .pickup-warning {
+      color: #d32f2f;
+      font-size: 13px;
+      margin-top: 5px;
+      display: none;
+    }
+
     @media print {
       body * { visibility: hidden; }
       #OrderDisplay, #OrderDisplay * { visibility: visible; }
@@ -178,7 +186,7 @@
         background: white;
         font-family: Arial, sans-serif;
       }
-      .print-btn, .confirm-btn, .header, .section { display: none; }
+      .print-btn, .confirm-btn, .header, .section:not(#OrderDisplay) { display: none; }
     }
   </style>
 </head>
@@ -191,12 +199,62 @@
 
   <div class="container">
 
-    <!-- ORDER SUMMARY -->
+    <!-- DELIVERY DETAILS + SHIPPING METHOD -->
+    <div class="section">
+      <h3>🚚 Delivery Details</h3>
+      <label>Name</label>
+      <input type="text" id="custName" placeholder="Enter your name">
+      <label>Phone</label>
+      <input type="text" id="custPhone" placeholder="Enter phone number">
+      <label>Address</label>
+      <textarea id="custAddress" rows="3" placeholder="Delivery address"></textarea>
+      <label>Postcode</label>
+      <input type="text" id="custPostcode" placeholder="e.g. 81300">
+      <label>State</label>
+      <select id="custState">
+        <option value="">Select State</option>
+        <option value="Sabah">Sabah</option>
+        <option value="Sarawak">Sarawak</option>
+        <option value="West Malaysia">West Malaysia</option>
+      </select>
+      <label>Country</label>
+      <input type="text" id="custCountry" value="Malaysia" readonly>
+
+      <!-- SHIPPING METHOD (MOVED UP) -->
+      <label>Shipping Option</label>
+      <select id="shippingMethod">
+        <option value="express">Express Free Shipping (≥ RM500)</option>
+        <option value="batch">Free Batch Shipping (1–4 weeks)</option>
+        <option value="courier">Standard Courier</option>
+        <option value="pickup">Self Pickup (Kota Kinabalu)</option>
+      </select>
+      <p id="pickupWarning" class="pickup-warning">
+        Only available in Kota Kinabalu. We'll contact you via WhatsApp.
+      </p>
+    </div>
+
+    <!-- PAYMENT -->
+    <div class="section">
+      <h3>💳 Payment</h3>
+      <p>Scan one of the QR codes below to make payment:</p>
+      <div class="qr-section">
+        <div class="qr-box">
+          <p>Bank QR</p>
+          <img src="img/bankqr.jpg" alt="Bank QR">
+        </div>
+        <div class="qr-box">
+          <p>Touch 'n Go</p>
+          <img src="img/tngqr.jpg" alt="TNG QR">
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDER SUMMARY (MOVED TO BOTTOM) -->
     <div class="section">
       <h3>Order Summary</h3>
       <div id="cart-items"></div>
 
-      <table style="width:100%; margin-top:15px; border-collapse:collapse; font-size:14px;">
+      <table>
         <tr>
           <th style="text-align:left; padding:6px 0; color:#654321;">Total Weight</th>
           <td id="total-weight" style="text-align:right; font-weight:600;">0.00 kg</td>
@@ -219,54 +277,6 @@
       </table>
     </div>
 
-    <!-- DELIVERY DETAILS -->
-    <div class="section">
-      <h3>🚚 Delivery Details</h3>
-      <label>Name</label>
-      <input type="text" id="custName" placeholder="Enter your name">
-      <label>Phone</label>
-      <input type="text" id="custPhone" placeholder="Enter phone number">
-      <label>Address</label>
-      <textarea id="custAddress" rows="3" placeholder="Delivery address"></textarea>
-      <label>Postcode</label>
-      <input type="text" id="custPostcode" placeholder="e.g. 81300">
-      <label>State</label>
-      <select id="custState">
-        <option value="">Select State</option>
-        <option value="Sabah">Sabah</option>
-        <option value="Sarawak">Sarawak</option>
-        <option value="West Malaysia">West Malaysia</option>
-      </select>
-      <label>Country</label>
-      <input type="text" id="custCountry" value="Malaysia" readonly>
-
-      <!-- SHIPPING METHOD -->
-      <label>Shipping Method</label>
-      <select id="shippingMethod">
-        <option value="courier">Standard Courier</option>
-        <option value="pickup">Self Pickup (Kota Kinabalu only)</option>
-      </select>
-      <p class="shipping-note" id="pickupNote" style="display:none; color:#d32f2f;">
-        Only available in Kota Kinabalu. We'll contact you via WhatsApp.
-      </p>
-    </div>
-
-    <!-- PAYMENT -->
-    <div class="section">
-      <h3>💳 Payment</h3>
-      <p>Scan one of the QR codes below to make payment:</p>
-      <div class="qr-section">
-        <div class="qr-box">
-          <p>Bank QR</p>
-          <img src="img/bankqr.jpg" alt="Bank QR">
-        </div>
-        <div class="qr-box">
-          <p>Touch 'n Go</p>
-          <img src="img/tngqr.jpg" alt="TNG QR">
-        </div>
-      </div>
-    </div>
-
     <!-- CONFIRM BUTTON -->
     <button class="confirm-btn" id="confirmBtn" onclick="confirmOrder()">✅ Confirm Order</button>
 
@@ -278,27 +288,27 @@
   <script>
     const BACKEND_URL = "";
 
-    // === NEW SHIPPING CALCULATOR ===
+    // === SHIPPING LOGIC ===
     function calculateShippingCost(subTotal, state, weight, method) {
       const isSabah = state === "Sabah";
       const isPickup = method === "pickup";
 
-      // 4. Self Pickup
-      if (isPickup) {
-        return { cost: 0, note: "Self Pickup – Collect via WhatsApp", eta: "Same day" };
-      }
-
-      // 1. Free Batch Shipping
-      if (subTotal < 500) {
-        return { cost: 0, note: "Free Batch Shipping", eta: "1–4 weeks" };
-      }
-
-      // 2. Express Free Shipping
-      if (subTotal >= 500) {
+      // 1. Express Free ≥ RM500
+      if (subTotal >= 500 && method !== "pickup") {
         return { cost: 0, note: "Express Free Shipping", eta: "1–4 days" };
       }
 
-      // 3. Standard Courier
+      // 2. Free Batch (only if < RM500 and selected)
+      if (method === "batch") {
+        return { cost: 0, note: "Free Batch Shipping", eta: "1–4 weeks" };
+      }
+
+      // 3. Self Pickup
+      if (isPickup) {
+        return { cost: 0, note: "Self Pickup", eta: "Next day" };
+      }
+
+      // 4. Standard Courier
       const base = isSabah ? 10 : 20;
       const perKg = isSabah ? 3 : 7;
       const cost = base + (Math.ceil(weight) * perKg);
@@ -313,7 +323,7 @@
 
       if (!cart.length) {
         itemsDiv.innerHTML = `<p style="text-align:center; color:#999; margin:20px 0;">Your cart is empty</p>`;
-        updateTotals();
+        updateSummary();
         return;
       }
 
@@ -343,10 +353,10 @@
 
       html += `</table>`;
       itemsDiv.innerHTML = html;
-      updateTotals();
+      updateSummary();
     }
 
-    function updateTotals() {
+    function updateSummary() {
       const state = document.getElementById("custState").value || "Sabah";
       const method = document.getElementById("shippingMethod").value;
       const { cost, note, eta } = calculateShippingCost(subTotal, state, totalWeight, method);
@@ -357,18 +367,23 @@
       document.getElementById("shipping-note").textContent = `${note} • ${eta}`;
       document.getElementById("grand-total").textContent = `RM ${(subTotal + cost).toFixed(2)}`;
 
-      // Show pickup note
-      document.getElementById("pickupNote").style.display = method === "pickup" ? "block" : "none";
+      // Auto-select Express if ≥500
+      if (subTotal >= 500 && method !== "pickup") {
+        document.getElementById("shippingMethod").value = "express";
+      }
+
+      // Show pickup warning
+      document.getElementById("pickupWarning").style.display = method === "pickup" ? "block" : "none";
     }
 
-    // Update on change
+    // Re-run on any change
     ["custState", "shippingMethod"].forEach(id => {
-      document.getElementById(id).addEventListener("change", updateTotals);
+      document.getElementById(id).addEventListener("change", updateSummary);
     });
 
     loadOrder();
 
-    // === Confirm Order ===
+    // === CONFIRM ORDER ===
     async function confirmOrder() {
       const btn = document.getElementById("confirmBtn");
       if (btn.disabled) return;
@@ -415,7 +430,9 @@
         total_amt: totalAmt,
         shipping_wt: totalWeight,
         shipping_cost: shippingCost,
-        shipping_method: method === "pickup" ? "Self Pickup" : "Courier",
+        shipping_method: method === "pickup" ? "Self Pickup" : 
+                         method === "express" ? "Express Free" : 
+                         method === "batch" ? "Free Batch" : "Standard Courier",
         delivery_eta: eta,
         pymt_method: "FPX", pymt_status: "Paid",
         courier_name: method === "pickup" ? "Self Pickup" : "Pos Laju",
@@ -445,7 +462,7 @@
       }
     }
 
-    // === View My Order ===
+    // === VIEW MY ORDER ===
     async function viewMyOrder() {
       const phone = document.getElementById("custPhone").value.trim();
       if (!phone) return;
