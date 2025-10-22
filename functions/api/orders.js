@@ -1,7 +1,7 @@
 // ===== Shipping Cost Calculator =====
 function calculateShipping(state, weight) {
-  const sabahRates = [9, 11, 12, 13, 15];
-  const otherRates = [18, 27, 35, 44, 52];
+  const sabahRates = [10, 11, 12, 13, 15];
+  const otherRates = [20, 27, 35, 44, 52];
   const kg = Math.ceil(weight);
   const index = Math.min(kg, 5) - 1;
   if (state === "Sabah") return sabahRates[index];
