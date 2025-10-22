@@ -96,14 +96,6 @@
       color: #654321;
     }
 
-    .total {
-      text-align: right;
-      font-weight: bold;
-      color: #996600;
-      font-size: 18px;
-      margin-top: 10px;
-    }
-
     .qr-section {
       display: flex;
       justify-content: center;
@@ -162,18 +154,31 @@
       cursor: not-allowed;
     }
 
-    .order {
-      text-align: center;
-      margin-top: 20px;
+    .print-btn {
+      background: #996600;
+      margin-top: 15px;
     }
 
-    .order button {
-      background: transparent;
-      color: #996600;
-      border: 2px solid #996600;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
+    .shipping-note {
+      font-size: 13px;
+      color: #654321;
+      font-style: italic;
+      margin-top: 5px;
+    }
+
+    /* Print-only styles */
+    @media print {
+      body * { visibility: hidden; }
+      #OrderDisplay, #OrderDisplay * { visibility: visible; }
+      #OrderDisplay {
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%;
+        padding: 20px;
+        background: white;
+        font-family: Arial, sans-serif;
+      }
+      .print-btn, .confirm-btn, .header, .section { display: none; }
     }
   </style>
 </head>
@@ -185,31 +190,36 @@
   </div>
 
   <div class="container">
+
+    <!-- ORDER SUMMARY -->
     <div class="section">
-  <h3>Order Summary</h3>
-  <div id="cart-items"></div>
+      <h3>Order Summary</h3>
+      <div id="cart-items"></div>
 
-  <!-- Summary Table -->
-  <table style="width:100%; margin-top:15px; border-collapse:collapse; font-size:14px;">
-    <tr>
-      <th style="text-align:left; padding:6px 0; color:#654321;">Total Weight</th>
-      <td id="total-weight" style="text-align:right; font-weight:600;">0.00 kg</td>
-    </tr>
-    <tr>
-      <th style="text-align:left; padding:6px 0; color:#654321;">Sub-total</th>
-      <td id="sub-total" style="text-align:right;">RM 0.00</td>
-    </tr>
-    <tr>
-      <th style="text-align:left; padding:6px 0; color:#654321;">Shipping Cost</th>
-      <td id="shipping-cost" style="text-align:right; color:#14b47e;">RM 0.00</td>
-    </tr>
-    <tr style="border-top:2px solid #996600; font-weight:bold; font-size:1.1em;">
-      <th style="text-align:left; padding:8px 0; color:#996600;">Total Amount</th>
-      <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
-    </tr>
-  </table>
-</div>
+      <table style="width:100%; margin-top:15px; border-collapse:collapse; font-size:14px;">
+        <tr>
+          <th style="text-align:left; padding:6px 0; color:#654321;">Total Weight</th>
+          <td id="total-weight" style="text-align:right; font-weight:600;">0.00 kg</td>
+        </tr>
+        <tr>
+          <th style="text-align:left; padding:6px 0; color:#654321;">Sub-total</th>
+          <td id="sub-total" style="text-align:right;">RM 0.00</td>
+        </tr>
+        <tr>
+          <th style="text-align:left; padding:6px 0; color:#654321;">Shipping</th>
+          <td id="shipping-cost" style="text-align:right; color:#14b47e;">RM 0.00</td>
+        </tr>
+        <tr>
+          <td colspan="2" id="shipping-note" class="shipping-note"></td>
+        </tr>
+        <tr style="border-top:2px solid #996600; font-weight:bold; font-size:1.1em;">
+          <th style="text-align:left; padding:8px 0; color:#996600;">Total Amount</th>
+          <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
+        </tr>
+      </table>
+    </div>
 
+    <!-- DELIVERY DETAILS -->
     <div class="section">
       <h3>🚚 Delivery Details</h3>
       <label>Name</label>
@@ -223,14 +233,25 @@
       <label>State</label>
       <select id="custState">
         <option value="">Select State</option>
-        <option>Sabah</option>
-        <option>Sarawak</option>
-        <option>West Malaysia</option>
+        <option value="Sabah">Sabah</option>
+        <option value="Sarawak">Sarawak</option>
+        <option value="West Malaysia">West Malaysia</option>
       </select>
       <label>Country</label>
       <input type="text" id="custCountry" value="Malaysia" readonly>
+
+      <!-- SHIPPING METHOD -->
+      <label>Shipping Method</label>
+      <select id="shippingMethod">
+        <option value="courier">Standard Courier</option>
+        <option value="pickup">Self Pickup (Kota Kinabalu only)</option>
+      </select>
+      <p class="shipping-note" id="pickupNote" style="display:none; color:#d32f2f;">
+        Only available in Kota Kinabalu. We'll contact you via WhatsApp.
+      </p>
     </div>
 
+    <!-- PAYMENT -->
     <div class="section">
       <h3>💳 Payment</h3>
       <p>Scan one of the QR codes below to make payment:</p>
@@ -246,216 +267,234 @@
       </div>
     </div>
 
+    <!-- CONFIRM BUTTON -->
     <button class="confirm-btn" id="confirmBtn" onclick="confirmOrder()">✅ Confirm Order</button>
 
-   // -------------------------------------------------
-//  View My Order – shows the latest order for the phone number
-// -------------------------------------------------
-async function viewMyOrder() {
-  const phone = document.getElementById("custPhone").value.trim();
-  if (!phone) {
-    alert("Please enter your phone number first.");
-    return;
-  }
+    <!-- ORDER DISPLAY + PRINT -->
+    <div id="OrderDisplay" style="margin-top:20px; font-size:14px; min-height:30px;"></div>
 
-  const display = document.getElementById("OrderDisplay");
-  display.innerHTML = "<p style='color:#666;'>Loading…</p>";
-
-  try {
-    const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const orders = await res.json();
-    if (!orders || orders.length === 0) {
-      display.innerHTML = "<p>No orders found for this phone.</p>";
-      return;
-    }
-
-    // Show the **most recent** order
-    const o = orders[0];
-
-    display.innerHTML = `
-      <div style="background:#fffbe6;padding:12px;border-radius:12px;">
-        <p><strong>Order ID:</strong> ${o.order_id}</p>
-        <p><strong>Product(s):</strong> ${o.prod_name}</p>
-        <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg (to ${o.state_to})</p>
-        <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
-        <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
-        <p><strong>Total Paid:</strong> <span style="color:#996600;font-weight:bold;">RM ${o.total_amt?.toFixed(2)}</span></p>
-        <p><strong>Status:</strong> <span style="color:green;">${o.pymt_status}</span></p>
-        <p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;text-decoration:none;">Track Package</a></p>
-      </div>
-    `;
-  } catch (err) {
-    display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-  }
-}
   </div>
 
   <script>
-const BACKEND_URL = ""; // Empty = same doman
+    const BACKEND_URL = "";
 
-function calculateShipping(state, weight) {
-  const sabahRates = [9, 11, 12, 13, 15];
-  const otherRates = [18, 27, 35, 44, 52];
-  const kg = Math.ceil(weight);
-  const index = Math.min(kg, 5) - 1;
-  if (state === "Sabah") return sabahRates[index];
-  return otherRates[index];
-}
+    // === NEW SHIPPING CALCULATOR ===
+    function calculateShippingCost(subTotal, state, weight, method) {
+      const isSabah = state === "Sabah";
+      const isPickup = method === "pickup";
 
-let cart = [], subTotal = 0, totalWeight = 0, shipping = 0;
+      // 4. Self Pickup
+      if (isPickup) {
+        return { cost: 0, note: "Self Pickup – Collect via WhatsApp", eta: "Same day" };
+      }
 
-function calculateShipping(state, weight) {
-  const sabahRates = [9, 11, 12, 13, 15];
-  const otherRates = [18, 27, 35, 44, 52];
-  const kg = Math.ceil(weight);
-  const idx = Math.min(kg, 5) - 1;
-  return state === "Sabah" ? sabahRates[idx] : otherRates[idx];
-}
+      // 1. Free Batch Shipping
+      if (subTotal < 500) {
+        return { cost: 0, note: "Free Batch Shipping", eta: "1–4 weeks" };
+      }
 
-function loadOrder() {
-  cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-  const itemsDiv = document.getElementById("cart-items");
+      // 2. Express Free Shipping
+      if (subTotal >= 500) {
+        return { cost: 0, note: "Express Free Shipping", eta: "1–4 days" };
+      }
 
-  if (!cart.length) {
-    itemsDiv.innerHTML = `<p style="text-align:center; color:#999; margin:20px 0;">Your cart is empty</p>`;
-    updateTotals();
-    return;
-  }
+      // 3. Standard Courier
+      const base = isSabah ? 10 : 20;
+      const perKg = isSabah ? 3 : 7;
+      const cost = base + (Math.ceil(weight) * perKg);
+      return { cost, note: `Standard Courier (${isSabah ? 'Sabah' : 'Other'})`, eta: "1–4 days" };
+    }
 
-  let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
-    <tr style="background:#e9d8a6; color:#654321; font-weight:600;">
-      <th style="padding:8px; text-align:left;">Product</th>
-      <th style="padding:8px; text-align:center;">Qty</th>
-      <th style="padding:8px; text-align:right;">Price</th>
-      <th style="padding:8px; text-align:right;">Subtotal</th>
-    </tr>`;
+    let cart = [], subTotal = 0, totalWeight = 0;
 
-  subTotal = 0;
-  totalWeight = 0;
+    function loadOrder() {
+      cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+      const itemsDiv = document.getElementById("cart-items");
 
-  cart.forEach(item => {
-    const lineTotal = item.price * item.qty;
-    subTotal += lineTotal;
-    totalWeight += (item.weight || 0) * item.qty;
+      if (!cart.length) {
+        itemsDiv.innerHTML = `<p style="text-align:center; color:#999; margin:20px 0;">Your cart is empty</p>`;
+        updateTotals();
+        return;
+      }
 
-    html += `<tr style="border-bottom:1px solid #eee;">
-      <td style="padding:8px;">${item.name}</td>
-      <td style="padding:8px; text-align:center;">${item.qty}</td>
-      <td style="padding:8px; text-align:right;">RM ${item.price.toFixed(2)}</td>
-      <td style="padding:8px; text-align:right;">RM ${lineTotal.toFixed(2)}</td>
-    </tr>`;
-  });
+      let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+        <tr style="background:#e9d8a6; color:#654321; font-weight:600;">
+          <th style="padding:8px; text-align:left;">Product</th>
+          <th style="padding:8px; text-align:center;">Qty</th>
+          <th style="padding:8px; text-align:right;">Price</th>
+          <th style="padding:8px; text-align:right;">Subtotal</th>
+        </tr>`;
 
-  html += `</table>`;
-  itemsDiv.innerHTML = html;
+      subTotal = 0;
+      totalWeight = 0;
 
-  updateTotals();
-}
+      cart.forEach(item => {
+        const lineTotal = item.price * item.qty;
+        subTotal += lineTotal;
+        totalWeight += (item.weight || 0) * item.qty;
 
-function updateTotals() {
-  const state = document.getElementById("custState").value || "Sabah";
-  shipping = calculateShipping(state, totalWeight);
+        html += `<tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px;">${item.name}</td>
+          <td style="padding:8px; text-align:center;">${item.qty}</td>
+          <td style="padding:8px; text-align:right;">RM ${item.price.toFixed(2)}</td>
+          <td style="padding:8px; text-align:right;">RM ${lineTotal.toFixed(2)}</td>
+        </tr>`;
+      });
 
-  document.getElementById("total-weight").textContent = `${totalWeight.toFixed(2)} kg`;
-  document.getElementById("sub-total").textContent = `RM ${subTotal.toFixed(2)}`;
-  document.getElementById("shipping-cost").textContent = `RM ${shipping.toFixed(2)}`;
-  document.getElementById("grand-total").textContent = `RM ${(subTotal + shipping).toFixed(2)}`;
-}
+      html += `</table>`;
+      itemsDiv.innerHTML = html;
+      updateTotals();
+    }
 
-// Re-calculate when state changes
-document.getElementById("custState").addEventListener("change", loadOrder);
+    function updateTotals() {
+      const state = document.getElementById("custState").value || "Sabah";
+      const method = document.getElementById("shippingMethod").value;
+      const { cost, note, eta } = calculateShippingCost(subTotal, state, totalWeight, method);
 
-// Initial load
-loadOrder();
-    
-async function confirmOrder() {
-  const btn = document.getElementById("confirmBtn");
-  btn.disabled = true;
-  btn.innerText = "Processing...";
+      document.getElementById("total-weight").textContent = `${totalWeight.toFixed(2)} kg`;
+      document.getElementById("sub-total").textContent = `RM ${subTotal.toFixed(2)}`;
+      document.getElementById("shipping-cost").textContent = `RM ${cost.toFixed(2)}`;
+      document.getElementById("shipping-note").textContent = `${note} • ${eta}`;
+      document.getElementById("grand-total").textContent = `RM ${(subTotal + cost).toFixed(2)}`;
 
-  const name = document.getElementById("custName").value.trim();
-  const phone = document.getElementById("custPhone").value.trim();
-  const address = document.getElementById("custAddress").value.trim();
-  const postcode = document.getElementById("custPostcode").value.trim();
-  const state_to = document.getElementById("custState").value.trim();
-  const country = document.getElementById("custCountry").value.trim();
+      // Show pickup note
+      document.getElementById("pickupNote").style.display = method === "pickup" ? "block" : "none";
+    }
 
-  if (!name || !phone || !address || !postcode || !state_to) {
-    alert("⚠️ Please fill in all delivery details.");
-    btn.disabled = false;
-    btn.innerText = "✅ Confirm Order";
-    return;
-  }
-
-  const cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-  if (cart.length === 0) {
-    alert("Cart is empty!");
-    btn.disabled = false;
-    btn.innerText = "✅ Confirm Order";
-    return;
-  }
-
-  const totalWeight = cart.reduce((sum, i) => sum + (i.weight || 0) * i.qty, 0);
-  const shipping_cost = calculateShipping(state_to, totalWeight);
-  const total_amt = subTotal + shipping_cost;
-  const order_id = "ORD" + Date.now();
-
-  const orderData = {
-    order_id,
-    cus_name: name,
-    cus_address: address,
-    postcode,
-    state_to,
-    country,
-    phone,
-    prod_name: cart.map(i => i.name).join(", "),
-    quantity: cart.reduce((sum, i) => sum + i.qty, 0),
-    total_amt,
-    shipping_wt: totalWeight,
-    shipping_cost,
-    pymt_method: "FPX",
-    pymt_status: "Paid",
-    courier_name: "Pos Laju",
-    tracking_link: `https://poslaju.com/track/${order_id}`
-  };
-
-  console.log("📦 Sending order to backend:", orderData);
-
-  try {
-    const res = await fetch(`/api/orders`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(orderData)
+    // Update on change
+    ["custState", "shippingMethod"].forEach(id => {
+      document.getElementById(id).addEventListener("change", updateTotals);
     });
 
-    console.log("🔍 Raw response:", res);
+    loadOrder();
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+    // === Confirm Order ===
+    async function confirmOrder() {
+      const btn = document.getElementById("confirmBtn");
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.innerText = "Processing...";
+
+      const name = document.getElementById("custName").value.trim();
+      const phone = document.getElementById("custPhone").value.trim();
+      const address = document.getElementById("custAddress").value.trim();
+      const postcode = document.getElementById("custPostcode").value.trim();
+      const state_to = document.getElementById("custState").value;
+      const method = document.getElementById("shippingMethod").value;
+
+      if (!name || !phone || !address || !postcode || !state_to) {
+        alert("Please fill in all delivery details.");
+        btn.disabled = false;
+        btn.innerText = "✅ Confirm Order";
+        return;
+      }
+
+      if (method === "pickup" && state_to !== "Sabah") {
+        alert("Self Pickup is only available in Kota Kinabalu (Sabah).");
+        btn.disabled = false;
+        btn.innerText = "✅ Confirm Order";
+        return;
+      }
+
+      if (!cart.length) {
+        alert("Cart is empty!");
+        btn.disabled = false;
+        btn.innerText = "✅ Confirm Order";
+        return;
+      }
+
+      const { cost: shippingCost, note: shippingNote, eta } = calculateShippingCost(subTotal, state_to, totalWeight, method);
+      const totalAmt = subTotal + shippingCost;
+      const order_id = "ORD" + Date.now();
+
+      const payload = {
+        order_id, cus_name: name, cus_address: address, postcode,
+        state_to, country: "Malaysia", phone,
+        prod_name: cart.map(i => i.name).join(", "),
+        quantity: cart.reduce((s, i) => s + i.qty, 0),
+        total_amt: totalAmt,
+        shipping_wt: totalWeight,
+        shipping_cost: shippingCost,
+        shipping_method: method === "pickup" ? "Self Pickup" : "Courier",
+        delivery_eta: eta,
+        pymt_method: "FPX", pymt_status: "Paid",
+        courier_name: method === "pickup" ? "Self Pickup" : "Pos Laju",
+        tracking_link: method === "pickup" ? "" : `https://poslaju.com/track/${order_id}`
+      };
+
+      try {
+        const res = await fetch(`/api/orders`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Failed");
+
+        localStorage.removeItem("cartItems");
+        alert("✅ Order placed successfully!");
+        await viewMyOrder();
+
+      } catch (err) {
+        alert("Failed: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "✅ Confirm Order";
+      }
     }
 
-    const data = await res.json();
-    console.log("✅ Backend response:", data);
+    // === View My Order ===
+    async function viewMyOrder() {
+      const phone = document.getElementById("custPhone").value.trim();
+      if (!phone) return;
 
-    if (data.success) {
-      localStorage.removeItem("cartItems");
-      alert("✅ Order recorded successfully!");
-      window.location.href = "index.html";
-    } else {
-      throw new Error(data.error || "Backend failed to record order.");
+      const display = document.getElementById("OrderDisplay");
+      display.innerHTML = "<p style='color:#666;'>Loading order...</p>";
+
+      try {
+        const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const orders = await res.json();
+        if (!orders || orders.length === 0) {
+          display.innerHTML = "<p>No orders found.</p>";
+          return;
+        }
+
+        const o = orders[0];
+        display.innerHTML = `
+          <div style="background:#fffbe6;padding:16px;border-radius:12px;font-size:15px;">
+            <p><strong>Order ID:</strong> ${o.order_id}</p>
+            <p><strong>Customer:</strong> ${o.cus_name}</p>
+            <p><strong>Delivery:</strong> ${o.cus_address}, ${o.postcode}, ${o.state_to}</p>
+            <p><strong>Method:</strong> ${o.shipping_method} • ${o.delivery_eta}</p>
+            <p><strong>Product(s):</strong> ${o.prod_name}</p>
+            <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg</p>
+            <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
+            <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
+            <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
+            <p style="font-size:1.1em;"><strong>Total Paid:</strong> 
+              <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
+            </p>
+            <p><strong>Status:</strong> <span style="color:green;">${o.pymt_status}</span></p>
+            ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : ''}
+          </div>
+        `;
+
+        if (!display.querySelector(".print-btn")) {
+          const printBtn = document.createElement("button");
+          printBtn.textContent = "Print Receipt (PDF)";
+          printBtn.className = "confirm-btn print-btn";
+          printBtn.style.background = "#996600";
+          printBtn.onclick = () => window.print();
+          display.appendChild(printBtn);
+        }
+
+      } catch (err) {
+        display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+      }
     }
-  } catch (err) {
-    console.error("❌ Order submission error:", err);
-    alert("❌ Failed: " + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "✅ Confirm Order";
-  }
-}
-
-loadOrder();
-</script>
+  </script>
 </body>
-  </html>
+</html>
