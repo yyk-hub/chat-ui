@@ -186,10 +186,29 @@
 
   <div class="container">
     <div class="section">
-      <h3>🛍️ Order Summary</h3>
-      <div id="order-summary"></div>
-      <div class="total" id="order-total"></div>
-    </div>
+  <h3>Order Summary</h3>
+  <div id="cart-items"></div>
+
+  <!-- Summary Table -->
+  <table style="width:100%; margin-top:15px; border-collapse:collapse; font-size:14px;">
+    <tr>
+      <th style="text-align:left; padding:6px 0; color:#654321;">Total Weight</th>
+      <td id="total-weight" style="text-align:right; font-weight:600;">0.00 kg</td>
+    </tr>
+    <tr>
+      <th style="text-align:left; padding:6px 0; color:#654321;">Sub-total</th>
+      <td id="sub-total" style="text-align:right;">RM 0.00</td>
+    </tr>
+    <tr>
+      <th style="text-align:left; padding:6px 0; color:#654321;">Shipping Cost</th>
+      <td id="shipping-cost" style="text-align:right; color:#14b47e;">RM 0.00</td>
+    </tr>
+    <tr style="border-top:2px solid #996600; font-weight:bold; font-size:1.1em;">
+      <th style="text-align:left; padding:8px 0; color:#996600;">Total Amount</th>
+      <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
+    </tr>
+  </table>
+</div>
 
     <div class="section">
       <h3>🚚 Delivery Details</h3>
@@ -247,38 +266,72 @@ function calculateShipping(state, weight) {
   return otherRates[index];
 }
 
-function loadOrder() {
-  let cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-  let summaryDiv = document.getElementById("order-summary");
-  let totalDiv = document.getElementById("order-total");
+let cart = [], subTotal = 0, totalWeight = 0, shipping = 0;
 
-  if (cart.length === 0) {
-    summaryDiv.innerHTML = "<p>No items in cart.</p>";
+function calculateShipping(state, weight) {
+  const sabahRates = [9, 11, 12, 13, 15];
+  const otherRates = [18, 27, 35, 44, 52];
+  const kg = Math.ceil(weight);
+  const idx = Math.min(kg, 5) - 1;
+  return state === "Sabah" ? sabahRates[idx] : otherRates[idx];
+}
+
+function loadOrder() {
+  cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+  const itemsDiv = document.getElementById("cart-items");
+
+  if (!cart.length) {
+    itemsDiv.innerHTML = `<p style="text-align:center; color:#999; margin:20px 0;">Your cart is empty</p>`;
+    updateTotals();
     return;
   }
 
-  let total = 0, totalWeight = 0;
-  let table = "<table><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr>";
+  let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+    <tr style="background:#e9d8a6; color:#654321; font-weight:600;">
+      <th style="padding:8px; text-align:left;">Product</th>
+      <th style="padding:8px; text-align:center;">Qty</th>
+      <th style="padding:8px; text-align:right;">Price</th>
+      <th style="padding:8px; text-align:right;">Subtotal</th>
+    </tr>`;
+
+  subTotal = 0;
+  totalWeight = 0;
 
   cart.forEach(item => {
-    let subtotal = item.price * item.qty;
-    total += subtotal;
+    const lineTotal = item.price * item.qty;
+    subTotal += lineTotal;
     totalWeight += (item.weight || 0) * item.qty;
-    table += `<tr>
-                <td>${item.name}</td>
-                <td>${item.qty}</td>
-                <td>RM ${item.price.toFixed(2)}</td>
-                <td>RM ${subtotal.toFixed(2)}</td>
-              </tr>`;
+
+    html += `<tr style="border-bottom:1px solid #eee;">
+      <td style="padding:8px;">${item.name}</td>
+      <td style="padding:8px; text-align:center;">${item.qty}</td>
+      <td style="padding:8px; text-align:right;">RM ${item.price.toFixed(2)}</td>
+      <td style="padding:8px; text-align:right;">RM ${lineTotal.toFixed(2)}</td>
+    </tr>`;
   });
 
-  table += `</table>`;
-  summaryDiv.innerHTML = table;
-  totalDiv.innerHTML = `Total Weight: ${totalWeight.toFixed(2)} kg<br><strong>RM ${total.toFixed(2)}</strong>`;
-  totalDiv.innerHTML = `Shipping: RM ${shipping} <br>Total: <strong>RM ${total.toFixed(2)}</strong>`;
+  html += `</table>`;
+  itemsDiv.innerHTML = html;
 
+  updateTotals();
 }
 
+function updateTotals() {
+  const state = document.getElementById("custState").value || "Sabah";
+  shipping = calculateShipping(state, totalWeight);
+
+  document.getElementById("total-weight").textContent = `${totalWeight.toFixed(2)} kg`;
+  document.getElementById("sub-total").textContent = `RM ${subTotal.toFixed(2)}`;
+  document.getElementById("shipping-cost").textContent = `RM ${shipping.toFixed(2)}`;
+  document.getElementById("grand-total").textContent = `RM ${(subTotal + shipping).toFixed(2)}`;
+}
+
+// Re-calculate when state changes
+document.getElementById("custState").addEventListener("change", loadOrder);
+
+// Initial load
+loadOrder();
+    
 async function confirmOrder() {
   const btn = document.getElementById("confirmBtn");
   btn.disabled = true;
@@ -308,7 +361,7 @@ async function confirmOrder() {
 
   const totalWeight = cart.reduce((sum, i) => sum + (i.weight || 0) * i.qty, 0);
   const shipping_cost = calculateShipping(state_to, totalWeight);
-  const total_amt = cart.reduce((sum, i) => sum + i.price * i.qty, 0) + shipping_cost;
+  const total_amt = subTotal + shipping_cost;
   const order_id = "ORD" + Date.now();
 
   const orderData = {
