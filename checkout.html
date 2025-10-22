@@ -248,10 +248,48 @@
 
     <button class="confirm-btn" id="confirmBtn" onclick="confirmOrder()">✅ Confirm Order</button>
 
-    <div class="order">
-      <button onclick="viewMMyOrder()">📦 View My Order</button>
-      <div id="OrderDisplay"></div>
-    </div>
+   // -------------------------------------------------
+//  View My Order – shows the latest order for the phone number
+// -------------------------------------------------
+async function viewMyOrder() {
+  const phone = document.getElementById("custPhone").value.trim();
+  if (!phone) {
+    alert("Please enter your phone number first.");
+    return;
+  }
+
+  const display = document.getElementById("OrderDisplay");
+  display.innerHTML = "<p style='color:#666;'>Loading…</p>";
+
+  try {
+    const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const orders = await res.json();
+    if (!orders || orders.length === 0) {
+      display.innerHTML = "<p>No orders found for this phone.</p>";
+      return;
+    }
+
+    // Show the **most recent** order
+    const o = orders[0];
+
+    display.innerHTML = `
+      <div style="background:#fffbe6;padding:12px;border-radius:12px;">
+        <p><strong>Order ID:</strong> ${o.order_id}</p>
+        <p><strong>Product(s):</strong> ${o.prod_name}</p>
+        <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg (to ${o.state_to})</p>
+        <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
+        <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
+        <p><strong>Total Paid:</strong> <span style="color:#996600;font-weight:bold;">RM ${o.total_amt?.toFixed(2)}</span></p>
+        <p><strong>Status:</strong> <span style="color:green;">${o.pymt_status}</span></p>
+        <p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;text-decoration:none;">Track Package</a></p>
+      </div>
+    `;
+  } catch (err) {
+    display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+  }
+}
   </div>
 
   <script>
