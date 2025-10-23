@@ -494,7 +494,7 @@
             <p style="font-size:1.1em;"><strong>Total Paid:</strong> 
               <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
             </p>
-            <p><strong>Status:</strong> <span style="color:green;">${o.pymt_status}</span></p>
+            <p><strong>Status:</strong> <span style="color:green;">${o.order_status}</span></p>
             ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : ''}
           </div>
         `;
