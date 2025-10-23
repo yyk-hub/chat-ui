@@ -71,7 +71,7 @@ export async function onRequestPost(context) {
       order.shipping_cost || 0,
       order.delivery_eta || '3 working days',
       order.pymt_method,
-      order.pymt_status,
+      order.order_status,
       order.courier_name || 'Pos Laju',
       order.tracking_link
     ).run();
