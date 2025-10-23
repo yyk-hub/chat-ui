@@ -51,7 +51,7 @@ export async function onRequestPost(context) {
         order_id, cus_name, cus_address, postcode, state_to, country, phone,
         prod_name, quantity, total_amt, shipping_wt,
         state_from, shipping_method, shipping_cost, delivery_eta,
-        pymt_method, pymt_status, courier_name, tracking_link
+        pymt_method, order_status, courier_name, tracking_link
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
