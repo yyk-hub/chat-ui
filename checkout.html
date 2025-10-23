@@ -434,7 +434,7 @@
                          method === "express" ? "Express Free" : 
                          method === "batch" ? "Free Batch" : "Standard Courier",
         delivery_eta: eta,
-        pymt_method: "FPX", pymt_status: "Paid",
+        pymt_method: "FPX", order_status: "Pending Payment",
         courier_name: method === "pickup" ? "Self Pickup" : "Pos Laju",
         tracking_link: method === "pickup" ? "" : `https://poslaju.com/track/${order_id}`
       };
