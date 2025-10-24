@@ -99,17 +99,25 @@
       cursor: not-allowed;
     }
 
+    .table-container {
+      overflow-x: auto;
+      width: 100%;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
       font-size: 14px;
+      table-layout: auto;
     }
 
     th, td {
       padding: 10px 8px;
       text-align: left;
       border-bottom: 1px solid #eee;
+      white-space: nowrap;
+      min-width: 80px;
     }
 
     th {
@@ -118,8 +126,19 @@
       font-weight: 600;
     }
 
-    .paid { color: #0b8b0b; font-weight: bold; }
-    .pending { color: #d32f2f; font-weight: bold; }
+    td {
+      word-break: break-word;
+    }
+
+    .paid {
+      color: #0b8b0b;
+      font-weight: bold;
+    }
+
+    .pending {
+      color: #d32f2f;
+      font-weight: bold;
+    }
 
     a.track-link {
       color: #14b47e;
@@ -144,18 +163,39 @@
       padding: 20px;
       font-style: italic;
     }
+
+    @media (max-width: 600px) {
+      table {
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 8px 4px;
+        min-width: 60px;
+      }
+
+      .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      td {
+        white-space: normal;
+        word-break: break-word;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="header">
-    <a href="index.html" class="home-btn">Home</a>
+    <a href="index.html" class="home-btn">🏠 Home</a>
     <h2 class="header-title">My Orders</h2>
   </div>
 
   <div class="container">
     <!-- Search Form -->
     <div class="section">
-      <label>Phone Number <span style="color:#d32f2f;">*</span>
+      <label>Phone Number <span style="color:#d32f2f;">*</span></label>
       <input type="text" id="custPhone" placeholder="e.g. 0123456789">
       <button id="loadBtn" onclick="loadOrders()">View My Orders</button>
     </div>
@@ -164,25 +204,26 @@
     <div id="ordersList" class="section" style="display:none;">
       <h3 style="margin-top:0; color:#996600;">Order History</h3>
       <div id="loadingMsg" class="loading" style="display:none;">Loading your orders...</div>
-      <table id="ordersTable">
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Product</th>
-            <th>Total (RM)</th>
-            <th>Courier</th>
-            <th>Track</th>
-            <th>Status</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="table-container">
+        <table id="ordersTable">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Product</th>
+              <th>Total (RM)</th>
+              <th>Courier</th>
+              <th>Track</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script>
-    // Use same origin → /api/orders (same as checkout)
     const BACKEND_URL = "";
 
     // Format D1 timestamp → e.g. "22 Oct 2025, 3:45 PM"
@@ -233,9 +274,9 @@
               <td><strong>${o.order_id}</strong></td>
               <td>${o.prod_name}</td>
               <td><strong>RM ${parseFloat(o.total_amt).toFixed(2)}</strong></td>
-              <td>${o.courier_name || 'Pos Laju'}</td>
-              <td><a href="${o.tracking_link}" target="_blank" class="track-link">Track</a></td>
-              <td class="${o.pymt_status === 'Paid' ? 'paid' : 'pending'}">${o.pymt_status}</td>
+              <td>${o.courier_name || 'City-Link'}</td>
+              <td>${o.tracking_link ? `<a href="https://www.citylinkexpress.com/track-your-shipment/?tracking=${o.order_id}" target="_blank" class="track-link">Track</a>` : '-'}</td>
+              <td class="${o.order_status === 'Paid' ? 'paid' : 'pending'}">${o.order_status}</td>
               <td>${formatDate(o.created_at)}</td>
             </tr>`;
           tbody.insertAdjacentHTML('beforeend', row);
@@ -251,4 +292,4 @@
     }
   </script>
 </body>
-</html>
+  </html>
