@@ -220,12 +220,11 @@
       <label>Country</label>
       <input type="text" id="custCountry" value="Malaysia" readonly>
 
-      <!-- SHIPPING METHOD (MOVED UP) -->
+      <!-- SHIPPING METHOD -->
       <label>Shipping Option</label>
       <select id="shippingMethod">
-        <option value="express">Express Free Shipping (≥ RM500)</option>
-        <option value="batch">Free Batch Shipping (1–4 weeks)</option>
         <option value="courier">Standard Courier</option>
+        <option value="express">Express Free Shipping (≥ RM500)</option>
         <option value="pickup">Self Pickup (Kota Kinabalu)</option>
       </select>
       <p id="pickupWarning" class="pickup-warning">
@@ -249,7 +248,7 @@
       </div>
     </div>
 
-    <!-- ORDER SUMMARY (MOVED TO BOTTOM) -->
+    <!-- ORDER SUMMARY -->
     <div class="section">
       <h3>Order Summary</h3>
       <div id="cart-items"></div>
@@ -298,20 +297,13 @@
         return { cost: 0, note: "Express Free Shipping", eta: "1–4 days" };
       }
 
-      // 2. Free Batch (only if < RM500 and selected)
-      if (method === "batch") {
-        return { cost: 0, note: "Free Batch Shipping", eta: "1–4 weeks" };
-      }
-
-      // 3. Self Pickup
+      // 2. Self Pickup
       if (isPickup) {
         return { cost: 0, note: "Self Pickup", eta: "Next day" };
       }
 
-      // 4. Standard Courier
-      const base = isSabah ? 10 : 20;
-      const perKg = isSabah ? 3 : 7;
-      const cost = base + (Math.ceil(weight) * perKg);
+      // 3. Standard Courier
+      const cost = 10; // Flat RM10 for all states
       return { cost, note: `Standard Courier (${isSabah ? 'Sabah' : 'Other'})`, eta: "1–4 days" };
     }
 
@@ -431,8 +423,7 @@
         shipping_wt: totalWeight,
         shipping_cost: shippingCost,
         shipping_method: method === "pickup" ? "Self Pickup" : 
-                         method === "express" ? "Express Free" : 
-                         method === "batch" ? "Free Batch" : "Standard Courier",
+                         method === "express" ? "Express Free" : "Standard Courier",
         delivery_eta: eta,
         pymt_method: "FPX", order_status: "Pending Payment",
         courier_name: method === "pickup" ? "Self Pickup" : "Pos Laju",
@@ -494,7 +485,7 @@
             <p style="font-size:1.1em;"><strong>Total Paid:</strong> 
               <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
             </p>
-            <p><strong>Status:</strong> <span style="color:green;">${o.order_status}</span></p>
+            <p><strong>Status:</strong> <span style="color:${o.order_status === 'Pending Payment' ? '#d32f2f' : 'green'};">${o.order_status}</span></p>
             ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : ''}
           </div>
         `;
