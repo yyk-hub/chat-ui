@@ -1,18 +1,6 @@
-// ===== Shipping Cost Calculator =====
-function calculateShipping(state, weight) {
-  const sabahRates = [10, 11, 12, 13, 15];
-  const otherRates = [20, 27, 35, 44, 52];
-  const kg = Math.ceil(weight);
-  const index = Math.min(kg, 5) - 1;
-  if (state === "Sabah") return sabahRates[index];
-  return otherRates[index];
-}
-
-// ===== Handle POST: Create Order =====
 export async function onRequestPost(context) {
   const { request, env } = context;
   
-  // CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -22,7 +10,7 @@ export async function onRequestPost(context) {
   try {
     const order = await request.json();
     
-    // Validate
+    // Validate required fields
     if (!order.order_id || !order.cus_name || !order.prod_name) {
       return new Response(
         JSON.stringify({ success: false, error: 'Missing required fields' }),
@@ -32,19 +20,11 @@ export async function onRequestPost(context) {
         }
       );
     }
-// 🟢 Step 1: Lookup product weight from ceo_products
-    const prodQuery = await env.DB.prepare(
-      `SELECT weight FROM ceo_products WHERE prod_name = ?`
-    ).bind(order.prod_name).first();
 
-    const weight = prodQuery ? prodQuery.weight : (order.shipping_wt || 1);
+    // Use shipping cost from client (no recalculation)
+    const shippingCost = order.shipping_cost || 0;
+    const deliveryETA = order.delivery_eta || '1–4 days';
 
-    // 🟢 Step 2: Calculate shipping cost
-    const shippingCost = calculateShipping(order.state_to || 'Sabah', weight);
-
-    // 🟢 Step 3: Default ETA
-    const deliveryETA = order.delivery_eta || '3 working days';
-    
     // Insert into D1
     await env.DB.prepare(`
       INSERT INTO ceo_orders (
@@ -53,7 +33,7 @@ export async function onRequestPost(context) {
         state_from, shipping_method, shipping_cost, delivery_eta,
         pymt_method, order_status, courier_name, tracking_link
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       order.order_id,
       order.cus_name,
@@ -65,15 +45,15 @@ export async function onRequestPost(context) {
       order.prod_name,
       order.quantity || 1,
       order.total_amt,
-      order.shipping_wt,
+      order.shipping_wt || 1,
       order.state_from || 'Sabah',
-      order.shipping_method || 'Pos Laju',
-      order.shipping_cost || 0,
-      order.delivery_eta || '3 working days',
-      order.pymt_method,
-      order.order_status,
+      order.shipping_method || 'Standard Courier',
+      shippingCost,
+      deliveryETA,
+      order.pymt_method || 'FPX',
+      order.order_status || 'Pending Payment',
       order.courier_name || 'Pos Laju',
-      order.tracking_link
+      order.tracking_link || ''
     ).run();
 
     return new Response(
@@ -95,7 +75,6 @@ export async function onRequestPost(context) {
   }
 }
 
-// Handle GET requests (retrieve orders)
 export async function onRequestGet(context) {
   const { env, request } = context;
   
@@ -130,7 +109,6 @@ export async function onRequestGet(context) {
   }
 }
 
-// Handle OPTIONS (CORS preflight)
 export async function onRequestOptions() {
   return new Response(null, {
     headers: {
@@ -139,4 +117,4 @@ export async function onRequestOptions() {
       'Access-Control-Allow-Headers': 'Content-Type',
     }
   });
-      }
+  }
