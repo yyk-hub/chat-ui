@@ -426,8 +426,8 @@
                          method === "express" ? "Express Free" : "Standard Courier",
         delivery_eta: eta,
         pymt_method: "FPX", order_status: "Pending Payment",
-        courier_name: method === "pickup" ? "Self Pickup" : "Pos Laju",
-        tracking_link: method === "pickup" ? "" : `https://poslaju.com/track/${order_id}`
+        courier_name: method === "pickup" ? "Self Pickup" : "City-Link",
+        tracking_link: method === "pickup" ? "" : `https://www.citylinkexpress.com/track-your-shipment/${order_id}`
       };
 
       try {
