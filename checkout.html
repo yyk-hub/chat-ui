@@ -175,6 +175,23 @@
       display: none;
     }
 
+    .whatsapp-instruction {
+      font-size: 14px;
+      color: #d32f2f;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .whatsapp-instruction a {
+      color: #14b47e;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .whatsapp-instruction a:hover {
+      text-decoration: underline;
+    }
+
     @media print {
       body * { visibility: hidden; }
       #OrderDisplay, #OrderDisplay * { visibility: visible; }
@@ -213,9 +230,12 @@
       <label>State</label>
       <select id="custState">
         <option value="">Select State</option>
+        <option value="Kuala Lumpur">Kuala Lumpur</option>
         <option value="Sabah">Sabah</option>
         <option value="Sarawak">Sarawak</option>
-        <option value="West Malaysia">West Malaysia</option>
+        <option value="Penang">Penang</option>
+        <option value="Johor">Johor</option>
+        <option value="West Malaysia">West Malaysia (Other)</option>
       </select>
       <label>Country</label>
       <input type="text" id="custCountry" value="Malaysia" readonly>
@@ -246,6 +266,9 @@
           <img src="img/tngqr.jpg" alt="TNG QR">
         </div>
       </div>
+      <p class="whatsapp-instruction">
+        After payment, please send your bank receipt via WhatsApp at <a href="index.html#whatsapp" target="_blank">Homepage</a>.
+      </p>
     </div>
 
     <!-- ORDER SUMMARY -->
@@ -396,8 +419,10 @@
         return;
       }
 
-      if (method === "pickup" && state_to !== "Sabah") {
-        alert("Self Pickup is only available in Kota Kinabalu (Sabah).");
+      // Validate Self Pickup locations (KL, KK, KCH, PNG, JB)
+      const validPickupStates = ["Kuala Lumpur", "Sabah", "Sarawak", "Penang", "Johor"];
+      if (method === "pickup" && !validPickupStates.includes(state_to)) {
+        alert("Self Pickup is only available in Kuala Lumpur, Sabah, Sarawak, Penang, or Johor.");
         btn.disabled = false;
         btn.innerText = "✅ Confirm Order";
         return;
@@ -427,7 +452,7 @@
         delivery_eta: eta,
         pymt_method: "FPX", order_status: "Pending Payment",
         courier_name: method === "pickup" ? "Self Pickup" : "City-Link",
-        tracking_link: method === "pickup" ? "" : `https://www.citylinkexpress.com/track-your-shipment/${order_id}`
+        tracking_link: "" // No tracking until paid and shipped
       };
 
       try {
@@ -442,7 +467,7 @@
         if (!data.success) throw new Error(data.error || "Failed");
 
         localStorage.removeItem("cartItems");
-        alert("✅ Order placed successfully!");
+        alert("✅ Order placed successfully! Please send your bank receipt via WhatsApp at Homepage.");
         await viewMyOrder();
 
       } catch (err) {
@@ -482,11 +507,12 @@
             <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
             <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
             <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
-            <p style="font-size:1.1em;"><strong>Total Paid:</strong> 
+            <p style="font-size:1.1em;"><strong>Total:</strong> 
               <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
             </p>
-            <p><strong>Status:</strong> <span style="color:${o.order_status === 'Pending Payment' ? '#d32f2f' : 'green'};">${o.order_status}</span></p>
-            ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : ''}
+            <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
+            ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until order is paid and shipped.</p>'}
+            <p class="whatsapp-instruction">Please send your bank receipt via WhatsApp at <a href="index.html#whatsapp" target="_blank">Homepage</a>.</p>
           </div>
         `;
 
@@ -505,4 +531,4 @@
     }
   </script>
 </body>
-</html>
+      </html>
