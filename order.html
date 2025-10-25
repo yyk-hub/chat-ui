@@ -100,7 +100,7 @@
     }
 /* Product text truncation */
 .product-cell {
-  max-width: 180px;
+  max-width: 160px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -244,24 +244,21 @@
       });
     }
     
-  // Limit product list to 1 items + "..."
+<script>
+  // Show only 1 product + "..."
   function formatProductList(prodName) {
     if (!prodName) return '-';
 
     // Split comma-separated product names
     const items = prodName.split(',').map(p => p.trim());
 
-    // If 1 or less items, no need to truncate
-    if (items.length <= 1) {
-      return `<span class="product-cell" title="${items.join(', ')}"></span>`;
-    }
-
-    // More than 1 items → truncate + tooltip
-    const displayText = `${items[0]}, ${items[1]}...`;
-    const fullText = items.join(', ');
+    // Always show only 1st item + ...
+    const displayText = items[0] + (items.length > 1 ? "..." : "");
+    const fullText = items.join(', '); // tooltip
 
     return `<span class="product-cell" title="${fullText}">${displayText}</span>`;
   }
+</script>
 
     async function loadOrders() {
       const phone = document.getElementById('custPhone').value.trim();
