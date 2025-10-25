@@ -46,7 +46,7 @@ export async function onRequestPost(context) {
       order.delivery_eta || '1–4 days',
       order.pymt_method || 'FPX',
       order.order_status || 'Pending Payment',
-      order.courier_name || 'Pos Laju',
+      order.courier_name || 'City-Link',
       order.tracking_link || ''
     ).run();
 
