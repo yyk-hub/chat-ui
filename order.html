@@ -98,7 +98,15 @@
       background: #aaa;
       cursor: not-allowed;
     }
-
+/* Product text truncation */
+.product-cell {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+      }
+    
     .table-container {
       overflow-x: auto;
       width: 100%;
@@ -235,6 +243,25 @@
         hour: 'numeric', minute: '2-digit'
       });
     }
+    
+  // Limit product list to 1 items + "..."
+  function formatProductList(prodName) {
+    if (!prodName) return '-';
+
+    // Split comma-separated product names
+    const items = prodName.split(',').map(p => p.trim());
+
+    // If 1 or less items, no need to truncate
+    if (items.length <= 1) {
+      return `<span class="product-cell" title="${items.join(', ')}"></span>`;
+    }
+
+    // More than 1 items → truncate + tooltip
+    const displayText = `${items[0]}...`;
+    const fullText = items.join(', ');
+
+    return `<span class="product-cell" title="${fullText}">${displayText}</span>`;
+  }
 
     async function loadOrders() {
       const phone = document.getElementById('custPhone').value.trim();
@@ -272,7 +299,7 @@
           const row = `
             <tr>
               <td><strong>${o.order_id}</strong></td>
-              <td>${o.prod_name}</td>
+              <td>${formatProductList(o.prod_name)}</td>
               <td><strong>RM ${parseFloat(o.total_amt).toFixed(2)}</strong></td>
               <td>${o.courier_name || 'City-Link'}</td>
               <td>${o.tracking_link ? `<a href="https://www.citylinkexpress.com/track-your-shipment/?tracking=${o.order_id}" target="_blank" class="track-link">Track</a>` : '-'}</td>
