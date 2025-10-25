@@ -257,7 +257,7 @@
     }
 
     // More than 1 items → truncate + tooltip
-    const displayText = `${items[0]}...`;
+    const displayText = `${items[0]}, ${items[1]}...`;
     const fullText = items.join(', ');
 
     return `<span class="product-cell" title="${fullText}">${displayText}</span>`;
