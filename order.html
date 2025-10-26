@@ -285,6 +285,331 @@
 
         loading.style.display = 'none';
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Orders - CEO Coffee</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: #f4ecd6;
+      font-family: Segoe UI, Arial, sans-serif;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      background: #f4ecd6;
+      border-bottom: 2px solid #d1c4a1;
+      padding: 12px 0;
+      text-align: center;
+      z-index: 100;
+    }
+
+    .header-title {
+      color: #996600;
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .home-btn {
+      position: absolute;
+      left: 20px;
+      top: 12px;
+      background: #996600;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .section {
+      background: #fffdf8;
+      border-radius: 16px;
+      padding: 18px;
+      margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      color: #654321;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 6px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #14b47e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto 10px;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #12a16d;
+    }
+
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .product-cell {
+      cursor: help;
+      max-height: 3.6em; /* Approx 2 lines at 1.8em line height */
+      overflow: hidden;
+      position: relative;
+    }
+
+    .product-cell.show-all {
+      max-height: none;
+    }
+
+    .show-more {
+      color: #14b47e;
+      text-decoration: none;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .show-more:hover {
+      text-decoration: underline;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 14px;
+      table-layout: auto;
+    }
+
+    th, td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      white-space: nowrap;
+      min-width: 80px;
+    }
+
+    th {
+      background: #e9d8a6;
+      color: #654321;
+      font-weight: 600;
+    }
+
+    td {
+      word-break: break-word;
+    }
+
+    .paid {
+      color: #0b8b0b;
+      font-weight: bold;
+    }
+
+    .pending {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+
+    .other {
+      color: #555;
+      font-weight: bold;
+    }
+
+    a.track-link {
+      color: #14b47e;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a.track-link:hover {
+      text-decoration: underline;
+    }
+
+    .loading {
+      text-align: center;
+      color: #996600;
+      font-style: italic;
+      padding: 20px;
+    }
+
+    .no-orders {
+      text-align: center;
+      color: #999;
+      padding: 20px;
+      font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+      table {
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 8px 4px;
+        min-width: 60px;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      .product-cell {
+        white-space: normal;
+        word-break: break-word;
+        max-height: 3.6em;
+      }
+
+      .product-cell.show-all {
+        max-height: none;
+      }
+
+      .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="home-btn">🏠 Home</a>
+    <h2 class="header-title">My Orders</h2>
+  </div>
+
+  <div class="container">
+    <!-- Search Form -->
+    <div class="section">
+      <label>Phone Number <span style="color:#d32f2f;">*</span></label>
+      <input type="text" id="custPhone" placeholder="e.g. 0123456789">
+      <button id="loadBtn" onclick="loadOrders()">View My Orders</button>
+    </div>
+
+    <!-- Results -->
+    <div id="ordersList" class="section" style="display:none;">
+      <h3 style="margin-top:0; color:#996600;">Order History</h3>
+      <div id="loadingMsg" class="loading" style="display:none;">Loading your orders...</div>
+      <div class="table-container">
+        <table id="ordersTable">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Product</th>
+              <th>Total</th>
+              <th>Courier</th>
+              <th>Track</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = "";
+
+    // Format D1 timestamp → e.g. "26 Oct 2025, 12:16 PM"
+    function formatDate(isoString) {
+      if (!isoString) return '-';
+      const d = new Date(isoString);
+      return d.toLocaleDateString('en-MY', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      }) + ', ' + d.toLocaleTimeString('en-MY', {
+        hour: 'numeric', minute: '2-digit'
+      });
+    }
+
+    // Format product list (show up to 2 products, tooltip for full list, "Show More" for >2)
+    function formatProductList(prodName, orderId) {
+      if (!prodName) return '-';
+      const items = prodName.split(", ").map(p => p.trim());
+      const fullText = items.join(", ");
+      const displayItems = items.slice(0, 2);
+      const displayText = displayItems.join("<br>");
+      const showMore = items.length > 2 ? `<br><a class="show-more" onclick="toggleProducts('${orderId}')">Show More</a>` : '';
+      return `<span class="product-cell" title="${fullText}" id="products-${orderId}">${displayText}${showMore}</span>`;
+    }
+
+    // Toggle full product list
+    function toggleProducts(orderId) {
+      const cell = document.getElementById(`products-${orderId}`);
+      const items = cell.innerText.split("\n").filter(p => p && p !== "Show More" && p !== "Show Less");
+      const fullText = cell.getAttribute("title").split(", ").map(p => p.trim()).join("<br>");
+      if (cell.classList.contains("show-all")) {
+        cell.innerHTML = formatProductList(cell.getAttribute("title"), orderId);
+        cell.classList.remove("show-all");
+      } else {
+        cell.innerHTML = `${fullText}<br><a class="show-more" onclick="toggleProducts('${orderId}')">Show Less</a>`;
+        cell.classList.add("show-all");
+      }
+    }
+
+    async function loadOrders() {
+      const phone = document.getElementById('custPhone').value.trim();
+      if (!phone) {
+        alert('Please enter your phone number.');
+        return;
+      }
+
+      const btn = document.getElementById('loadBtn');
+      const list = document.getElementById('ordersList');
+      const loading = document.getElementById('loadingMsg');
+      const tbody = document.querySelector('#ordersTable tbody');
+
+      // UI: show loading
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+      list.style.display = 'block';
+      loading.style.display = 'block';
+      tbody.innerHTML = '';
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/orders?phone=${encodeURIComponent(phone)}`);
+        if (!res.ok) throw new Error('Failed to load orders. Please try again.');
+
+        const orders = await res.json();
+
+        loading.style.display = 'none';
+
         if (!orders || orders.length === 0) {
           tbody.innerHTML = `<tr><td colspan="7" class="no-orders">No orders found for this phone.</td></tr>`;
           return;
@@ -294,11 +619,11 @@
           const row = `
             <tr>
               <td><strong>${o.order_id}</strong></td>
-              <td>${formatProductList(o.prod_name)}</td>
+              <td class="product-cell">${formatProductList(o.prod_name, o.order_id)}</td>
               <td><strong>RM ${parseFloat(o.total_amt).toFixed(2)}</strong></td>
-              <td>${o.courier_name || 'City-Link'}</td>
-              <td>${o.tracking_link ? `<a href="https://www.citylinkexpress.com/track-your-shipment/?tracking=${o.order_id}" target="_blank" class="track-link">Track</a>` : '-'}</td>
-              <td class="${o.order_status === 'Paid' ? 'paid' : 'pending'}">${o.order_status}</td>
+              <td>${o.courier_name}</td>
+              <td>${o.tracking_link ? `<a href="${o.tracking_link}" target="_blank" class="track-link">Track</a>` : '-'}</td>
+              <td class="${o.order_status === 'Paid' ? 'paid' : o.order_status === 'Pending Payment' ? 'pending' : 'other'}">${o.order_status}</td>
               <td>${formatDate(o.created_at)}</td>
             </tr>`;
           tbody.insertAdjacentHTML('beforeend', row);
@@ -306,7 +631,7 @@
 
       } catch (err) {
         loading.style.display = 'none';
-        tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Error: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">${err.message}</td></tr>`;
       } finally {
         btn.disabled = false;
         btn.textContent = "View My Orders";
@@ -314,4 +639,4 @@
     }
   </script>
 </body>
-  </html>
+</html>
