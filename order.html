@@ -198,15 +198,19 @@
 
       th, td {
         padding: 8px 4px;
-        min-width: 60px;
+        min-width: 80px;  /* Increased from 60px */
         white-space: normal;
         word-break: break-word;
+      }
+      
+      th:nth-child(2), td:nth-child(2) { /* Product column */
+        min-width: 120px; /* Wider to fit one product name */
       }
 
       .product-cell {
         white-space: normal;
         word-break: break-word;
-        max-height: 3.6em;
+        max-height: none; /* Allow natural height for better readability */
       }
 
       .product-cell.show-all {
