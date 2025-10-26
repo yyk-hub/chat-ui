@@ -420,9 +420,9 @@
       }
 
       // Validate Self Pickup locations (KL, KK, KCH, PNG, JB)
-      const validPickupStates = ["Kuala Lumpur", "Kota Kinabalu", "Kuching", "Penang", "Johor"];
+      const validPickupStates = ["Kuala Lumpur", "Kota Kinabalu", "Kuching", "Penang", "Johor Bahru"];
       if (method === "pickup" && !validPickupStates.includes(state_to)) {
-        alert("Self Pickup is only available in Kuala Lumpur, Kota Kinabalu, Kuching, Penang, or Johor.");
+        alert("Self Pickup is only available in Kuala Lumpur, Kota Kinabalu, Kuching, Penang, or Johor Bahru.");
         btn.disabled = false;
         btn.innerText = "✅ Confirm Order";
         return;
