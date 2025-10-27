@@ -2,38 +2,134 @@ name: Optimize Product Images
 
 on:
   push:
+    # Only trigger when files under img/ are added/changed
     paths:
-      - 'img/**'    # Only run when image files are added/changed
+      - 'img/**'
+
+permissions:
+  contents: write
 
 jobs:
   optimize:
+    # Prevent loop: don't run if the actor is the GitHub Actions bot that pushed the commit
+    if: ${{ github.actor != 'github-actions' && github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          # allow pushing back to the repo using the GITHUB_TOKEN
+          persist-credentials: true
 
-      - name: Install imagemin tools
+      - name: Install image tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick webp
+          sudo apt-get update -y
+          sudo apt-get install -y imagemagick pngquant jpegoptim webp
 
-      - name: Resize and optimize images
+      - name: Optimize images (convert PNG→JPG when no transparency; resize & compress)
+        id: optimize
         run: |
-          mkdir -p optimized
-          find img -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) | while read IMG; do
-            echo "Optimizing $IMG ..."
-            # Resize to max 800px wide while keeping aspect ratio
-            convert "$IMG" -resize 800x800\> -strip -quality 80 "optimized/$(basename "$IMG")"
+          set -euo pipefail
+          CHANGED=false
+
+          # find jpg/jpeg/png files under img/
+          find img -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -print0 | while IFS= read -r -d '' FILE; do
+            echo "Processing: $FILE"
+            LOWER_EXT="${FILE##*.}"
+            LOWER_EXT="${LOWER_EXT,,}"
+
+            # Create temp output path
+            DIR=$(dirname "$FILE")
+            BASENAME=$(basename "$FILE")
+            NAME="${BASENAME%.*}"
+
+            # Resize and compress behavior:
+            # - JPEG: resize & optimize to same path (overwrite)
+            # - PNG: check alpha channel
+            if [[ "$LOWER_EXT" == "jpg" || "$LOWER_EXT" == "jpeg" ]]; then
+              # Make temp file and replace original if changed
+              TMP="$DIR/$NAME.optimized.jpg"
+              magick convert "$FILE" -resize 800x800\> -strip -quality 80 "$TMP"
+              # compare and replace if smaller or different
+              if ! cmp -s "$TMP" "$FILE"; then
+                mv "$TMP" "$FILE"
+                echo "Updated JPG: $FILE"
+                CHANGED=true
+              else
+                rm -f "$TMP"
+              fi
+
+              # run jpegoptim to further reduce size (lossy allowed at 80-85)
+              jpegoptim --strip-all --max=85 "$FILE" > /dev/null || true
+
+            elif [[ "$LOWER_EXT" == "png" ]]; then
+              # Check if PNG has alpha channel using ImageMagick Identify channels info
+              CHANNELS=$(magick identify -format "%[channels]" "$FILE" 2>/dev/null || echo "")
+              # "a" in channels indicates alpha; some builds output "rgba" etc.
+              if echo "$CHANNELS" | grep -qi 'a'; then
+                # Keep PNG (has transparency) — optimize via pngquant (in-place)
+                TMP="$DIR/$NAME.optimized.png"
+                # Convert to 8-bit PNG with pngquant then reconvert to ensure same path
+                # pngquant will output a new .png; handle gracefully
+                pngquant --force --output "$TMP" --quality=65-85 -- "$FILE" > /dev/null 2>&1 || true
+                if [ -f "$TMP" ]; then
+                  # resize (preserve alpha)
+                  magick convert "$TMP" -resize 800x800\> -strip "$FILE"
+                  rm -f "$TMP"
+                  echo "Optimized PNG (alpha kept): $FILE"
+                  CHANGED=true
+                else
+                  # fallback: just resize with magick
+                  magick convert "$FILE" -resize 800x800\> -strip "$TMP"
+                  if ! cmp -s "$TMP" "$FILE"; then
+                    mv "$TMP" "$FILE"
+                    CHANGED=true
+                    echo "Resized PNG: $FILE"
+                  else
+                    rm -f "$TMP"
+                  fi
+                fi
+              else
+                # PNG has no alpha — convert to JPG and replace the PNG with JPG
+                NEW_JPG="$DIR/$NAME.jpg"
+                TMP="$DIR/$NAME.optimized.jpg"
+                magick convert "$FILE" -resize 800x800\> -strip -quality 80 "$TMP"
+                # use jpegoptim to optimize
+                jpegoptim --strip-all --max=85 "$TMP" > /dev/null || true
+                # Only replace if generated file exists
+                if [ -f "$TMP" ]; then
+                  mv "$TMP" "$NEW_JPG"
+                  rm -f "$FILE"
+                  echo "Converted PNG -> JPG and removed original PNG: $FILE -> $NEW_JPG"
+                  CHANGED=true
+                fi
+              fi
+            fi
           done
 
-          # Replace originals with optimized versions
-          mv optimized/* img/
+          # Detect repo changes
+          if git diff --quiet --exit-code; then
+            echo "No image changes to commit."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected — committing."
+            git config user.name "github-actions"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add img || true
+            # Add [skip ci] to avoid other CI triggers that respect it
+            git commit -m "🔧 Auto-optimize product images [skip ci]" || true
+            git push origin HEAD:${{ github.ref_name }} || true
+            echo "changed=true" >> $GITHUB_OUTPUT
+            CHANGED=true
+          fi
 
-      - name: Commit optimized images
+          if [ "$CHANGED" = true ] || [ "$(cat $GITHUB_OUTPUT 2>/dev/null || echo '')" = *"changed=true"* ]; then
+            echo "::set-output name=changed::true"
+          else
+            echo "::set-output name=changed::false"
+          fi
+
+      - name: Result
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add img/
-          git commit -m "🔧 Optimized product images" || echo "No images changed"
-          git push
+          echo "Optimization job finished."
+          echo "If commit created by workflow, changes are pushed to this branch (and workflow will not re-run due to actor guard)."
