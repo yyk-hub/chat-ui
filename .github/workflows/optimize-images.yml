@@ -1,7 +1,109 @@
-- name: Commit optimized images
-  run: |
-    git config --global user.name "github-actions"
-    git config --global user.email "github-actions@github.com"
-    git add img/
-    git commit -m "🔧 Optimized product images" || echo "No changes to commit"
-    git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
+name: Optimize Product Images
+
+on:
+  push:
+    paths:
+      - 'img/**'
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    
+    # Prevent infinite loops
+    if: "!contains(github.event.head_commit.message, '[skip-optimize]')"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install optimization tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick libwebp-dev jpegoptim optipng pngquant
+          
+      - name: Configure ImageMagick (remove size limits)
+        run: |
+          sudo sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml
+          sudo sed -i 's/<policy domain="resource" name="disk" value="1GiB"\/>/<policy domain="resource" name="disk" value="8GiB"\/>/' /etc/ImageMagick-6/policy.xml
+
+      - name: Find and optimize images
+        run: |
+          # Create temporary directory
+          mkdir -p optimized
+          
+          # Counter for optimized images
+          count=0
+          
+          # Find and optimize images
+          find img -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | while read IMG; do
+            filename=$(basename "$IMG")
+            extension="${filename##*.}"
+            
+            echo "Processing: $IMG"
+            
+            case "${extension,,}" in
+              jpg|jpeg)
+                # Optimize JPEG
+                convert "$IMG" -strip -quality 85 -sampling-factor 4:2:0 -interlace Plane -resize 1200x1200\> "optimized/$filename"
+                jpegoptim --max=85 --strip-all "optimized/$filename" 2>/dev/null || true
+                ;;
+              png)
+                # Optimize PNG
+                convert "$IMG" -strip -resize 1200x1200\> "optimized/$filename"
+                optipng -o2 "optimized/$filename" 2>/dev/null || true
+                pngquant --quality=80-95 --ext .png --force "optimized/$filename" 2>/dev/null || true
+                ;;
+              webp)
+                # Optimize WebP
+                cp "$IMG" "optimized/$filename"
+                ;;
+            esac
+            
+            # Check if optimization actually reduced file size
+            if [ -f "optimized/$filename" ]; then
+              original_size=$(stat -f%z "$IMG" 2>/dev/null || stat -c%s "$IMG")
+              optimized_size=$(stat -f%z "optimized/$filename" 2>/dev/null || stat -c%s "optimized/$filename")
+              
+              if [ "$optimized_size" -lt "$original_size" ]; then
+                reduction=$((100 - (optimized_size * 100 / original_size)))
+                echo "✓ Reduced by ${reduction}% (${original_size} → ${optimized_size} bytes)"
+                mv "optimized/$filename" "$IMG"
+                count=$((count + 1))
+              else
+                echo "⊘ No size reduction, keeping original"
+                rm "optimized/$filename"
+              fi
+            fi
+          done
+          
+          echo "OPTIMIZED_COUNT=$count" >> $GITHUB_ENV
+          
+      - name: Commit and push if changes exist
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are any changes
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No images were optimized (all already optimal)"
+            exit 0
+          fi
+          
+          git add img/
+          git commit -m "🖼️ Optimize images: ${{ env.OPTIMIZED_COUNT }} files reduced [skip-optimize]"
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Image Optimization Complete 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Images optimized:** ${{ env.OPTIMIZED_COUNT }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
