@@ -98,7 +98,30 @@ jobs:
           
           git add img/
           git commit -m "🖼️ Optimize images: ${{ env.OPTIMIZED_COUNT }} files reduced [skip-optimize]"
-          git push
+          
+          # Pull latest changes and push (with retry logic)
+          max_attempts=3
+          attempt=1
+          
+          while [ $attempt -le $max_attempts ]; do
+            echo "Push attempt $attempt of $max_attempts"
+            
+            # Pull with rebase to avoid merge commits
+            git pull --rebase origin ${{ github.ref_name }} || true
+            
+            # Try to push
+            if git push; then
+              echo "✓ Successfully pushed changes"
+              exit 0
+            fi
+            
+            echo "Push failed, retrying..."
+            attempt=$((attempt + 1))
+            sleep 2
+          done
+          
+          echo "Failed to push after $max_attempts attempts"
+          exit 1
 
       - name: Summary
         if: always()
