@@ -84,44 +84,16 @@ jobs:
           done
           
           echo "OPTIMIZED_COUNT=$count" >> $GITHUB_ENV
-          
-      - name: Commit and push if changes exist
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Check if there are any changes
-          if git diff --quiet && git diff --cached --quiet; then
-            echo "No images were optimized (all already optimal)"
-            exit 0
-          fi
-          
-          git add img/
-          git commit -m "🖼️ Optimize images: ${{ env.OPTIMIZED_COUNT }} files reduced [skip-optimize]"
-          
-          # Pull latest changes and push (with retry logic)
-          max_attempts=3
-          attempt=1
-          
-          while [ $attempt -le $max_attempts ]; do
-            echo "Push attempt $attempt of $max_attempts"
-            
-            # Pull with rebase to avoid merge commits
-            git pull --rebase origin ${{ github.ref_name }} || true
-            
-            # Try to push
-            if git push; then
-              echo "✓ Successfully pushed changes"
-              exit 0
-            fi
-            
-            echo "Push failed, retrying..."
-            attempt=$((attempt + 1))
-            sleep 2
-          done
-          
-          echo "Failed to push after $max_attempts attempts"
-          exit 1
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🖼️ Optimize images: ${{ env.OPTIMIZED_COUNT }} files reduced [skip-optimize]"
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
+          commit_author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+          file_pattern: 'img/**'
+          skip_dirty_check: false
 
       - name: Summary
         if: always()
