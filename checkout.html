@@ -5,218 +5,44 @@
   <title>Checkout - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      background: #f4ecd6;
-      font-family: Segoe UI, Arial, sans-serif;
-      margin: 0;
-    }
-
-    .container {
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-    }
-
-    .header {
-      position: sticky;
-      top: 0;
-      background: #f4ecd6;
-      z-index: 1000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 2px solid #d1c4a1;
-    }
-
-    .home-btn {
-      position: absolute;
-      left: 20px;
-      background: #996600;
-      color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .shop-btn {
-      position: absolute;
-      right: 20px;
-      background: #14b47e;
-      color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .header-title {
-      color: #996600;
-      margin: 0;
-      font-size: 20px;
-    }
-
-    .section {
-      background: #fffbe6;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-
-    h3 {
-      margin-top: 0;
-      color: #996600;
-      border-bottom: 1px solid #d1c4a1;
-      padding-bottom: 4px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-      font-size: 14px;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 8px;
-    }
-
-    th {
-      background: #e9d8a6;
-      color: #654321;
-    }
-
-    .qr-section {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 15px;
-      margin-top: 10px;
-      flex-wrap: nowrap;
-      padding: 0 10px;
-      box-sizing: border-box;
-    }
-
-    .qr-box {
-      text-align: center;
-      margin: 5px;
-      flex: 1 1 0;
-      max-width: 160px;
-    }
-
-    .qr-box img {
-      width: 140px;
-      height: 140px;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-    }
-
-    label {
-      display: block;
-      margin-top: 10px;
-      color: #654321;
-    }
-
-    input, textarea, select {
-      width: 95%;
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-top: 4px;
-      font-size: 14px;
-    }
-
-    .confirm-btn {
-      background: #14b47e;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: block;
-      margin: 25px auto;
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .confirm-btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    .print-btn {
-      background: #996600;
-      margin-top: 15px;
-    }
-
-    .shipping-note {
-      font-size: 13px;
-      color: #654321;
-      font-style: italic;
-      margin-top: 5px;
-    }
-
-    .pickup-warning {
-      color: #d32f2f;
-      font-size: 13px;
-      margin-top: 5px;
-      display: none;
-    }
-
-    .whatsapp-instruction {
-      font-size: 14px;
-      color: #d32f2f;
-      margin-top: 10px;
-      text-align: center;
-    }
-
-    .whatsapp-instruction a {
-      color: #14b47e;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    .whatsapp-instruction a:hover {
-      text-decoration: underline;
-    }
-
-    @media print {
-      body * { visibility: hidden; }
-      #OrderDisplay, #OrderDisplay * { visibility: visible; }
-      #OrderDisplay {
-        position: absolute;
-        left: 0; top: 0;
-        width: 100%;
-        padding: 20px;
-        background: white;
-        font-family: Arial, sans-serif;
-      }
-      .print-btn, .confirm-btn, .header, .section:not(#OrderDisplay) { display: none; }
-    }
+    body { background: #f4ecd6; font-family: Segoe UI, Arial, sans-serif; margin: 0; }
+    .container { padding: 20px; max-width: 800px; margin: auto; }
+    .header { position: sticky; top: 0; background: #f4ecd6; z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 12px 0; border-bottom: 2px solid #d1c4a1; }
+    .home-btn, .shop-btn { position: absolute; background: #996600; color: white; border: none; padding: 6px 14px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+    .shop-btn { right: 20px; background: #14b47e; }
+    .header-title { color: #996600; margin: 0; font-size: 20px; }
+    .section { background: #fffbe6; border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+    h3 { margin-top: 0; color: #996600; border-bottom: 1px solid #d1c4a1; padding-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+    th, td { text-align: left; padding: 8px; }
+    th { background: #e9d8a6; color: #654321; }
+    .qr-section { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px; flex-wrap: nowrap; padding: 0 10px; box-sizing: border-box; }
+    .qr-box { text-align: center; margin: 5px; flex: 1 1 0; max-width: 160px; }
+    .qr-box img { width: 140px; height: 140px; border: 1px solid #ccc; border-radius: 12px; }
+    label { display: block; margin-top: 10px; color: #654321; }
+    input, textarea, select { width: 95%; padding: 8px; border-radius: 8px; border: 1px solid #ccc; margin-top: 4px; font-size: 14px; }
+    .confirm-btn { background: #14b47e; color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; display: block; margin: 25px auto; font-size: 16px; font-weight: 600; }
+    .confirm-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .print-btn { background: #996600; margin-top: 15px; }
+    .shipping-note { font-size: 13px; color: #654321; font-style: italic; margin-top: 5px; }
+    .pickup-warning { color: #d32f2f; font-size: 13px; margin-top: 5px; display: none; }
+    .whatsapp-instruction { font-size: 14px; color: #d32f2f; margin-top: 10px; text-align: center; }
+    .whatsapp-instruction a { color: #14b47e; text-decoration: none; font-weight: 500; }
+    .whatsapp-instruction a:hover { text-decoration: underline; }
+    .nav-menu-container { position: absolute; right: 20px; top: 12px; }
+    @media print { body * { visibility: hidden; } #OrderDisplay, #OrderDisplay * { visibility: visible; } #OrderDisplay { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; } .print-btn, .confirm-btn, .header, .section:not(#OrderDisplay) { display: none; } }
   </style>
 </head>
 <body>
   <div class="header">
     <a href="cart.html" class="home-btn">🛒 Cart</a>
     <h2 class="header-title">Checkout</h2>
-    <a href="shop.html" class="shop-btn">🏬 Shop</a>
+    <div class="nav-menu-container">
+      <div id="nav-menu"></div>
+    </div>
   </div>
-
   <div class="container">
-
-    <!-- DELIVERY DETAILS + SHIPPING METHOD -->
+    <!-- DELIVERY DETAILS -->
     <div class="section">
       <h3>🚚 Delivery Details</h3>
       <label>Name</label>
@@ -239,8 +65,6 @@
       </select>
       <label>Country</label>
       <input type="text" id="custCountry" value="Malaysia" readonly>
-
-      <!-- SHIPPING METHOD -->
       <label>Shipping Option</label>
       <select id="shippingMethod">
         <option value="courier">Standard Courier</option>
@@ -251,7 +75,6 @@
         Only available in KL, KK, KCH, PNG, JB. We'll contact you via WhatsApp.
       </p>
     </div>
-
     <!-- PAYMENT -->
     <div class="section">
       <h3>💳 Payment</h3>
@@ -270,12 +93,10 @@
         After payment, please send your bank receipt via WhatsApp at <a href="index.html#whatsapp" target="_blank">Homepage</a>.
       </p>
     </div>
-
     <!-- ORDER SUMMARY -->
     <div class="section">
       <h3>Order Summary</h3>
       <div id="cart-items"></div>
-
       <table>
         <tr>
           <th style="text-align:left; padding:6px 0; color:#654321;">Total Weight</th>
@@ -298,50 +119,42 @@
         </tr>
       </table>
     </div>
-
     <!-- CONFIRM BUTTON -->
     <button class="confirm-btn" id="confirmBtn" onclick="confirmOrder()">✅ Confirm Order</button>
-
-    <!-- ORDER DISPLAY + PRINT -->
+    <!-- ORDER DISPLAY -->
     <div id="OrderDisplay" style="margin-top:20px; font-size:14px; min-height:30px;"></div>
-
   </div>
 
   <script>
-    const BACKEND_URL = "";
+    const BACKEND_URL = "https://chat-ui-30l.pages.dev";
+    // Load nav menu
+    fetch('components/nav-menu.html').then(r=>r.text()).then(html=>{
+      document.getElementById('nav-menu').innerHTML = html;
+    });
 
     // === SHIPPING LOGIC ===
     function calculateShippingCost(subTotal, state, weight, method) {
       const isSabah = state === "Sabah";
       const isPickup = method === "pickup";
-
-      // 1. Express Free ≥ RM500
       if (subTotal >= 500 && method !== "pickup") {
         return { cost: 0, note: "Express Free Shipping", eta: "1–4 days" };
       }
-
-      // 2. Self Pickup
       if (isPickup) {
         return { cost: 0, note: "Self Pickup", eta: "Next day" };
       }
-
-      // 3. Standard Courier
-      const cost = 10; // Flat RM10 for all states
+      const cost = 10;
       return { cost, note: `Standard Courier (${isSabah ? 'Sabah' : 'Other'})`, eta: "1–4 days" };
     }
 
     let cart = [], subTotal = 0, totalWeight = 0;
-
     function loadOrder() {
       cart = JSON.parse(localStorage.getItem("cartItems")) || [];
       const itemsDiv = document.getElementById("cart-items");
-
       if (!cart.length) {
         itemsDiv.innerHTML = `<p style="text-align:center; color:#999; margin:20px 0;">Your cart is empty</p>`;
         updateSummary();
         return;
       }
-
       let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
         <tr style="background:#e9d8a6; color:#654321; font-weight:600;">
           <th style="padding:8px; text-align:left;">Product</th>
@@ -349,15 +162,12 @@
           <th style="padding:8px; text-align:right;">Price</th>
           <th style="padding:8px; text-align:right;">Subtotal</th>
         </tr>`;
-
       subTotal = 0;
       totalWeight = 0;
-
       cart.forEach(item => {
         const lineTotal = item.price * item.qty;
         subTotal += lineTotal;
         totalWeight += (item.weight || 0) * item.qty;
-
         html += `<tr style="border-bottom:1px solid #eee;">
           <td style="padding:8px;">${item.name}</td>
           <td style="padding:8px; text-align:center;">${item.qty}</td>
@@ -365,7 +175,6 @@
           <td style="padding:8px; text-align:right;">RM ${lineTotal.toFixed(2)}</td>
         </tr>`;
       });
-
       html += `</table>`;
       itemsDiv.innerHTML = html;
       updateSummary();
@@ -375,27 +184,20 @@
       const state = document.getElementById("custState").value || "Sabah";
       const method = document.getElementById("shippingMethod").value;
       const { cost, note, eta } = calculateShippingCost(subTotal, state, totalWeight, method);
-
       document.getElementById("total-weight").textContent = `${totalWeight.toFixed(2)} kg`;
       document.getElementById("sub-total").textContent = `RM ${subTotal.toFixed(2)}`;
       document.getElementById("shipping-cost").textContent = `RM ${cost.toFixed(2)}`;
       document.getElementById("shipping-note").textContent = `${note} • ${eta}`;
       document.getElementById("grand-total").textContent = `RM ${(subTotal + cost).toFixed(2)}`;
-
-      // Auto-select Express if ≥500
       if (subTotal >= 500 && method !== "pickup") {
         document.getElementById("shippingMethod").value = "express";
       }
-
-      // Show pickup warning
       document.getElementById("pickupWarning").style.display = method === "pickup" ? "block" : "none";
     }
 
-    // Re-run on any change
     ["custState", "shippingMethod"].forEach(id => {
       document.getElementById(id).addEventListener("change", updateSummary);
     });
-
     loadOrder();
 
     // === CONFIRM ORDER ===
@@ -419,7 +221,6 @@
         return;
       }
 
-      // Validate Self Pickup locations (KL, KK, KCH, PNG, JB)
       const validPickupStates = ["Kuala Lumpur", "Kota Kinabalu", "Kuching", "Penang", "Johor Bahru"];
       if (method === "pickup" && !validPickupStates.includes(state_to)) {
         alert("Self Pickup is only available in Kuala Lumpur, Kota Kinabalu, Kuching, Penang, or Johor Bahru.");
@@ -447,29 +248,28 @@
         total_amt: totalAmt,
         shipping_wt: totalWeight,
         shipping_cost: shippingCost,
-        shipping_method: method === "pickup" ? "Self Pickup" : 
+        shipping_method: method === "pickup" ? "Self Pickup" :
                          method === "express" ? "Express Free" : "Standard Courier",
         delivery_eta: eta,
         pymt_method: "FPX", order_status: "Pending Payment",
         courier_name: method === "pickup" ? "Self Pickup" : "City-Link",
-        tracking_link: "" // No tracking until paid and shipped
+        tracking_link: ""
       };
 
       try {
-        const res = await fetch(`/api/orders`, {
+        const res = await fetch(`${BACKEND_URL}/api/orders`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!data.success) throw new Error(data.error || "Failed");
 
         localStorage.removeItem("cartItems");
-        alert("✅ Order placed successfully! Please send your bank receipt via WhatsApp at Homepage.");
-        await viewMyOrder();
-
+        localStorage.setItem("currentOrderId", order_id);
+        alert("✅ Order placed successfully! Redirecting to edit details...");
+        window.location.href = `order.html?edit=1&phone=${encodeURIComponent(phone)}`;
       } catch (err) {
         alert("Failed: " + err.message);
       } finally {
@@ -477,58 +277,6 @@
         btn.innerText = "✅ Confirm Order";
       }
     }
-
-    // === VIEW MY ORDER ===
-    async function viewMyOrder() {
-      const phone = document.getElementById("custPhone").value.trim();
-      if (!phone) return;
-
-      const display = document.getElementById("OrderDisplay");
-      display.innerHTML = "<p style='color:#666;'>Loading order...</p>";
-
-      try {
-        const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const orders = await res.json();
-        if (!orders || orders.length === 0) {
-          display.innerHTML = "<p>No orders found.</p>";
-          return;
-        }
-
-        const o = orders[0];
-        display.innerHTML = `
-          <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;">
-            <p><strong>Order ID:</strong> ${o.order_id}</p>
-            <p><strong>Customer:</strong> ${o.cus_name}</p>
-            <p><strong>Delivery:</strong> ${o.cus_address}, ${o.postcode}, ${o.state_to}</p>
-            <p><strong>Method:</strong> ${o.shipping_method} • ${o.delivery_eta}</p>
-            <p><strong>Product(s):</strong> ${o.prod_name}</p>
-            <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg</p>
-            <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
-            <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
-            <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
-            <p style="font-size:1.1em;"><strong>Total:</strong> 
-              <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
-            </p>
-            <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
-            ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until order is paid and shipped.</p>'}
-            <p class="whatsapp-instruction">Please send your bank receipt via WhatsApp at <a href="index.html#whatsapp" target="_blank">Homepage</a>.</p>
-          </div>
-        `;
-
-        if (!display.querySelector(".print-btn")) {
-          const printBtn = document.createElement("button");
-          printBtn.textContent = "Print (PDF)";
-          printBtn.className = "confirm-btn print-btn";
-          printBtn.style.background = "#996600";
-          printBtn.onclick = () => window.print();
-          display.appendChild(printBtn);
-        }
-
-      } catch (err) {
-        display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-      }
-    }
   </script>
 </body>
-      </html>
+</html>
