@@ -11,9 +11,9 @@
       margin: 0;
     }
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
-      padding: 20px;
+      padding: 15px;
     }
     .header {
       position: sticky;
@@ -27,21 +27,21 @@
     .header-title {
       color: #996600;
       margin: 0;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 600;
     }
     .home-btn {
       position: absolute;
-      left: 20px;
+      left: 15px;
       top: 12px;
       background: #996600;
       color: white;
       border: none;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 8px;
       cursor: pointer;
       text-decoration: none;
-      font-size: 14px;
+      font-size: 13px;
       display: flex;
       align-items: center;
       gap: 5px;
@@ -49,7 +49,7 @@
     .section {
       background: #fffdf8;
       border-radius: 16px;
-      padding: 18px;
+      padding: 16px;
       margin-top: 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
@@ -58,11 +58,11 @@
       margin-top: 8px;
       color: #654321;
       font-weight: 500;
-      font-size: 14px;
+      font-size: 13px;
     }
     input, select, textarea {
       width: 100%;
-      padding: 8px;
+      padding: 9px;
       border-radius: 8px;
       border: 1px solid #ccc;
       margin-top: 4px;
@@ -73,13 +73,13 @@
       background: #14b47e;
       color: white;
       border: none;
-      padding: 6px 12px;
+      padding: 7px 14px;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
-      transition: background 0.2s;
-      margin: 4px 2px;
+      margin: 3px;
+      min-width: 70px;
     }
     button:hover { background: #12a16d; }
     button:disabled { background: #aaa; cursor: not-allowed; }
@@ -90,29 +90,45 @@
     .action-cell { white-space: nowrap; text-align: center; }
     .edit-row { display: none; background: #fffbe6; }
     .edit-row.show { display: table-row; }
-    .edit-cell { padding: 12px; }
+    .edit-cell { padding: 14px; }
     .edit-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      max-width: 100%;
-      overflow: hidden;
+      font-size: 13px;
     }
     .edit-full { grid-column: 1 / -1; }
     .product-cell {
-      cursor: help;
       max-height: 3.6em;
       overflow: hidden;
       position: relative;
     }
     .product-cell.show-all { max-height: none; }
-    .show-more { color: #14b47e; text-decoration: none; font-size: 12px; cursor: pointer; }
+    .show-more { color: #14b47e; font-size: 11px; cursor: pointer; }
     .show-more:hover { text-decoration: underline; }
-    .table-container { overflow-x: auto; width: 100%; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; table-layout: auto; }
-    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap; min-width: 70px; }
-    th { background: #e9d8a6; color: #654321; font-weight: 600; }
-    td { word-break: break-word; }
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13px;
+      min-width: 700px;
+    }
+    th, td {
+      padding: 8px 6px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      white-space: nowrap;
+      min-width: 70px;
+    }
+    th { background: #e9d8a6; color: #654321; font-weight: 600; font-size: 12px; }
+    td { word-break: break-word; font-size: 13px; }
     .paid { color: #0b8b0b; font-weight: bold; }
     .pending { color: #d32f2f; font-weight: bold; }
     .other { color: #555; font-weight: bold; }
@@ -121,28 +137,20 @@
     .loading { text-align: center; color: #996600; font-style: italic; padding: 20px; }
     .no-orders { text-align: center; color: #999; padding: 20px; font-style: italic; }
 
-    /* PRINT STYLES */
     @media print {
       body * { visibility: hidden; }
       .print-area, .print-area * { visibility: visible; }
-      .print-area {
-        position: absolute;
-        left: 0; top: 0;
-        width: 100%;
-        padding: 20px;
-        background: white;
-        font-family: Arial, sans-serif;
-      }
+      .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 15px; background: white; }
       .edit-btn, .print-btn, .cancel-btn, .save-btn, .edit-row, .header, .section:not(.print-area), .action-cell { display: none !important; }
     }
 
     @media (max-width: 600px) {
       .container { padding: 10px; }
-      table { font-size: 12px; }
-      th, td { padding: 6px 4px; min-width: 60px; }
-      .edit-grid { grid-template-columns: 1fr; gap: 8px; }
-      .action-cell button { font-size: 11px; padding: 5px 8px; margin: 2px; }
-      input, select, textarea { font-size: 13px; padding: 6px; }
+      table { font-size: 11px; min-width: 600px; }
+      th, td { padding: 6px 4px; }
+      .edit-grid { grid-template-columns: 1fr; }
+      .action-cell button { font-size: 10px; padding: 4px 6px; margin: 1px; }
+      .header-title { font-size: 18px; }
     }
   </style>
 </head>
@@ -152,28 +160,26 @@
     <h2 class="header-title">My Orders</h2>
   </div>
   <div class="container">
-    <!-- Search Form -->
     <div class="section">
       <label>Phone Number <span style="color:#d32f2f;">*</span></label>
       <input type="text" id="custPhone" placeholder="e.g. 0123456789">
       <button id="loadBtn" onclick="loadOrders()">View My Orders</button>
     </div>
-    <!-- Results -->
     <div id="ordersList" class="section" style="display:none;">
       <h3 style="margin-top:0; color:#996600;">Order History</h3>
-      <div id="loadingMsg" class="loading" style="display:none;">Loading your orders...</div>
+      <div id="loadingMsg" class="loading" style="display:none;">Loading...</div>
       <div class="table-container">
         <table id="ordersTable">
           <thead>
             <tr>
-              <th>Order ID</th>
+              <th>ID</th>
               <th>Product</th>
               <th>Total</th>
               <th>Courier</th>
               <th>Track</th>
               <th>Status</th>
               <th>Date</th>
-              <th class="action-cell">Action</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -185,99 +191,89 @@
   <script>
     const BACKEND_URL = "https://chat-ui-30l.pages.dev";
 
-    function formatDate(isoString) {
-      if (!isoString) return '-';
+    function formatDate(iso) {
+      if (!iso) return '-';
       try {
-        const d = new Date(isoString);
-        if (isNaN(d.getTime())) return '-';
+        const d = new Date(iso);
         return d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' +
                d.toLocaleTimeString('en-MY', { hour: 'numeric', minute: '2-digit' });
       } catch { return '-'; }
     }
 
-    function formatProductList(prodName, orderId) {
-      if (!prodName) return '-';
-      const items = prodName.split(", ").map(p => p.trim()).filter(p => p);
-      if (items.length === 0) return '-';
-      const fullText = items.join(", ");
-      const displayItems = items.slice(0, 2);
-      const displayText = displayItems.join("<br>");
-      const showMore = items.length > 2 ? `<br><a class="show-more" onclick="toggleProducts('${orderId}')">Show More</a>` : '';
-      return `<span class="product-cell" title="${fullText}" id="products-${orderId}">${displayText}${showMore}</span>`;
+    function formatProductList(name, id) {
+      if (!name) return '-';
+      const items = name.split(", ").map(p => p.trim()).filter(p => p);
+      const full = items.join(", ");
+      const display = items.slice(0, 2).join("<br>");
+      const more = items.length > 2 ? `<br><a class="show-more" onclick="toggleProducts('${id}')">More</a>` : '';
+      return `<span class="product-cell" title="${full}" id="p-${id}">${display}${more}</span>`;
     }
 
-    function toggleProducts(orderId) {
-      const cell = document.getElementById(`products-${orderId}`);
+    function toggleProducts(id) {
+      const cell = document.getElementById(`p-${id}`);
       if (!cell) return;
-      const fullText = cell.getAttribute("title").split(", ").map(p => p.trim()).join("<br>");
+      const full = cell.title.split(", ").join("<br>");
       if (cell.classList.contains("show-all")) {
-        cell.innerHTML = formatProductList(cell.getAttribute("title"), orderId);
+        cell.innerHTML = formatProductList(cell.title, id);
         cell.classList.remove("show-all");
       } else {
-        cell.innerHTML = `${fullText}<br><a class="show-more" onclick="toggleProducts('${orderId}')">Show Less</a>`;
+        cell.innerHTML = `${full}<br><a class="show-more" onclick="toggleProducts('${id}')">Less</a>`;
         cell.classList.add("show-all");
       }
     }
 
-    function showEditRow(orderId) {
-      const editRow = document.getElementById(`edit-${orderId}`);
-      if (editRow) editRow.classList.add("show");
+    function showEdit(id) {
+      const row = document.getElementById(`edit-${id}`);
+      if (row) row.classList.add("show");
     }
 
-    function hideEditRow(orderId) {
-      const editRow = document.getElementById(`edit-${orderId}`);
-      if (editRow) editRow.classList.remove("show");
+    function hideEdit(id) {
+      const row = document.getElementById(`edit-${id}`);
+      if (row) row.classList.remove("show");
     }
 
-    async function saveEdit(orderId) {
+    async function saveEdit(id) {
       const payload = {
-        cus_name: document.getElementById(`name-${orderId}`).value.trim(),
-        cus_address: document.getElementById(`address-${orderId}`).value.trim(),
-        postcode: document.getElementById(`postcode-${orderId}`).value.trim(),
-        state_to: document.getElementById(`state-${orderId}`).value,
-        shipping_method: document.getElementById(`shipping-${orderId}`).value === "pickup" ? "Self Pickup" :
-                         document.getElementById(`shipping-${orderId}`).value === "express" ? "Express Free" : "Standard Courier"
+        cus_name: document.getElementById(`name-${id}`).value.trim(),
+        cus_address: document.getElementById(`address-${id}`).value.trim(),
+        postcode: document.getElementById(`postcode-${id}`).value.trim(),
+        state_to: document.getElementById(`state-${id}`).value,
+        shipping_method: document.getElementById(`shipping-${id}`).value === "pickup" ? "Self Pickup" :
+                         document.getElementById(`shipping-${id}`).value === "express" ? "Express Free" : "Standard Courier"
       };
 
       try {
-        const res = await fetch(`${BACKEND_URL}/api/orders/${orderId}`, {
-          method: "PATCH",
+        const res = await fetch(`${BACKEND_URL}/api/orders/${id}`, {
+          method: "PUT",  // PATCH → 405, use PUT
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
-        // Read response safely
-        const text = await res.text();
         let data;
-        try {
-          data = text ? JSON.parse(text) : {};
-        } catch {
-          throw new Error("Invalid response from server");
-        }
+        try { data = await res.json(); } catch { data = { error: "Invalid JSON" }; }
 
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        alert("Delivery details updated!");
-        hideEditRow(orderId);
+        alert("Updated!");
+        hideEdit(id);
         loadOrders();
       } catch (err) {
-        alert("Save failed: " + err.message);
+        alert("Error: " + err.message);
       }
     }
 
-    function printOrder(orderId, phone) {
-      const printArea = document.getElementById(`print-${orderId}`);
-      if (!printArea) return;
-      let content = printArea.innerHTML;
-      content = content.replace(/\{PHONE\}/g, phone || 'Not provided');
-      printArea.innerHTML = content;
-      printArea.style.display = 'block';
+    function printOrder(id, phone) {
+      const area = document.getElementById(`print-${id}`);
+      if (!area) return;
+      let html = area.innerHTML.replace(/\{PHONE\}/g, phone);
+      area.innerHTML = html;
+      area.style.display = 'block';
       window.print();
-      printArea.style.display = 'none';
+      area.style.display = 'none';
     }
 
     async function loadOrders() {
       const phone = document.getElementById('custPhone').value.trim();
-      if (!phone) return alert('Please enter your phone number.');
+      if (!phone) return alert('Enter phone number');
 
       const btn = document.getElementById('loadBtn');
       const list = document.getElementById('ordersList');
@@ -291,20 +287,14 @@
       tbody.innerHTML = '';
 
       try {
-        const res = await fetch(`${BACKEND_URL}/api/orders?phone=${encodeURIComponent(phone)}`, {
-          headers: { 'Accept': 'application/json' }
-        });
+        const res = await fetch(`${BACKEND_URL}/api/orders?phone=${encodeURIComponent(phone)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-        let orders;
-        try {
-          orders = text ? JSON.parse(text) : [];
-        } catch {
-          throw new Error("Invalid JSON from server");
-        }
-        if (!Array.isArray(orders)) throw new Error('Invalid response');
-        loading.style.display = 'none';
 
+        let orders;
+        try { orders = await res.json(); } catch { throw new Error("Invalid response"); }
+        if (!Array.isArray(orders)) throw new Error("Invalid data");
+
+        loading.style.display = 'none';
         if (orders.length === 0) {
           tbody.innerHTML = `<tr><td colspan="8" class="no-orders">No orders found.</td></tr>`;
           return;
@@ -341,7 +331,7 @@
             <td class="${order.order_status === 'Paid' ? 'paid' : order.order_status === 'Pending Payment' ? 'pending' : 'other'}">${order.order_status}</td>
             <td>${formatDate(order.created_at)}</td>
             <td class="action-cell">
-              ${canEdit ? `<button class="edit-btn" onclick="showEditRow('${order.order_id}')">Edit</button>` : ''}
+              ${canEdit ? `<button class="edit-btn" onclick="showEdit('${order.order_id}')">Edit</button>` : ''}
               <button class="print-btn" onclick="printOrder('${order.order_id}', '${order.phone}')">Print</button>
             </td>
           `;
@@ -353,65 +343,36 @@
           printArea.className = 'print-area';
           printArea.style.display = 'none';
           printArea.innerHTML = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding:20px;">
-              <h2 style="text-align:center; color:#996600; margin-bottom:10px;">CEO Coffee - Order Receipt</h2>
-              <p style="text-align:center; font-size:12px; color:#666; margin-top:0;">${formatDate(order.created_at)}</p>
-              
-              <table style="width:100%; margin-bottom:15px; font-size:14px;">
-                <tr><td><strong>Order ID:</strong></td><td>${order.order_id}</td></tr>
-                <tr><td><strong>Customer:</strong></td><td>${order.cus_name}</td></tr>
+            <div style="font-family:Arial;max-width:580px;margin:auto;padding:15px;">
+              <h2 style="text-align:center;color:#996600;">CEO Coffee Receipt</h2>
+              <p style="text-align:center;font-size:11px;color:#666;">${formatDate(order.created_at)}</p>
+              <table style="width:100%;font-size:13px;margin:10px 0;">
+                <tr><td><strong>ID:</strong></td><td>${order.order_id}</td></tr>
+                <tr><td><strong>Name:</strong></td><td>${order.cus_name}</td></tr>
                 <tr><td><strong>Phone:</strong></td><td>{PHONE}</td></tr>
               </table>
-
-              <p style="margin:10px 0;"><strong>Delivery Address:</strong><br>
-                ${order.cus_address}<br>${order.postcode}, ${order.state_to}
-              </p>
-
-              <p style="margin:10px 0;"><strong>Shipping Method:</strong> ${order.shipping_method}</p>
-
-              <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
-
-              <table style="width:100%; font-size:15px;">
-                <tr>
-                  <td><strong>Products:</strong></td>
-                  <td style="text-align:right;">${order.prod_name.replace(/, /g, '<br>')}</td>
-                </tr>
-                <tr>
-                  <td>Sub-total</td>
-                  <td style="text-align:right;">RM ${subTotal}</td>
-                </tr>
-                <tr>
-                  <td>Shipping Cost</td>
-                  <td style="text-align:right; color:#14b47e;">RM ${order.shipping_cost.toFixed(2)}</td>
-                </tr>
-                <tr style="border-top:2px solid #996600; font-weight:bold; font-size:16px;">
-                  <td>Total Amount</td>
-                  <td style="text-align:right; color:#996600;">RM ${order.total_amt.toFixed(2)}</td>
+              <p style="margin:8px 0;"><strong>Address:</strong><br>${order.cus_address}<br>${order.postcode}, ${order.state_to}</p>
+              <p style="margin:8px 0;"><strong>Shipping:</strong> ${order.shipping_method}</p>
+              <hr style="border:0;border-top:1px dashed #ccc;margin:12px 0;">
+              <table style="width:100%;font-size:14px;">
+                <tr><td><strong>Products:</strong></td><td style="text-align:right;">${order.prod_name.replace(/, /g, '<br>')}</td></tr>
+                <tr><td>Sub-total</td><td style="text-align:right;">RM ${subTotal}</td></tr>
+                <tr><td>Shipping</td><td style="text-align:right;color:#14b47e;">RM ${order.shipping_cost.toFixed(2)}</td></tr>
+                <tr style="border-top:2px solid #996600;font-weight:bold;font-size:15px;">
+                  <td>Total</td><td style="text-align:right;color:#996600;">RM ${order.total_amt.toFixed(2)}</td>
                 </tr>
               </table>
-
-              <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
-
-              <p style="margin:10px 0;">
-                <strong>Status:</strong> 
-                <span style="color:${order.order_status === 'Paid' ? '#0b8b0b' : '#d32f2f'}">
-                  ${order.order_status}
-                </span>
+              <hr style="border:0;border-top:1px dashed #ccc;margin:12px 0;">
+              <p style="margin:8px 0;"><strong>Status:</strong> 
+                <span style="color:${order.order_status === 'Paid' ? '#0b8b0b' : '#d32f2f'}">${order.order_status}</span>
               </p>
-
-              ${order.tracking_link ? 
-                `<p style="margin:10px 0;"><strong>Tracking:</strong> <a href="${order.tracking_link}" style="color:#14b47e; text-decoration:none;">Click to Track</a></p>` 
-                : ''}
-
-              <div style="margin-top:30px; text-align:center; font-size:12px; color:#666; line-height:1.5;">
-                <p>Thank you for your order!</p>
-                <p>Need help? Send receipt via WhatsApp at <a href="index.html#whatsapp" style="color:#14b47e;">Homepage</a></p>
-              </div>
+              ${order.tracking_link ? `<p style="margin:8px 0;"><strong>Track:</strong> <a href="${order.tracking_link}" style="color:#14b47e;">Click here</a></p>` : ''}
+              <p style="text-align:center;font-size:11px;color:#666;margin-top:20px;">Thank you!</p>
             </div>
           `;
           document.body.appendChild(printArea);
 
-          // Edit Row (Compact Grid)
+          // Edit Row
           if (canEdit) {
             const editRow = document.createElement('tr');
             editRow.id = `edit-${order.order_id}`;
@@ -419,39 +380,28 @@
             editRow.innerHTML = `
               <td colspan="8" class="edit-cell">
                 <div class="edit-grid">
-                  <div>
-                    <label>Name</label>
-                    <input type="text" id="name-${order.order_id}" value="${order.cus_name}">
-                  </div>
-                  <div>
-                    <label>Postcode</label>
-                    <input type="text" id="postcode-${order.order_id}" value="${order.postcode}">
-                  </div>
-                  <div class="edit-full">
-                    <label>Address</label>
-                    <textarea id="address-${order.order_id}" rows="2">${order.cus_address}</textarea>
-                  </div>
-                  <div>
-                    <label>State</label>
+                  <div><label>Name</label><input id="name-${order.order_id}" value="${order.cus_name}"></div>
+                  <div><label>Postcode</label><input id="postcode-${order.order_id}" value="${order.postcode}"></div>
+                  <div class="edit-full"><label>Address</label><textarea id="address-${order.order_id}" rows="2">${order.cus_address}</textarea></div>
+                  <div><label>State</label>
                     <select id="state-${order.order_id}">
                       <option value="Kuala Lumpur" ${order.state_to === "Kuala Lumpur" ? "selected" : ""}>Kuala Lumpur</option>
                       <option value="Sabah" ${order.state_to === "Sabah" ? "selected" : ""}>Sabah</option>
                       <option value="Sarawak" ${order.state_to === "Sarawak" ? "selected" : ""}>Sarawak</option>
                       <option value="Penang" ${order.state_to === "Penang" ? "selected" : ""}>Penang</option>
                       <option value="Johor" ${order.state_to === "Johor" ? "selected" : ""}>Johor</option>
-                      <option value="West Malaysia" ${order.state_to === "West Malaysia" ? "selected" : ""}>West Malaysia (Other)</option>
+                      <option value="West Malaysia" ${order.state_to === "West Malaysia" ? "selected" : ""}>West Malaysia</option>
                     </select>
                   </div>
-                  <div>
-                    <label>Shipping</label>
+                  <div><label>Shipping</label>
                     <select id="shipping-${order.order_id}">
-                      <option value="courier" ${order.shipping_method.includes("Courier") ? "selected" : ""}>Standard Courier</option>
-                      <option value="express" ${order.shipping_method.includes("Express") ? "selected" : ""}>Express Free Shipping</option>
-                      <option value="pickup" ${order.shipping_method.includes("Pickup") ? "selected" : ""}>Self Pickup</option>
+                      <option value="courier" ${order.shipping_method.includes("Courier") ? "selected" : ""}>Standard</option>
+                      <option value="express" ${order.shipping_method.includes("Express") ? "selected" : ""}>Express Free</option>
+                      <option value="pickup" ${order.shipping_method.includes("Pickup") ? "selected" : ""}>Pickup</option>
                     </select>
                   </div>
-                  <div class="edit-full" style="text-align:right; margin-top:8px;">
-                    <button class="cancel-btn" onclick="hideEditRow('${order.order_id}')">Cancel</button>
+                  <div class="edit-full" style="text-align:right;">
+                    <button class="cancel-btn" onclick="hideEdit('${order.order_id}')">Cancel</button>
                     <button class="save-btn" onclick="saveEdit('${order.order_id}')">Save</button>
                   </div>
                 </div>
@@ -462,9 +412,8 @@
         });
 
       } catch (err) {
-        console.error(err);
         loading.style.display = 'none';
-        tbody.innerHTML = `<tr><td colspan="8" style="color:red; text-align:center;">Error: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="color:red;text-align:center;">Error: ${err.message}</td></tr>`;
       } finally {
         btn.disabled = false;
         btn.textContent = "View My Orders";
