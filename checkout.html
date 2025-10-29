@@ -396,7 +396,51 @@
       document.getElementById(id).addEventListener("change", updateSummary);
     });
 
-    loadOrder();
+    // === PREVENT DUPLICATE ORDERS ===
+    
+    // Generate hash of cart to detect duplicates
+    function hashCart(cartItems) {
+      const cartString = JSON.stringify(cartItems.map(i => ({
+        name: i.name,
+        qty: i.qty,
+        price: i.price
+      })));
+      return btoa(cartString); // Simple base64 hash
+    }
+
+    // Check if order was already placed for this cart
+    function checkExistingOrder() {
+      const orderPlaced = localStorage.getItem('orderPlaced');
+      const currentCartHash = hashCart(cart);
+      
+      if (orderPlaced === currentCartHash) {
+        // Order already exists for this cart
+        document.getElementById('confirmBtn').style.display = 'none';
+        showOrderHistoryButton();
+        return true;
+      }
+      return false;
+    }
+
+    // Show "View Order History" button instead of Confirm
+    function showOrderHistoryButton() {
+      const container = document.querySelector('.container');
+      const existingHistoryBtn = document.getElementById('viewHistoryBtn');
+      
+      if (!existingHistoryBtn) {
+        const historyBtn = document.createElement('a');
+        historyBtn.id = 'viewHistoryBtn';
+        historyBtn.href = 'order.html';
+        historyBtn.className = 'confirm-btn';
+        historyBtn.style.background = '#996600';
+        historyBtn.innerHTML = '📋 View Order History';
+        historyBtn.style.textDecoration = 'none';
+        historyBtn.style.textAlign = 'center';
+        
+        const confirmBtn = document.getElementById('confirmBtn');
+        confirmBtn.parentNode.insertBefore(historyBtn, confirmBtn.nextSibling);
+      }
+    }
 
     // === CONFIRM ORDER ===
     async function confirmOrder() {
@@ -466,13 +510,22 @@
         const data = await res.json();
         if (!data.success) throw new Error(data.error || "Failed");
 
+        // SUCCESS: Mark order as placed
+        const cartHash = hashCart(cart);
+        localStorage.setItem('orderPlaced', cartHash);
+        localStorage.setItem('lastOrderPhone', phone);
         localStorage.removeItem("cartItems");
+        
         alert("✅ Order placed successfully! Please send your bank receipt via WhatsApp at Homepage.");
+        
+        // Hide confirm button, show order history button
+        btn.style.display = 'none';
+        showOrderHistoryButton();
+        
         await viewMyOrder();
 
       } catch (err) {
         alert("Failed: " + err.message);
-      } finally {
         btn.disabled = false;
         btn.innerText = "✅ Confirm Order";
       }
@@ -529,6 +582,12 @@
         display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
       }
     }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadOrder();
+      checkExistingOrder();
+    });
   </script>
 </body>
-      </html>
+</html>
