@@ -10,13 +10,11 @@
       font-family: Segoe UI, Arial, sans-serif;
       margin: 0;
     }
-
     .container {
       max-width: 800px;
       margin: auto;
       padding: 20px;
     }
-
     .header {
       position: sticky;
       top: 0;
@@ -26,14 +24,12 @@
       text-align: center;
       z-index: 100;
     }
-
     .header-title {
       color: #996600;
       margin: 0;
       font-size: 22px;
       font-weight: 600;
     }
-
     .home-btn {
       position: absolute;
       left: 20px;
@@ -50,7 +46,6 @@
       align-items: center;
       gap: 5px;
     }
-
     .section {
       background: #fffdf8;
       border-radius: 16px;
@@ -58,15 +53,13 @@
       margin-top: 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-
     label {
       display: block;
       margin-top: 12px;
       color: #654321;
       font-weight: 500;
     }
-
-    input {
+    input, select, textarea {
       width: 100%;
       padding: 10px;
       border-radius: 8px;
@@ -75,161 +68,76 @@
       font-size: 15px;
       box-sizing: border-box;
     }
-
     button {
       background: #14b47e;
       color: white;
       border: none;
-      padding: 12px 24px;
+      padding: 10px 20px;
       border-radius: 10px;
       cursor: pointer;
-      display: block;
-      margin: 20px auto 10px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       transition: background 0.2s;
     }
-
-    button:hover {
-      background: #12a16d;
-    }
-
-    button:disabled {
-      background: #aaa;
-      cursor: not-allowed;
-    }
-
+    button:hover { background: #12a16d; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+    .edit-btn { background: #996600; font-size: 13px; padding: 6px 12px; margin-left: 8px; }
+    .save-btn { background: #14b47e; }
+    .cancel-btn { background: #d32f2f; }
+    .print-btn { background: #996600; margin-left: 10px; font-size: 13px; padding: 6px 12px; }
+    .edit-row { background: #fffbe6; padding: 16px; border-radius: 12px; margin-top: 10px; display: none; }
+    .edit-row.show { display: block; }
     .product-cell {
       cursor: help;
-      max-height: 3.6em; /* Approx 2 lines at 1.8em line height */
+      max-height: 3.6em;
       overflow: hidden;
       position: relative;
     }
+    .product-cell.show-all { max-height: none; }
+    .show-more { color: #14b47e; text-decoration: none; font-size: 12px; cursor: pointer; }
+    .show-more:hover { text-decoration: underline; }
+    .table-container { overflow-x: auto; width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; table-layout: auto; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap; min-width: 80px; }
+    th { background: #e9d8a6; color: #654321; font-weight: 600; }
+    td { word-break: break-word; }
+    .paid { color: #0b8b0b; font-weight: bold; }
+    .pending { color: #d32f2f; font-weight: bold; }
+    .other { color: #555; font-weight: bold; }
+    a.track-link { color: #14b47e; text-decoration: none; font-weight: 500; }
+    a.track-link:hover { text-decoration: underline; }
+    .loading { text-align: center; color: #996600; font-style: italic; padding: 20px; }
+    .no-orders { text-align: center; color: #999; padding: 20px; font-style: italic; }
 
-    .product-cell.show-all {
-      max-height: none;
-    }
-
-    .show-more {
-      color: #14b47e;
-      text-decoration: none;
-      font-size: 12px;
-      cursor: pointer;
-    }
-
-    .show-more:hover {
-      text-decoration: underline;
-    }
-
-    .table-container {
-      overflow-x: auto;
-      width: 100%;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-      font-size: 14px;
-      table-layout: auto;
-    }
-
-    th, td {
-      padding: 10px 8px;
-      text-align: left;
-      border-bottom: 1px solid #eee;
-      white-space: nowrap;
-      min-width: 80px;
-    }
-
-    th {
-      background: #e9d8a6;
-      color: #654321;
-      font-weight: 600;
-    }
-
-    td {
-      word-break: break-word;
-    }
-
-    .paid {
-      color: #0b8b0b;
-      font-weight: bold;
-    }
-
-    .pending {
-      color: #d32f2f;
-      font-weight: bold;
-    }
-
-    .other {
-      color: #555;
-      font-weight: bold;
-    }
-
-    a.track-link {
-      color: #14b47e;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    a.track-link:hover {
-      text-decoration: underline;
-    }
-
-    .loading {
-      text-align: center;
-      color: #996600;
-      font-style: italic;
-      padding: 20px;
-    }
-
-    .no-orders {
-      text-align: center;
-      color: #999;
-      padding: 20px;
-      font-style: italic;
+    /* PRINT STYLES */
+    @media print {
+      body * { visibility: hidden; }
+      .print-area, .print-area * { visibility: visible; }
+      .print-area {
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%;
+        padding: 20px;
+        background: white;
+        font-family: Arial, sans-serif;
+      }
+      .edit-btn, .print-btn, .cancel-btn, .save-btn, .edit-row, .header, .section:not(.print-area) { display: none !important; }
     }
 
     @media (max-width: 600px) {
-      table {
-        font-size: 12px;
-      }
-
-      th, td {
-        padding: 8px 4px;
-        min-width: 80px;  /* Increased from 60px */
-        white-space: normal;
-        word-break: break-word;
-      }
-      
-      th:nth-child(2), td:nth-child(2) { /* Product column */
-        min-width: 120px; /* Wider to fit one product name */
-      }
-
-      .product-cell {
-        white-space: normal;
-        word-break: break-word;
-        max-height: none; /* Allow natural height for better readability */
-      }
-
-      .product-cell.show-all {
-        max-height: none;
-      }
-
-      .table-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
+      table { font-size: 12px; }
+      th, td { padding: 8px 4px; min-width: 80px; white-space: normal; word-break: break-word; }
+      th:nth-child(2), td:nth-child(2) { min-width: 120px; }
+      .product-cell { white-space: normal; max-height: none; }
+      .print-btn, .edit-btn { font-size: 12px; padding: 5px 8px; }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <a href="index.html" class="home-btn">🏠 Home</a>
+    <a href="index.html" class="home-btn">Home</a>
     <h2 class="header-title">My Orders</h2>
   </div>
-
   <div class="container">
     <!-- Search Form -->
     <div class="section">
@@ -237,7 +145,6 @@
       <input type="text" id="custPhone" placeholder="e.g. 0123456789">
       <button id="loadBtn" onclick="loadOrders()">View My Orders</button>
     </div>
-
     <!-- Results -->
     <div id="ordersList" class="section" style="display:none;">
       <h3 style="margin-top:0; color:#996600;">Order History</h3>
@@ -253,6 +160,7 @@
               <th>Track</th>
               <th>Status</th>
               <th>Date</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -264,23 +172,16 @@
   <script>
     const BACKEND_URL = "https://chat-ui-30l.pages.dev";
 
-    // Format D1 timestamp → e.g. "26 Oct 2025, 12:34 PM"
     function formatDate(isoString) {
       if (!isoString) return '-';
       try {
         const d = new Date(isoString);
         if (isNaN(d.getTime())) return '-';
-        return d.toLocaleDateString('en-MY', {
-          day: 'numeric', month: 'short', year: 'numeric'
-        }) + ', ' + d.toLocaleTimeString('en-MY', {
-          hour: 'numeric', minute: '2-digit'
-        });
-      } catch {
-        return '-';
-      }
+        return d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' +
+               d.toLocaleTimeString('en-MY', { hour: 'numeric', minute: '2-digit' });
+      } catch { return '-'; }
     }
 
-    // Format product list (show up to 2 products, tooltip for full list, "Show More" for >2)
     function formatProductList(prodName, orderId) {
       if (!prodName) return '-';
       const items = prodName.split(", ").map(p => p.trim()).filter(p => p);
@@ -292,7 +193,6 @@
       return `<span class="product-cell" title="${fullText}" id="products-${orderId}">${displayText}${showMore}</span>`;
     }
 
-    // Toggle full product list
     function toggleProducts(orderId) {
       const cell = document.getElementById(`products-${orderId}`);
       if (!cell) return;
@@ -306,19 +206,64 @@
       }
     }
 
+    function showEditRow(orderId) {
+      const editRow = document.getElementById(`edit-${orderId}`);
+      if (editRow) editRow.classList.add("show");
+    }
+
+    function hideEditRow(orderId) {
+      const editRow = document.getElementById(`edit-${orderId}`);
+      if (editRow) editRow.classList.remove("show");
+    }
+
+    async function saveEdit(orderId) {
+      const payload = {
+        cus_name: document.getElementById(`name-${orderId}`).value.trim(),
+        cus_address: document.getElementById(`address-${orderId}`).value.trim(),
+        postcode: document.getElementById(`postcode-${orderId}`).value.trim(),
+        state_to: document.getElementById(`state-${orderId}`).value,
+        shipping_method: document.getElementById(`shipping-${orderId}`).value === "pickup" ? "Self Pickup" :
+                         document.getElementById(`shipping-${orderId}`).value === "express" ? "Express Free" : "Standard Courier"
+      };
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/orders/${orderId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error("Update failed");
+        alert("Delivery details updated!");
+        hideEditRow(orderId);
+        loadOrders(); // Refresh table
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    }
+
+    function printOrder(orderId, phone) {
+      const printArea = document.getElementById(`print-${orderId}`);
+      if (!printArea) return;
+
+      // Inject phone into print content
+      let content = printArea.innerHTML;
+      content = content.replace(/\{PHONE\}/g, phone);
+
+      printArea.innerHTML = content;
+      printArea.style.display = 'block';
+      window.print();
+      printArea.style.display = 'none';
+    }
+
     async function loadOrders() {
       const phone = document.getElementById('custPhone').value.trim();
-      if (!phone) {
-        alert('Please enter your phone number.');
-        return;
-      }
+      if (!phone) return alert('Please enter your phone number.');
 
       const btn = document.getElementById('loadBtn');
       const list = document.getElementById('ordersList');
       const loading = document.getElementById('loadingMsg');
       const tbody = document.querySelector('#ordersTable tbody');
 
-      // UI: show loading
       btn.disabled = true;
       btn.textContent = "Loading...";
       list.style.display = 'block';
@@ -327,51 +272,163 @@
 
       try {
         const res = await fetch(`${BACKEND_URL}/api/orders?phone=${encodeURIComponent(phone)}`, {
-          headers: {
-            'Accept': 'application/json'
-          }
+          headers: { 'Accept': 'application/json' }
         });
-        if (!res.ok) throw new Error(`Failed to load orders: HTTP ${res.status}`);
-
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const orders = await res.json();
-        if (!Array.isArray(orders)) throw new Error('Invalid response format from server');
-
+        if (!Array.isArray(orders)) throw new Error('Invalid response');
         loading.style.display = 'none';
 
         if (orders.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" class="no-orders">No orders found for this phone.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="no-orders">No orders found.</td></tr>`;
           return;
         }
 
         orders.forEach(o => {
-          // Validate required fields
           const order = {
             order_id: o.order_id || 'Unknown',
             prod_name: o.prod_name || '-',
-            total_amt: o.total_amt || 0,
+            total_amt: parseFloat(o.total_amt) || 0,
+            shipping_cost: parseFloat(o.shipping_cost) || 0,
             courier_name: o.courier_name || '-',
             tracking_link: o.tracking_link || '',
             order_status: o.order_status || 'Unknown',
-            created_at: o.created_at || ''
+            created_at: o.created_at || '',
+            cus_name: o.cus_name || '',
+            cus_address: o.cus_address || '',
+            postcode: o.postcode || '',
+            state_to: o.state_to || '',
+            shipping_method: o.shipping_method || '',
+            phone: o.phone || ''
           };
 
-          const row = `
-            <tr>
-              <td><strong>${order.order_id}</strong></td>
-              <td class="product-cell">${formatProductList(order.prod_name, order.order_id)}</td>
-              <td><strong>RM ${parseFloat(order.total_amt).toFixed(2)}</strong></td>
-              <td>${order.courier_name}</td>
-              <td>${order.tracking_link ? `<a href="${order.tracking_link}" target="_blank" class="track-link">Track</a>` : '-'}</td>
-              <td class="${order.order_status === 'Paid' ? 'paid' : order.order_status === 'Pending Payment' ? 'pending' : 'other'}">${order.order_status}</td>
-              <td>${formatDate(order.created_at)}</td>
-            </tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
+          const canEdit = order.order_status === "Pending Payment";
+          const subTotal = (order.total_amt - order.shipping_cost).toFixed(2);
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><strong>${order.order_id}</strong></td>
+            <td>${formatProductList(order.prod_name, order.order_id)}</td>
+            <td><strong>RM ${order.total_amt.toFixed(2)}</strong></td>
+            <td>${order.courier_name}</td>
+            <td>${order.tracking_link ? `<a href="${order.tracking_link}" target="_blank" class="track-link">Track</a>` : '-'}</td>
+            <td class="${order.order_status === 'Paid' ? 'paid' : order.order_status === 'Pending Payment' ? 'pending' : 'other'}">${order.order_status}</td>
+            <td>${formatDate(order.created_at)}</td>
+            <td>
+              ${canEdit ? `<button class="edit-btn" onclick="showEditRow('${order.order_id}')">Edit</button>` : ''}
+              <button class="print-btn" onclick="printOrder('${order.order_id}', '${order.phone}')">Print</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+
+          // Print Area (hidden)
+          const printArea = document.createElement('div');
+          printArea.id = `print-${order.order_id}`;
+          printArea.className = 'print-area';
+          printArea.style.display = 'none';
+          printArea.innerHTML = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding:20px;">
+              <h2 style="text-align:center; color:#996600; margin-bottom:10px;">CEO Coffee - Order Receipt</h2>
+              <p style="text-align:center; font-size:12px; color:#666; margin-top:0;">${formatDate(order.created_at)}</p>
+              
+              <table style="width:100%; margin-bottom:15px; font-size:14px;">
+                <tr><td><strong>Order ID:</strong></td><td>${order.order_id}</td></tr>
+                <tr><td><strong>Customer:</strong></td><td>${order.cus_name}</td></tr>
+                <tr><td><strong>Phone:</strong></td><td>{PHONE}</td></tr>
+              </table>
+
+              <p style="margin:10px 0;"><strong>Delivery Address:</strong><br>
+                ${order.cus_address}<br>${order.postcode}, ${order.state_to}
+              </p>
+
+              <p style="margin:10px 0;"><strong>Shipping Method:</strong> ${order.shipping_method}</p>
+
+              <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
+
+              <table style="width:100%; font-size:15px;">
+                <tr>
+                  <td><strong>Products:</strong></td>
+                  <td style="text-align:right;">${order.prod_name.replace(/, /g, '<br>')}</td>
+                </tr>
+                <tr>
+                  <td>Sub-total</td>
+                  <td style="text-align:right;">RM ${subTotal}</td>
+                </tr>
+                <tr>
+                  <td>Shipping Cost</td>
+                  <td style="text-align:right; color:#14b47e;">RM ${order.shipping_cost.toFixed(2)}</td>
+                </tr>
+                <tr style="border-top:2px solid #996600; font-weight:bold; font-size:16px;">
+                  <td>Total Amount</td>
+                  <td style="text-align:right; color:#996600;">RM ${order.total_amt.toFixed(2)}</td>
+                </tr>
+              </table>
+
+              <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
+
+              <p style="margin:10px 0;">
+                <strong>Status:</strong> 
+                <span style="color:${order.order_status === 'Paid' ? '#0b8b0b' : '#d32f2f'}">
+                  ${order.order_status}
+                </span>
+              </p>
+
+              ${order.tracking_link ? 
+                `<p style="margin:10px 0;"><strong>Tracking:</strong> <a href="${order.tracking_link}" style="color:#14b47e; text-decoration:none;">Click to Track</a></p>` 
+                : ''}
+
+              <div style="margin-top:30px; text-align:center; font-size:12px; color:#666; line-height:1.5;">
+                <p>Thank you for your order!</p>
+                <p>Need help? Send receipt via WhatsApp at <a href="index.html#whatsapp" style="color:#14b47e;">Homepage</a></p>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(printArea);
+
+          // Edit Row (only if Pending)
+          if (canEdit) {
+            const editRow = document.createElement('tr');
+            editRow.id = `edit-${order.order_id}`;
+            editRow.className = "edit-row";
+            editRow.innerHTML = `
+              <td colspan="8">
+                <div style="background:#fffbe6; padding:16px; border-radius:12px;">
+                  <label>Name</label>
+                  <input type="text" id="name-${order.order_id}" value="${order.cus_name}">
+                  <label>Address</label>
+                  <textarea id="address-${order.order_id}" rows="2">${order.cus_address}</textarea>
+                  <label>Postcode</label>
+                  <input type="text" id="postcode-${order.order_id}" value="${order.postcode}">
+                  <label>State</label>
+                  <select id="state-${order.order_id}">
+                    <option value="Kuala Lumpur" ${order.state_to === "Kuala Lumpur" ? "selected" : ""}>Kuala Lumpur</option>
+                    <option value="Sabah" ${order.state_to === "Sabah" ? "selected" : ""}>Sabah</option>
+                    <option value="Sarawak" ${order.state_to === "Sarawak" ? "selected" : ""}>Sarawak</option>
+                    <option value="Penang" ${order.state_to === "Penang" ? "selected" : ""}>Penang</option>
+                    <option value="Johor" ${order.state_to === "Johor" ? "selected" : ""}>Johor</option>
+                    <option value="West Malaysia" ${order.state_to === "West Malaysia" ? "selected" : ""}>West Malaysia (Other)</option>
+                  </select>
+                  <label>Shipping</label>
+                  <select id="shipping-${order.order_id}">
+                    <option value="courier" ${order.shipping_method.includes("Courier") ? "selected" : ""}>Standard Courier</option>
+                    <option value="express" ${order.shipping_method.includes("Express") ? "selected" : ""}>Express Free Shipping</option>
+                    <option value="pickup" ${order.shipping_method.includes("Pickup") ? "selected" : ""}>Self Pickup</option>
+                  </select>
+                  <div style="margin-top:15px; text-align:right;">
+                    <button class="cancel-btn" onclick="hideEditRow('${order.order_id}')">Cancel</button>
+                    <button class="save-btn" onclick="saveEdit('${order.order_id}')">Save</button>
+                  </div>
+                </div>
+              </td>
+            `;
+            tbody.appendChild(editRow);
+          }
         });
 
       } catch (err) {
-        console.error('Load orders error:', err);
+        console.error(err);
         loading.style.display = 'none';
-        tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Failed to load orders: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="color:red; text-align:center;">Error: ${err.message}</td></tr>`;
       } finally {
         btn.disabled = false;
         btn.textContent = "View My Orders";
