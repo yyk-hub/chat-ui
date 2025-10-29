@@ -87,11 +87,11 @@ export async function onRequestGet(context) {
   }
 }
 
-export async function onRequestPatch(context) {
+export async function onRequestPut(context) {
   const { request, env } = context;
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'PATCH, OPTIONS',
+    'Access-Control-Allow-Methods': 'Put, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
@@ -164,7 +164,7 @@ export async function onRequestPatch(context) {
     });
 
   } catch (err) {
-    console.error('PATCH error:', err);
+    console.error('Put error:', err);
     return new Response(JSON.stringify({ success: false, error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -176,7 +176,7 @@ export async function onRequestOptions() {
   return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     }
   });
