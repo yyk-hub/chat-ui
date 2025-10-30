@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>My Orders - CEO Coffee</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
       background: #f4ecd6;
@@ -261,38 +261,81 @@
       }
     }
 
-    function printOrder(id, phone) {
-  const printArea = document.getElementById(`print-${id}`);
-  if (!printArea) return alert("Print content not ready");
+   function printOrder(id, phone) {
+  const area = document.getElementById(`print-${id}`);
+  if (!area) return alert("Print content not ready");
 
-  let html = printArea.innerHTML.replace(/\{PHONE\}/g, phone);
-  const printDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title>
-    <style>body{font-family:Arial;margin:0;padding:20px;background:white;}
-    h2{text-align:center;color:#996600;}hr{border:0;border-top:1px dashed #ccc;margin:15px 0;}
-    table{width:100%;font-size:14px;}td{padding:4px 0;}
-    .total{font-weight:bold;font-size:16px;border-top:2px solid #996600;}
-    @media print{body{-webkit-print-color-adjust:exact;}}</style>
-    </head><body>${html}</body></html>`;
+  let html = area.innerHTML.replace(/\{PHONE\}/g, phone);
 
+  const printDoc = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+      <title>CEO Coffee - ${id}</title>
+      <style>
+        * { box-sizing: border-box; }
+        body { 
+          font-family: Arial, sans-serif; 
+          margin: 0; 
+          padding: 20px; 
+          background: white; 
+          font-size: 14px;
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+        }
+        h2 { text-align: center; color: #996600; margin: 10px 0; font-size: 18px; }
+        p { margin: 8px 0; font-size: 14px; line-height: 1.5; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        td { padding: 4px 0; font-size: 14px; }
+        hr { border: 0; border-top: 1px dashed #ccc; margin: 15px 0; }
+        .total { font-weight: bold; font-size: 16px; border-top: 2px solid #996600; padding-top: 8px; }
+        @page { margin: 0.5cm; }
+        @media print {
+          body { margin: 0; padding: 10px; }
+        }
+      </style>
+    </head>
+    <body>${html}</body>
+    </html>
+  `;
+
+  // Create blob + URL
   const blob = new Blob([printDoc], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
+
+  // Hidden iframe
   const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
   document.body.appendChild(iframe);
+
   iframe.src = url;
 
+  // Wait for full load + render
   iframe.onload = () => {
     setTimeout(() => {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
+      try {
+        const win = iframe.contentWindow;
+        win.focus();
+        win.print();
+      } catch (e) {
+        alert("Print blocked. Try again.");
+      }
+
+      // Cleanup
       setTimeout(() => {
         document.body.removeChild(iframe);
         URL.revokeObjectURL(url);
-      }, 1000);
-    }, 300);
+      }, 1500);
+    }, 500); // Increased delay for full render
   };
 }
-
     async function loadOrders() {
       const phone = document.getElementById('custPhone').value.trim();
       if (!phone) return alert('Enter phone number');
