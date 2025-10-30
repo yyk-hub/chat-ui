@@ -262,14 +262,36 @@
     }
 
     function printOrder(id, phone) {
-      const area = document.getElementById(`print-${id}`);
-      if (!area) return;
-      let html = area.innerHTML.replace(/\{PHONE\}/g, phone);
-      area.innerHTML = html;
-      area.style.display = 'block';
-      window.print();
-      area.style.display = 'none';
-    }
+  const printArea = document.getElementById(`print-${id}`);
+  if (!printArea) return alert("Print content not ready");
+
+  let html = printArea.innerHTML.replace(/\{PHONE\}/g, phone);
+  const printDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title>
+    <style>body{font-family:Arial;margin:0;padding:20px;background:white;}
+    h2{text-align:center;color:#996600;}hr{border:0;border-top:1px dashed #ccc;margin:15px 0;}
+    table{width:100%;font-size:14px;}td{padding:4px 0;}
+    .total{font-weight:bold;font-size:16px;border-top:2px solid #996600;}
+    @media print{body{-webkit-print-color-adjust:exact;}}</style>
+    </head><body>${html}</body></html>`;
+
+  const blob = new Blob([printDoc], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+  iframe.src = url;
+
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        URL.revokeObjectURL(url);
+      }, 1000);
+    }, 300);
+  };
+}
 
     async function loadOrders() {
       const phone = document.getElementById('custPhone').value.trim();
