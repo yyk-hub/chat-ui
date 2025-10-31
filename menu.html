@@ -47,7 +47,158 @@
     font-size: 20px;
     color: #996600;
   }
+  
+/* ✨ Gold Glass Dropdown Menu */
+.menu-dropdown {
+  position: absolute;
+  right: 20px;
+}
 
+.menu-icon {
+  background: none;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  color: #b8860b; /* soft gold */
+  transition: all 0.3s ease;
+}
+
+.menu-icon:hover {
+  color: #d4af37; /* bright gold hover */
+  text-shadow: 0 0 6px rgba(212,175,55,0.6);
+  transform: scale(1.1);
+}
+
+/* 💎 Frosted glass dropdown panel with golden shimmer */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  background: rgba(255, 250, 240, 0.75);
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  border-radius: 16px;
+  min-width: 190px;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 0px 6px 20px rgba(184, 134, 11, 0.35), 
+              0 0 12px rgba(255, 215, 0, 0.2); /* glowing edge */
+  z-index: 999;
+  overflow: hidden;
+  animation: fadeIn 0.25s ease;
+}
+
+/* ✨ Dropdown links */
+.dropdown-content a {
+  color: #4a3b1b;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  font-size: 15px;
+  background-color: rgba(255, 255, 255, 0.35);
+  border-bottom: 1px solid rgba(218, 165, 32, 0.15);
+  transition: all 0.25s ease;
+}
+
+.dropdown-content a:hover {
+  background-color: rgba(255, 240, 210, 0.55);
+  color: #8b6508;
+  transform: translateX(4px);
+}
+
+.dropdown-content a:last-child {
+  border-bottom: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 🌟 Optional shimmer glow animation when opened */
+@keyframes shimmer {
+  0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 18px rgba(255, 215, 0, 0.6); }
+  100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+}
+
+.dropdown-content.active {
+  animation: shimmer 2s infinite ease-in-out;
+  }/* ✨ Gold Glass Dropdown Menu */
+.menu-dropdown {
+  position: absolute;
+  right: 20px;
+}
+
+.menu-icon {
+  background: none;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  color: #b8860b; /* soft gold */
+  transition: all 0.3s ease;
+}
+
+.menu-icon:hover {
+  color: #d4af37; /* bright gold hover */
+  text-shadow: 0 0 6px rgba(212,175,55,0.6);
+  transform: scale(1.1);
+}
+
+/* 💎 Frosted glass dropdown panel with golden shimmer */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  background: rgba(255, 250, 240, 0.75);
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  border-radius: 16px;
+  min-width: 190px;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 0px 6px 20px rgba(184, 134, 11, 0.35), 
+              0 0 12px rgba(255, 215, 0, 0.2); /* glowing edge */
+  z-index: 999;
+  overflow: hidden;
+  animation: fadeIn 0.25s ease;
+}
+
+/* ✨ Dropdown links */
+.dropdown-content a {
+  color: #4a3b1b;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  font-size: 15px;
+  background-color: rgba(255, 255, 255, 0.35);
+  border-bottom: 1px solid rgba(218, 165, 32, 0.15);
+  transition: all 0.25s ease;
+}
+
+.dropdown-content a:hover {
+  background-color: rgba(255, 240, 210, 0.55);
+  color: #8b6508;
+  transform: translateX(4px);
+}
+
+.dropdown-content a:last-child {
+  border-bottom: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 🌟 Optional shimmer glow animation when opened */
+@keyframes shimmer {
+  0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 18px rgba(255, 215, 0, 0.6); }
+  100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+}
+
+.dropdown-content.active {
+  animation: shimmer 2s infinite ease-in-out;
+}
   /* Main content */
   .container {
     max-width: 850px;
@@ -122,11 +273,23 @@
 </head>
 <body>
 
-<div class="header">
+  <div class="header">
   <a href="index.html" class="home-btn">🏠 Home</a>
   <h2>📋 Menu</h2>
-  <a href="shop.html" class="shop-btn">🛍️ Shop</a>
-</div>
+
+  <!-- ✨ Gold 3-line dropdown -->
+  <div class="menu-dropdown">
+    <button class="menu-icon" id="menuToggle" title="Menu">
+      &#9776;
+    </button>
+    <div class="dropdown-content" id="dropdownMenu">
+      <a href="order.html">🧾 Order History</a>
+      <a href="shop.html">🛍️ Shop</a>
+      <a href="admin.html">🔐 Admin Panel</a>
+      <a href="index.html">🏠 Home</a>
+    </div>
+  </div>
+  </div>
 
 <div class="container">
 
@@ -206,8 +369,26 @@
   </footer>
 
 </div>
+
+  <script>
+const menuToggle = document.getElementById("menuToggle");
+const dropdownMenu = document.getElementById("dropdownMenu");
+
+menuToggle.addEventListener("click", (e) => {
+  e.stopPropagation();
+  dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
+});
+
+// Close menu when clicking outside
+window.addEventListener("click", (e) => {
+  if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+    dropdownMenu.style.display = "none";
+  }
+});
+  </script>
 </body>
                                                                                                                    </html>
+
 
 
 
