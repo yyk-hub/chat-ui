@@ -14,6 +14,26 @@
     th,td{padding:8px;border-bottom:1px solid #eee;text-align:left;font-size:14px}
     th{background:#e9d8a6}
     .btn{background:#996600;color:#fff;border:0;padding:8px 10px;border-radius:8px;cursor:pointer}
+    .table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-wrapper table {
+  width: 100%;
+  min-width: 700px; /* so columns keep shape */
+}
+
+@media (max-width: 768px) {
+  table th, table td {
+    font-size: 12px;
+    padding: 6px;
+  }
+  input, select, button {
+    font-size: 12px;
+    padding: 6px;
+  }
+}
   </style>
 </head>
 <body>
@@ -36,7 +56,9 @@
         <button id="btnLoad" class="btn">Load</button>
       </div>
 
-      <div id="ordersHolder"></div>
+      <div class="table-wrapper">
+  <div id="ordersHolder"></div>
+      </div>
     </div>
   </div>
 
