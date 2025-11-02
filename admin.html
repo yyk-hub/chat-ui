@@ -14,6 +14,27 @@
     th,td{padding:8px;border-bottom:1px solid #eee;text-align:left;font-size:14px}
     th{background:#e9d8a6}
     .btn{background:#996600;color:#fff;border:0;padding:8px 10px;border-radius:8px;cursor:pointer}
+   .topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #996600;
+  color: #fff;
+  padding: 10px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.topbar .btn {
+  background: #fff;
+  color: #996600;
+  font-weight: bold;
+         }
+    
     .table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -36,8 +57,13 @@
 }
   </style>
 </head>
-<body>
+  <body>
+  <header class="topbar">
+    <button class="btn" onclick="goMenu()">← Menu</button>
+    <h2>Admin Panel</h2>
+  </header>
   <div class="wrap">
+  
     <div class="card">
       <h3>Admin Login</h3>
       <p>Enter your admin token (keeps in session only):</p>
@@ -173,6 +199,10 @@ async function updateOrder(order_id){
 
 // on load: if token in session, auto show panel
 if (sessionStorage.getItem('ADMIN_TOKEN')) showPanel();
+
+  function goMenu() {
+  window.location.href = 'menu.html'; // change to your actual menu page path
+}
 </script>
 </body>
           </html>
