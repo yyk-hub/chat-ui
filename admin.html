@@ -52,15 +52,27 @@
   opacity: 0.8;
 }
 
-/* Mobile adjustment */
-@media (max-width: 700px) {
-  .topbar h2 {
-    font-size: 18px;
+    .table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-wrapper table {
+  width: 100%;
+  min-width: 700px; /* so columns keep shape */
+}
+
+@media (max-width: 720px) {
+  table th, table td {
+    font-size: 15px;
+    padding: 6px;
   }
-  .btn-back {
-    font-size: 18px;
+  input, select, button {
+    font-size: 15px;
+    padding: 6px;
   }
 }
+
   </style>
 </head>
   <body>
