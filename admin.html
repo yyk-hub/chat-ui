@@ -180,7 +180,7 @@ function showPanel(){
   document.getElementById('btnLogin').style.display = 'none';
   document.getElementById('admToken').style.display = 'none';
   loadOrders();
-  LoadProducts();
+  loadProducts();
 }
 
 document.getElementById('btnLoad').addEventListener('click', loadOrders);
@@ -290,32 +290,25 @@ document.getElementById('btnRefreshProd').addEventListener('click', loadProducts
 
 // === When product selected, fetch details ===
 document.getElementById('prodSelect').addEventListener('change', async () => {
+document.getElementById('prodSelect').addEventListener('change', async () => {
   const id = document.getElementById('prodSelect').value;
-  const detailsBox = document.getElementById('prodDetails');
-  if (!id) { 
-    detailsBox.style.display = 'none'; 
-    return; 
+  if (!id) {
+    // hide/clear UI
+    document.getElementById('currPrice').value = '';
+    document.getElementById('currStock').value = '';
+    return;
   }
-
   try {
-    const res = await fetch(`/api/admin/products/${id}`, {
+    const res = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, {
       headers: { 'x-admin-token': token() }
     });
-    if (res.status === 403) { 
-      alert('Unauthorized'); 
-      return; 
-    }
+    if (res.status === 403) { alert('Unauthorized'); return; }
     const data = await res.json();
-    if (!data || !data.prod_id) { 
-      detailsBox.style.display = 'none'; 
-      return; 
-    }
-
-    document.getElementById('currPrice').textContent = parseFloat(data.price || 0).toFixed(2);
-    document.getElementById('currStock').textContent = data.stock ?? '-';
-    document.getElementById('prodPrice').value = data.price ?? '';
-    document.getElementById('prodStock').value = data.stock ?? '';
-    detailsBox.style.display = 'block';
+    // fill UI (adjust depending whether you're using textContent or input.value)
+    document.getElementById('currPrice').value = data.price ?? '';
+    document.getElementById('currStock').value = data.stock ?? '';
+    document.getElementById('newPrice').value = '';
+    document.getElementById('newStock').value = '';
   } catch (err) {
     console.error('Error fetching product detail:', err);
   }
