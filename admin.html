@@ -180,6 +180,7 @@ function showPanel(){
   document.getElementById('btnLogin').style.display = 'none';
   document.getElementById('admToken').style.display = 'none';
   loadOrders();
+  LoadProducts();
 }
 
 document.getElementById('btnLoad').addEventListener('click', loadOrders);
@@ -272,6 +273,7 @@ async function loadProducts() {
     }
     const products = await res.json();
     const select = document.getElementById('prodSelect');
+    if (!select) return;
     select.innerHTML = '<option value="">— Select Product —</option>';
     products.forEach(p => {
       const opt = document.createElement('option');
