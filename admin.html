@@ -144,214 +144,251 @@ h3 {
 
   <div id="updateResult" style="margin-top:8px;font-size:13px"></div>
 </div>
+    
 <script>
-const API = '/api/admin/orders';
+document.addEventListener('DOMContentLoaded', () => {
+  const ORDERS_API = '/api/admin/orders';
+  const PRODUCTS_API = '/api/admin/products';
 
-function token() { return sessionStorage.getItem('ADMIN_TOKEN') || ''; }
-function setToken(t){ sessionStorage.setItem('ADMIN_TOKEN', t); }
-function clearToken(){ sessionStorage.removeItem('ADMIN_TOKEN'); }
+  // util token helpers
+  function token(){ return sessionStorage.getItem('ADMIN_TOKEN') || ''; }
+  function setToken(t){ sessionStorage.setItem('ADMIN_TOKEN', t); }
+  function clearToken(){ sessionStorage.removeItem('ADMIN_TOKEN'); }
 
-document.getElementById('btnLogin').addEventListener('click', async ()=>{
-  const v = document.getElementById('admToken').value.trim();
-  if(!v){ alert('Enter token'); return; }
-  // quick validation: try to fetch 1 order
-  try {
-    const r = await fetch(API, { headers: { 'x-admin-token': v }});
-    if (r.status === 403) throw new Error('Unauthorized');
-    const data = await r.json();
-    // success
-    setToken(v);
+  // elements
+  const btnLogin = document.getElementById('btnLogin');
+  const btnLogout = document.getElementById('btnLogout');
+  const admTokenInput = document.getElementById('admToken');
+  const loginMsg = document.getElementById('loginMsg');
+
+  const adminPanel = document.getElementById('adminPanel');
+  const updateProductSection = document.getElementById('updateProductSection');
+  const btnLoad = document.getElementById('btnLoad');
+  const ordersHolder = document.getElementById('ordersHolder');
+  const filterPhone = document.getElementById('filterPhone');
+
+  const prodSelect = document.getElementById('prodSelect');
+  const currPrice = document.getElementById('currPrice');
+  const currStock = document.getElementById('currStock');
+  const newPrice = document.getElementById('newPrice');
+  const newStock = document.getElementById('newStock');
+  const btnUpdateProduct = document.getElementById('btnUpdateProduct');
+  const updateResult = document.getElementById('updateResult');
+
+  // Basic login check: call ORDERS_API (GET) to validate token
+  async function validateTokenAndShow(t) {
+    try {
+      const r = await fetch(ORDERS_API, { headers: { 'x-admin-token': t }});
+      if (r.status === 403) throw new Error('Unauthorized');
+      const json = await r.json(); // just ensure it returns JSON
+      // show UI
+      setToken(t);
+      showPanel();
+    } catch (err) {
+      console.error('Token validation failed', err);
+      loginMsg.textContent = 'Invalid token or server error';
+      loginMsg.style.color = '#a00';
+    }
+  }
+
+  // show admin UI
+  function showPanel(){
+    adminPanel.style.display = 'block';
+    updateProductSection.style.display = 'block';
+    btnLogout.style.display = 'inline-block';
+    btnLogin.style.display = 'none';
+    admTokenInput.style.display = 'none';
+    loginMsg.textContent = '';
+
+    loadOrders();
+    loadProducts();
+  }
+
+  // login / logout
+  btnLogin.addEventListener('click', () => {
+    const v = admTokenInput.value.trim();
+    if (!v) { alert('Enter token'); return; }
+    validateTokenAndShow(v);
+  });
+
+  btnLogout.addEventListener('click', () => {
+    clearToken();
+    location.reload();
+  });
+
+  // load orders
+  btnLoad.addEventListener('click', loadOrders);
+  async function loadOrders(){
+    const phone = filterPhone.value.trim();
+    const hdrs = { 'x-admin-token': token() };
+    const q = phone ? `?phone=${encodeURIComponent(phone)}` : '';
+    try {
+      const res = await fetch(ORDERS_API + q, { headers: hdrs });
+      if (res.status === 403) { alert('Unauthorized - please login again'); clearToken(); return; }
+      const orders = await res.json();
+      renderOrders(orders || []);
+    } catch (err) {
+      console.error('Load orders failed', err);
+      ordersHolder.innerHTML = `<p style="color:#a00">Failed to load orders.</p>`;
+    }
+  }
+
+  function renderOrders(orders){
+    if(!orders || orders.length === 0) { ordersHolder.innerHTML = '<p>No orders</p>'; return; }
+    let html = '<table><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+    orders.forEach(o => {
+      const safeProd = (o.prod_name||'').replace(/,/g,'<br/>');
+      html += `<tr>
+        <td><strong>${o.order_id}</strong><br/><small>${o.created_at || ''}</small></td>
+        <td style="max-width:300px">${safeProd}</td>
+        <td>RM ${parseFloat(o.total_amt||0).toFixed(2)}</td>
+        <td>${o.phone||''}</td>
+        <td id="status-${o.order_id}">${o.order_status||o.pymt_status||'—'}</td>
+        <td>
+          <select id="s-${o.order_id}">
+            <option>Pending Payment</option>
+            <option>Paid</option>
+            <option>Shipped</option>
+            <option>Completed</option>
+            <option>Cancelled</option>
+          </select>
+          <br/>
+          <input id="courier-${o.order_id}" placeholder="courier" style="width:140px;margin-top:6px" value="${o.courier_name||''}"/>
+          <input id="track-${o.order_id}" placeholder="tracking link" style="width:220px;margin-top:6px" value="${o.tracking_link||''}"/>
+          <br/>
+          <button class="btn" data-order="${o.order_id}">Save</button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    ordersHolder.innerHTML = html;
+
+    // set selects to current status and attach click handlers
+    orders.forEach(o=>{
+      const sel = document.getElementById('s-'+o.order_id);
+      if(sel && (o.order_status || o.pymt_status)) {
+        try { sel.value = o.order_status || o.pymt_status; } catch(e){}
+      }
+      const btn = ordersHolder.querySelector(`button[data-order="${o.order_id}"]`);
+      if(btn) btn.addEventListener('click', () => updateOrder(o.order_id));
+    });
+  }
+
+  // update order (PUT)
+  async function updateOrder(order_id){
+    const status = document.getElementById('s-'+order_id).value;
+    const courier = document.getElementById('courier-'+order_id).value;
+    const track = document.getElementById('track-'+order_id).value;
+    const body = { order_id, order_status: status, courier_name: courier, tracking_link: track };
+    try {
+      const res = await fetch(ORDERS_API + '/' + encodeURIComponent(order_id), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
+        body: JSON.stringify(body)
+      });
+      if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
+      const data = await res.json();
+      if (data.success || data.result) {
+        document.getElementById('status-'+order_id).textContent = status;
+        alert('Order updated');
+      } else {
+        alert('Update failed: ' + (data.error || JSON.stringify(data)));
+      }
+    } catch (err) {
+      console.error('Update order failed', err);
+      alert('Failed to update order (see console)');
+    }
+  }
+
+  // === PRODUCTS: loadProducts -> populate dropdown ===
+  async function loadProducts() {
+    try {
+      const res = await fetch(PRODUCTS_API, { headers: { 'x-admin-token': token() }});
+      if (res.status === 403) { console.warn('Unauthorized loading products'); return; }
+      const products = await res.json();
+      if (!Array.isArray(products)) { console.error('Products response not array', products); return; }
+      if (!prodSelect) return;
+      prodSelect.innerHTML = '<option value="">— Select Product —</option>';
+      products.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.prod_id;
+        opt.textContent = `${p.prod_id} — ${p.prod_name}`;
+        prodSelect.appendChild(opt);
+      });
+    } catch (err) {
+      console.error('Error loading products:', err);
+    }
+  }
+
+  // when a product selected -> fetch details
+  prodSelect && prodSelect.addEventListener('change', async () => {
+    const id = prodSelect.value;
+    if (!id) {
+      currPrice.value = '';
+      currStock.value = '';
+      newPrice.value = '';
+      newStock.value = '';
+      return;
+    }
+    try {
+      const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(id)}`, {
+        headers: { 'x-admin-token': token() }
+      });
+      if (res.status === 403) { alert('Unauthorized'); return; }
+      const data = await res.json();
+      if (!data || !data.prod_id) {
+        alert('Product not found');
+        return;
+      }
+      currPrice.value = data.price ?? '';
+      currStock.value = data.stock ?? '';
+      newPrice.value = '';
+      newStock.value = '';
+    } catch (err) {
+      console.error('Error fetching product detail:', err);
+    }
+  });
+
+  // update product handler -> PUT /api/admin/products/:id
+  btnUpdateProduct && btnUpdateProduct.addEventListener('click', async () => {
+    const prodId = prodSelect.value;
+    if (!prodId) { alert('Select a product first'); return; }
+    const body = {};
+    if (newPrice.value.trim() !== '') body.price = parseFloat(newPrice.value);
+    if (newStock.value.trim() !== '') body.stock = parseInt(newStock.value, 10);
+    if (Object.keys(body).length === 0) { alert('Enter new price and/or new stock'); return; }
+
+    try {
+      const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(prodId)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token()
+        },
+        body: JSON.stringify(body)
+      });
+      if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
+      const data = await res.json();
+      if (data.success) {
+        updateResult.textContent = `✅ ${prodId} updated successfully`;
+        updateResult.style.color = '#006600';
+        // refresh displayed data
+        if (body.price !== undefined) currPrice.value = parseFloat(body.price).toFixed(2);
+        if (body.stock !== undefined) currStock.value = body.stock;
+      } else {
+        updateResult.textContent = '❌ Update failed: ' + (data.error || 'Unknown');
+        updateResult.style.color = '#a00';
+      }
+    } catch (err) {
+      console.error('Error updating product:', err);
+      updateResult.textContent = '❌ Update failed (see console)';
+      updateResult.style.color = '#a00';
+    }
+  });
+
+  // auto show panel if already logged in
+  if (sessionStorage.getItem('ADMIN_TOKEN')) {
     showPanel();
-  } catch (err) {
-    document.getElementById('loginMsg').textContent = 'Invalid token or server error';
-    console.error(err);
-  }
-});
-
-document.getElementById('btnLogout').addEventListener('click', ()=>{
-  clearToken();
-  location.reload();
-});
-
-function showPanel(){
-  document.getElementById('adminPanel').style.display = 'block';
-  document.getElementById('updateProductSection').style.display = 'block'; // 👈 show product update
-  document.getElementById('btnLogout').style.display = 'inline-block';
-  document.getElementById('btnLogin').style.display = 'none';
-  document.getElementById('admToken').style.display = 'none';
-  loadOrders();
-  loadProducts();
-}
-
-document.getElementById('btnLoad').addEventListener('click', loadOrders);
-
-async function loadOrders(){
-  const phone = document.getElementById('filterPhone').value.trim();
-  const hdrs = { 'x-admin-token': token() };
-  const q = phone ? `?phone=${encodeURIComponent(phone)}` : '';
-  const res = await fetch(API + q, { headers: hdrs });
-  if (res.status === 403) { alert('Unauthorized - please login again'); clearToken(); return; }
-  const orders = await res.json();
-  renderOrders(orders);
-}
-
-function renderOrders(orders){
-  const h = document.getElementById('ordersHolder');
-  if(!orders || orders.length===0){ h.innerHTML = '<p>No orders</p>'; return; }
-  let html = '<table><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-  orders.forEach(o=>{
-    html += `<tr>
-      <td><strong>${o.order_id}</strong><br/><small>${o.created_at || ''}</small></td>
-      <td style="max-width:300px">${(o.prod_name||'').replace(/,/g,'<br/>')}</td>
-      <td>RM ${parseFloat(o.total_amt||0).toFixed(2)}</td>
-      <td>${o.phone||''}</td>
-      <td id="status-${o.order_id}">${o.order_status||o.pymt_status||'—'}</td>
-      <td>
-        <select id="s-${o.order_id}">
-          <option>Pending Payment</option>
-          <option>Paid</option>
-          <option>Shipped</option>
-          <option>Completed</option>
-          <option>Cancelled</option>
-        </select>
-        <br/>
-        <input id="courier-${o.order_id}" placeholder="courier" style="width:140px;margin-top:6px" value="${o.courier_name||''}"/>
-        <input id="track-${o.order_id}" placeholder="tracking link" style="width:220px;margin-top:6px" value="${o.tracking_link||''}"/>
-        <br/>
-        <button class="btn" onclick="updateOrder('${o.order_id}')">Save</button>
-      </td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  h.innerHTML = html;
-
-  // set selects to current status
-  orders.forEach(o=>{
-    const sel = document.getElementById('s-'+o.order_id);
-    if(sel && (o.order_status || o.pymt_status)) {
-      const val = o.order_status || o.pymt_status;
-      try { sel.value = val; } catch(e){}
-    }
-  });
-}
-
-async function updateOrder(order_id){
-  const status = document.getElementById('s-'+order_id).value;
-  const courier = document.getElementById('courier-'+order_id).value;
-  const track = document.getElementById('track-'+order_id).value;
-  const body = { order_id, order_status: status, courier_name: courier, tracking_link: track };
-  const res = await fetch(API+'/'+encodeURIComponent(order_id), {
-    method: 'PUT',
-    headers: { 'Content-Type':'application/json', 'x-admin-token': token() },
-    body: JSON.stringify(body)
-  });
-  if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
-  const data = await res.json();
-  if (data.success || data.result) {
-    document.getElementById('status-'+order_id).textContent = status;
-    alert('Updated');
-  } else {
-    alert('Update failed: ' + (data.error||JSON.stringify(data)));
-  }
-}
-
-// on load: if token in session, auto show panel
-if (sessionStorage.getItem('ADMIN_TOKEN')) showPanel();
-
-  function goMenu() {
-  window.location.href = 'menu.html'; // change to your actual menu page path
-}
-// === Fetch all products for dropdown ===
-async function loadProducts() {
-  try {
-    const res = await fetch('/api/admin/products', {
-      headers: { 'x-admin-token': token() }
-    });
-    if (res.status === 403) { 
-      console.warn('Unauthorized loading products'); 
-      return; 
-    }
-    const products = await res.json();
-    const select = document.getElementById('prodSelect');
-    if (!select) return;
-    select.innerHTML = '<option value="">— Select Product —</option>';
-    products.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.prod_id;
-      opt.textContent = `${p.prod_id} — ${p.prod_name}`;
-      select.appendChild(opt);
-    });
-  } catch (err) {
-    console.error('Error loading products:', err);
-  }
-}
-
-document.getElementById('btnRefreshProd').addEventListener('click', loadProducts);
-
-// === When product selected, fetch details ===
-document.getElementById('prodSelect').addEventListener('change', async () => {
-document.getElementById('prodSelect').addEventListener('change', async () => {
-  const id = document.getElementById('prodSelect').value;
-  if (!id) {
-    // hide/clear UI
-    document.getElementById('currPrice').value = '';
-    document.getElementById('currStock').value = '';
-    return;
-  }
-  try {
-    const res = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, {
-      headers: { 'x-admin-token': token() }
-    });
-    if (res.status === 403) { alert('Unauthorized'); return; }
-    const data = await res.json();
-    // fill UI (adjust depending whether you're using textContent or input.value)
-    document.getElementById('currPrice').value = data.price ?? '';
-    document.getElementById('currStock').value = data.stock ?? '';
-    document.getElementById('newPrice').value = '';
-    document.getElementById('newStock').value = '';
-  } catch (err) {
-    console.error('Error fetching product detail:', err);
-  }
-});
-
-// === Update Product (Stock / Price) ===
-document.getElementById('btnUpdateProd').addEventListener('click', async () => {
-  const prodId = document.getElementById('prodSelect').value;
-  const price = document.getElementById('prodPrice').value.trim();
-  const stock = document.getElementById('prodStock').value.trim();
-  if (!prodId) { 
-    alert('Select a product first'); 
-    return; 
-  }
-
-  const body = {};
-  if (price) body.price = parseFloat(price);
-  if (stock) body.stock = parseInt(stock);
-
-  try {
-    const res = await fetch(`/api/admin/products/${encodeURIComponent(prodId)}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-token': token()
-      },
-      body: JSON.stringify(body)
-    });
-
-    const data = await res.json();
-    const msg = document.getElementById('updateProdResult');
-    if (data.success) {
-      msg.textContent = `✅ ${prodId} updated successfully`;
-      msg.style.color = '#006600';
-      // Refresh current display
-      if (price) document.getElementById('currPrice').textContent = parseFloat(price).toFixed(2);
-      if (stock) document.getElementById('currStock').textContent = stock;
-    } else {
-      msg.textContent = '❌ Update failed: ' + (data.error || 'Unknown');
-      msg.style.color = '#a00';
-    }
-  } catch (err) {
-    console.error('Error updating product:', err);
   }
 });
 </script>
