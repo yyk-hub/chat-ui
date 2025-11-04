@@ -120,26 +120,29 @@ h3 {
 <!-- 🔧 Update Product (Stock / Price) -->
 <div class="card" id="updateProductSection" style="display:none">
   <h3>Update Product</h3>
-  
-  <div class="row" style="flex-wrap:wrap; gap:8px">
-    <select id="prodSelect" style="flex:1 1 200px">
-      <option value="">— Select Product —</option>
+
+  <div class="form-grid">
+    <label>Product:</label>
+    <select id="prodSelect">
+      <option value="">-- Select Product --</option>
     </select>
-    <button id="btnRefreshProd" class="btn" style="background:#cc8800">↻ Refresh</button>
+
+    <label>Current Price:</label>
+    <input type="number" id="currPrice" step="0.01" readonly />
+
+    <label>Current Stock:</label>
+    <input type="number" id="currStock" readonly />
+
+    <label>New Price (optional):</label>
+    <input type="number" id="newPrice" step="0.01" placeholder="Enter new price" />
+
+    <label>New Stock (optional):</label>
+    <input type="number" id="newStock" placeholder="Enter new stock" />
+
+    <button id="btnUpdateProduct" class="btn">Update Product</button>
   </div>
 
-  <div id="prodDetails" style="margin-top:12px; display:none">
-    <p><strong>Current Price:</strong> RM <span id="currPrice">-</span></p>
-    <p><strong>Current Stock:</strong> <span id="currStock">-</span> units</p>
-
-    <div class="row" style="flex-wrap:wrap; gap:8px; margin-top:8px">
-      <input id="prodPrice" type="number" step="0.01" placeholder="New Price (optional)" style="flex:1 1 120px" />
-      <input id="prodStock" type="number" placeholder="New Stock (optional)" style="flex:1 1 120px" />
-      <button id="btnUpdateProd" class="btn">Update</button>
-    </div>
-  </div>
-
-  <p id="updateProdResult" style="color:#663300;margin-top:8px"></p>
+  <div id="updateResult" style="margin-top:8px;font-size:13px"></div>
 </div>
 <script>
 const API = '/api/admin/orders';
@@ -257,13 +260,16 @@ if (sessionStorage.getItem('ADMIN_TOKEN')) showPanel();
   function goMenu() {
   window.location.href = 'menu.html'; // change to your actual menu page path
 }
-  // === Fetch all products for dropdown ===
+// === Fetch all products for dropdown ===
 async function loadProducts() {
   try {
     const res = await fetch('/api/admin/products', {
       headers: { 'x-admin-token': token() }
     });
-    if (res.status === 403) { console.warn('Unauthorized loading products'); return; }
+    if (res.status === 403) { 
+      console.warn('Unauthorized loading products'); 
+      return; 
+    }
     const products = await res.json();
     const select = document.getElementById('prodSelect');
     select.innerHTML = '<option value="">— Select Product —</option>';
@@ -281,18 +287,27 @@ async function loadProducts() {
 document.getElementById('btnRefreshProd').addEventListener('click', loadProducts);
 
 // === When product selected, fetch details ===
-document.getElementById('prodSelect').addEventListener('change', async ()=>{
+document.getElementById('prodSelect').addEventListener('change', async () => {
   const id = document.getElementById('prodSelect').value;
   const detailsBox = document.getElementById('prodDetails');
-  if(!id){ detailsBox.style.display='none'; return; }
+  if (!id) { 
+    detailsBox.style.display = 'none'; 
+    return; 
+  }
 
   try {
     const res = await fetch(`/api/admin/products/${id}`, {
       headers: { 'x-admin-token': token() }
     });
-    if (res.status === 403) { alert('Unauthorized'); return; }
+    if (res.status === 403) { 
+      alert('Unauthorized'); 
+      return; 
+    }
     const data = await res.json();
-    if(!data || !data.prod_id){ detailsBox.style.display='none'; return; }
+    if (!data || !data.prod_id) { 
+      detailsBox.style.display = 'none'; 
+      return; 
+    }
 
     document.getElementById('currPrice').textContent = parseFloat(data.price || 0).toFixed(2);
     document.getElementById('currStock').textContent = data.stock ?? '-';
@@ -305,36 +320,43 @@ document.getElementById('prodSelect').addEventListener('change', async ()=>{
 });
 
 // === Update Product (Stock / Price) ===
-document.getElementById('btnUpdateProd').addEventListener('click', async ()=>{
+document.getElementById('btnUpdateProd').addEventListener('click', async () => {
   const prodId = document.getElementById('prodSelect').value;
   const price = document.getElementById('prodPrice').value.trim();
   const stock = document.getElementById('prodStock').value.trim();
-  if(!prodId){ alert('Select a product first'); return; }
+  if (!prodId) { 
+    alert('Select a product first'); 
+    return; 
+  }
 
-  const body = { action:'update_product', prod_id:prodId };
-  if(price) body.price = parseFloat(price);
-  if(stock) body.stock = parseInt(stock);
+  const body = {};
+  if (price) body.price = parseFloat(price);
+  if (stock) body.stock = parseInt(stock);
 
-  const res = await fetch('/api/admin/orders', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-admin-token': token()
-    },
-    body: JSON.stringify(body)
-  });
+  try {
+    const res = await fetch(`/api/admin/products/${encodeURIComponent(prodId)}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': token()
+      },
+      body: JSON.stringify(body)
+    });
 
-  const data = await res.json();
-  const msg = document.getElementById('updateProdResult');
-  if(data.success){
-    msg.textContent = `✅ ${prodId} updated successfully`;
-    msg.style.color = '#006600';
-    // refresh displayed data
-    document.getElementById('currPrice').textContent = price || document.getElementById('currPrice').textContent;
-    document.getElementById('currStock').textContent = stock || document.getElementById('currStock').textContent;
-  } else {
-    msg.textContent = '❌ Update failed: ' + (data.error || 'Unknown');
-    msg.style.color = '#a00';
+    const data = await res.json();
+    const msg = document.getElementById('updateProdResult');
+    if (data.success) {
+      msg.textContent = `✅ ${prodId} updated successfully`;
+      msg.style.color = '#006600';
+      // Refresh current display
+      if (price) document.getElementById('currPrice').textContent = parseFloat(price).toFixed(2);
+      if (stock) document.getElementById('currStock').textContent = stock;
+    } else {
+      msg.textContent = '❌ Update failed: ' + (data.error || 'Unknown');
+      msg.style.color = '#a00';
+    }
+  } catch (err) {
+    console.error('Error updating product:', err);
   }
 });
 </script>
