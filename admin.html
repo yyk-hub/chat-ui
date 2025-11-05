@@ -255,7 +255,7 @@ async function loadOrders(reset=false){
     ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
     : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
 
-  const res = await fetch(API + q, { headers: hdrs });
+  const res = await fetch(ORDERS_API + q, { headers: hdrs });
   if (res.status === 403) { 
     alert('Unauthorized - please login again'); 
     clearToken(); 
