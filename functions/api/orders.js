@@ -74,28 +74,34 @@ export async function onRequestGet(context) {
     'Access-Control-Allow-Origin': '*',
     'Content-Type': 'application/json',
   };
+
   try {
     const url = new URL(request.url);
     const phone = url.searchParams.get('phone');
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+
     let query;
+    let params = [];
+
     if (phone) {
-      query = env.DB.prepare(
-        'SELECT * FROM ceo_orders WHERE phone = ? ORDER BY created_at DESC'
-      ).bind(phone);
+      query = `SELECT * FROM ceo_orders WHERE phone = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+      params = [phone, limit, offset];
     } else {
-      query = env.DB.prepare(
-        'SELECT * FROM ceo_orders ORDER BY created_at DESC LIMIT 10'
-      );
+      query = `SELECT * FROM ceo_orders ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+      params = [limit, offset];
     }
-    const { results } = await query.all();
+
+    const { results } = await env.DB.prepare(query).bind(...params).all();
     return new Response(JSON.stringify(results), { headers: corsHeaders });
+
   } catch (err) {
     console.error('GET error:', err);
     return new Response(
       JSON.stringify({ success: false, error: err.message }),
       { status: 500, headers: corsHeaders }
     );
-  }
+  };
 }
 
 export async function onRequestPut(context) {
