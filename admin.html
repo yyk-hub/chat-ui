@@ -126,6 +126,9 @@ h3 {
       <div class="table-wrapper">
   <div id="ordersHolder"></div>
       </div>
+      <div style="text-align:center;margin:10px;">
+  <button id="loadMoreBtn" class="btn" style="display:none;" onclick="loadOrders()">Load More</button>
+      </div>
     </div>
   </div>
 <!-- 🔧 Update Product (Stock / Price) -->
@@ -226,21 +229,54 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // load orders
-  btnLoad.addEventListener('click', loadOrders);
-  async function loadOrders(){
-    const phone = filterPhone.value.trim();
-    const hdrs = { 'x-admin-token': token() };
-    const q = phone ? `?phone=${encodeURIComponent(phone)}` : '';
-    try {
-      const res = await fetch(ORDERS_API + q, { headers: hdrs });
-      if (res.status === 403) { alert('Unauthorized - please login again'); clearToken(); return; }
-      const orders = await res.json();
-      renderOrders(orders || []);
-    } catch (err) {
-      console.error('Load orders failed', err);
-      ordersHolder.innerHTML = `<p style="color:#a00">Failed to load orders.</p>`;
-    }
+  let orderOffset = 0; // track pagination
+const ORDERS_LIMIT = 10;
+
+function showPanel(){
+  document.getElementById('adminPanel').style.display = 'block';
+  document.getElementById('updateProductSection').style.display = 'block';
+  document.getElementById('btnLogout').style.display = 'inline-block';
+  document.getElementById('btnLogin').style.display = 'none';
+  document.getElementById('admToken').style.display = 'none';
+  document.getElementById('loginMsg').textContent = '';
+
+  orderOffset = 0; // reset
+  loadOrders(true); // load first 10
+  loadProducts();
+}
+
+async function loadOrders(reset=false){
+  const phone = document.getElementById('filterPhone').value.trim();
+  const hdrs = { 'x-admin-token': token() };
+
+  if (reset) orderOffset = 0;
+
+  const q = phone 
+    ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
+    : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
+
+  const res = await fetch(API + q, { headers: hdrs });
+  if (res.status === 403) { 
+    alert('Unauthorized - please login again'); 
+    clearToken(); 
+    return; 
   }
+
+  const orders = await res.json();
+  if (reset) {
+    renderOrders(orders, true);
+  } else {
+    renderOrders(orders, false);
+  }
+
+  if (orders.length >= ORDERS_LIMIT) {
+    document.getElementById('loadMoreBtn').style.display = 'block';
+  } else {
+    document.getElementById('loadMoreBtn').style.display = 'none';
+  }
+
+  orderOffset += orders.length;
+}
 
   function renderOrders(orders){
     if(!orders || orders.length === 0) { ordersHolder.innerHTML = '<p>No orders</p>'; return; }
