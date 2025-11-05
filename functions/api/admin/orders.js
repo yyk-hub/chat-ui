@@ -26,17 +26,27 @@ export async function onRequest(context) {
 
   try {
     const url = new URL(request.url);
-    // Support query params ?phone=... and ?limit=...
-    if (request.method === 'GET') {
+    
+    // Get Orders with pagination & filters
+    
+   if (request.method === 'GET') {
       const phone = url.searchParams.get('phone');
-      const limit = Number(url.searchParams.get('limit')) || 50;
+      const limit = parseInt(url.searchParams.get('limit') || '10', 10);
+      const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+
       let query;
       if (phone) {
-        query = env.DB.prepare('SELECT * FROM ceo_orders WHERE phone = ? ORDER BY created_at DESC').bind(phone);
+        query = env.DB.prepare(
+          'SELECT * FROM ceo_orders WHERE phone = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
+        ).bind(phone, limit, offset);
       } else {
-        query = env.DB.prepare('SELECT * FROM ceo_orders ORDER BY created_at DESC LIMIT ?').bind(limit);
+        query = env.DB.prepare(
+          'SELECT * FROM ceo_orders ORDER BY created_at DESC LIMIT ? OFFSET ?'
+        ).bind(limit, offset);
       }
+
       const { results } = await query.all();
+
       return new Response(JSON.stringify(results), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
