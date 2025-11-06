@@ -15,172 +15,121 @@
     th{background:#e9d8a6}
     .btn{background:#996600;color:#fff;border:0;padding:8px 10px;border-radius:8px;cursor:pointer}
     
-/* === Header (Top Bar) === */
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #996600;
-  color: #fff;
-  padding: 12px 16px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-}
-
-.topbar h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-h3 {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 8px 0;
-  color: #663300;
-}
-.btn-back {
-  position: absolute;
-  left: 13px;
-  background: transparent;
-  color: #fff;
-  border: none;
-  font-size: 15px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.btn-back:hover {
-  opacity: 0.8;
-}
-
-    .table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.table-wrapper table {
-  width: 100%;
-  min-width: 700px; /* so columns keep shape */
-}
-
-@media (max-width: 720px) {
-  table th, table td {
-    font-size: 13px;
-    padding: 6px;
-  }
-  h3 {
-    font-size: 15px;
-  }
-  .btn-back { 
-    front-size:15px;
-  }
-  
-  input, select, button {
-    font-size: 13px;
-    padding: 6px;
-  }
-}
-.form-grid {
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  align-items: center;
-  gap: 8px 10px;
-}
-
-@media (max-width: 600px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #996600;
+      color: #fff;
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    }
+    .topbar h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+    h3 { font-size: 15px; font-weight: 700; margin: 8px 0; color: #663300; }
+    .btn-back {
+      position: absolute;
+      left: 13px;
+      background: transparent;
+      color: #fff;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-back:hover { opacity: 0.8; }
+    .table-wrapper { width: 100%; overflow-x: auto; }
+    .table-wrapper table { width: 100%; min-width: 700px; }
+    @media (max-width: 720px) {
+      table th, table td { font-size: 13px; padding: 6px; }
+      h3 { font-size: 15px; }
+      .btn-back { font-size: 15px; }
+      input, select, button { font-size: 13px; padding: 6px; }
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      align-items: center;
+      gap: 8px 10px;
+    }
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
-  <body>
-    <div class="topbar">
-  <button class="btn-back" onclick="window.location.href='index.html'">← Menu</button>
-  <h2>Admin Panel</h2>
-    </div>
-  
-    <div class="card">
-      <h3>Admin Login</h3>
-      <p>Enter your admin token (keeps in session only):</p>
-      <div class="row">
-        <input id="admToken" placeholder="admin token" style="flex:1" />
-        <button id="btnLogin" class="btn">Login</button>
-        <button id="btnLogout" style="display:none">Logout</button>
-      </div>
-      <p id="loginMsg" style="color:#a00"></p>
-    </div>
-
-    <div class="card" id="adminPanel" style="display:none">
-      <h3>Orders (Latest)</h3>
-      <div class="row" style="margin-bottom:8px">
-        <input id="filterPhone" placeholder="Filter by phone (optional)"/>
-        <button id="btnLoad" class="btn">Load</button>
-      </div>
-
-      <div class="table-wrapper">
-  <div id="ordersHolder"></div>
-      </div>
-      <div style="text-align:center;margin:10px;">
-  <button id="loadMoreBtn" class="btn" style="display:none;" onclick="loadOrders()">Load More</button>
-      </div>
-    </div>
-  </div>
-<!-- 🔧 Update Product (Stock / Price) -->
-<div class="card" id="updateProductSection" style="display:none">
-  <h3>Update Product</h3>
-
-  <div class="form-grid">
-    <label>Product:</label>
-    <select id="prodSelect">
-      <option value="">-- Select Product --</option>
-    </select>
-
-    <label>Current Price:</label>
-    <input type="number" id="currPrice" step="0.01" readonly />
-
-    <label>Current Stock:</label>
-    <input type="number" id="currStock" readonly />
-
-    <label>New Price (optional):</label>
-    <input type="number" id="newPrice" step="0.01" placeholder="Enter new price" />
-
-    <label>New Stock (optional):</label>
-    <input type="number" id="newStock" placeholder="Enter new stock" />
-
-    <button id="btnUpdateProduct" class="btn">Update Product</button>
+<body>
+  <div class="topbar">
+    <button class="btn-back" onclick="window.location.href='index.html'">← Menu</button>
+    <h2>Admin Panel</h2>
   </div>
 
-  <div id="updateResult" style="margin-top:8px;font-size:13px"></div>
-</div>
-    
+  <div class="card">
+    <h3>Admin Login</h3>
+    <p>Enter your admin token (keeps in session only):</p>
+    <div class="row">
+      <input id="admToken" placeholder="admin token" style="flex:1" />
+      <button id="btnLogin" class="btn">Login</button>
+      <button id="btnLogout" style="display:none" class="btn">Logout</button>
+    </div>
+    <p id="loginMsg" style="color:#a00"></p>
+  </div>
+
+  <div class="card" id="adminPanel" style="display:none">
+    <h3>Orders (Latest)</h3>
+    <div class="row" style="margin-bottom:8px">
+      <input id="filterPhone" placeholder="Filter by phone (optional)"/>
+      <button id="btnLoad" class="btn">Load</button>
+    </div>
+    <div class="table-wrapper"><div id="ordersHolder"></div></div>
+    <div style="text-align:center;margin:10px;">
+      <button id="loadMoreBtn" class="btn" style="display:none;" onclick="loadOrders()">Load More</button>
+    </div>
+  </div>
+
+  <div class="card" id="updateProductSection" style="display:none">
+    <h3>Update Product</h3>
+    <div class="form-grid">
+      <label>Product:</label>
+      <select id="prodSelect"><option value="">-- Select Product --</option></select>
+      <label>Current Price:</label>
+      <input type="number" id="currPrice" step="0.01" readonly />
+      <label>Current Stock:</label>
+      <input type="number" id="currStock" readonly />
+      <label>New Price (optional):</label>
+      <input type="number" id="newPrice" step="0.01" placeholder="Enter new price" />
+      <label>New Stock (optional):</label>
+      <input type="number" id="newStock" placeholder="Enter new stock" />
+      <button id="btnUpdateProduct" class="btn">Update Product</button>
+    </div>
+    <div id="updateResult" style="margin-top:8px;font-size:13px"></div>
+  </div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const ORDERS_API = '/api/admin/orders';
-  const PRODUCTS_API = '/api/admin/products';
+  // ✅ Use absolute URLs so it works anywhere
+  const BASE_URL = 'https://chat-ui-30l.pages.dev';
+  const ORDERS_API = BASE_URL + '/api/admin/orders';
+  const PRODUCTS_API = BASE_URL + '/api/admin/products';
 
-  // util token helpers
+  // === Helpers ===
   function token(){ return sessionStorage.getItem('ADMIN_TOKEN') || ''; }
   function setToken(t){ sessionStorage.setItem('ADMIN_TOKEN', t); }
   function clearToken(){ sessionStorage.removeItem('ADMIN_TOKEN'); }
 
-  // elements
+  // === Elements ===
+  const admTokenInput = document.getElementById('admToken');
   const btnLogin = document.getElementById('btnLogin');
   const btnLogout = document.getElementById('btnLogout');
-  const admTokenInput = document.getElementById('admToken');
   const loginMsg = document.getElementById('loginMsg');
-
   const adminPanel = document.getElementById('adminPanel');
   const updateProductSection = document.getElementById('updateProductSection');
-  const btnLoad = document.getElementById('btnLoad');
   const ordersHolder = document.getElementById('ordersHolder');
   const filterPhone = document.getElementById('filterPhone');
-
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
   const prodSelect = document.getElementById('prodSelect');
   const currPrice = document.getElementById('currPrice');
   const currStock = document.getElementById('currStock');
@@ -189,100 +138,77 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnUpdateProduct = document.getElementById('btnUpdateProduct');
   const updateResult = document.getElementById('updateResult');
 
-  // Basic login check: call ORDERS_API (GET) to validate token
+  // === Login ===
+  btnLogin.addEventListener('click', () => {
+    const v = admTokenInput.value.trim().replace(/[<>]/g, '');
+    if (!v) return alert('Enter token');
+    validateTokenAndShow(v);
+  });
+  btnLogout.addEventListener('click', () => { clearToken(); location.reload(); });
+
   async function validateTokenAndShow(t) {
     try {
       const r = await fetch(ORDERS_API, { headers: { 'x-admin-token': t }});
-      if (r.status === 403) throw new Error('Unauthorized');
-      const json = await r.json(); // just ensure it returns JSON
-      // show UI
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const text = await r.text();
+      console.log('Token validation response:', text);
+      JSON.parse(text);
       setToken(t);
       showPanel();
     } catch (err) {
-      console.error('Token validation failed', err);
-      loginMsg.textContent = 'Invalid token or server error';
+      console.error('Token validation failed:', err);
+      loginMsg.textContent = '❌ Invalid token or server error';
       loginMsg.style.color = '#a00';
     }
   }
 
-  // show admin UI
-  function showPanel(){
+  // === Panel ===
+  function showPanel() {
     adminPanel.style.display = 'block';
     updateProductSection.style.display = 'block';
     btnLogout.style.display = 'inline-block';
     btnLogin.style.display = 'none';
     admTokenInput.style.display = 'none';
     loginMsg.textContent = '';
+    orderOffset = 0;
+    loadOrders(true);
     loadProducts();
   }
 
-  // login / logout
-  btnLogin.addEventListener('click', () => {
-    const v = admTokenInput.value.trim();
-    if (!v) { alert('Enter token'); return; }
-    validateTokenAndShow(v);
-  });
+  // === Orders ===
+  let orderOffset = 0;
+  const ORDERS_LIMIT = 10;
 
-  btnLogout.addEventListener('click', () => {
-    clearToken();
-    location.reload();
-  });
+  document.getElementById('btnLoad').addEventListener('click', () => loadOrders(true));
 
-  // load orders
-  let orderOffset = 0; // track pagination
-const ORDERS_LIMIT = 10;
-
-function showPanel(){
-  document.getElementById('adminPanel').style.display = 'block';
-  document.getElementById('updateProductSection').style.display = 'block';
-  document.getElementById('btnLogout').style.display = 'inline-block';
-  document.getElementById('btnLogin').style.display = 'none';
-  document.getElementById('admToken').style.display = 'none';
-  document.getElementById('loginMsg').textContent = '';
-
-  orderOffset = 0; // reset
-  loadOrders(true); // load first 10
-  loadProducts();
-}
-
-async function loadOrders(reset=false){
-  const phone = document.getElementById('filterPhone').value.trim();
-  const hdrs = { 'x-admin-token': token() };
-
-  if (reset) orderOffset = 0;
-
-  const q = phone 
-    ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
-    : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
-
-  const res = await fetch(ORDERS_API + q, { headers: hdrs });
-  if (res.status === 403) { 
-    alert('Unauthorized - please login again'); 
-    clearToken(); 
-    return; 
+  async function loadOrders(reset=false) {
+    const phone = filterPhone.value.trim();
+    const hdrs = { 'x-admin-token': token() };
+    if (reset) orderOffset = 0;
+    const q = phone
+      ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
+      : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
+    try {
+      const res = await fetch(ORDERS_API + q, { headers: hdrs });
+      if (res.status === 403) { alert('Unauthorized - please login again'); clearToken(); return; }
+      const orders = await res.json();
+      renderOrders(orders, reset);
+      loadMoreBtn.style.display = (orders.length >= ORDERS_LIMIT) ? 'block' : 'none';
+      orderOffset += orders.length;
+    } catch (e) {
+      console.error('Error loading orders', e);
+      ordersHolder.innerHTML = '<p style="color:red">Failed to load orders</p>';
+    }
   }
 
-  const orders = await res.json();
-  if (reset) {
-    renderOrders(orders, true);
-  } else {
-    renderOrders(orders, false);
-  }
-
-  if (orders.length >= ORDERS_LIMIT) {
-    document.getElementById('loadMoreBtn').style.display = 'block';
-  } else {
-    document.getElementById('loadMoreBtn').style.display = 'none';
-  }
-
-  orderOffset += orders.length;
-}
-
-  function renderOrders(orders){
-    if(!orders || orders.length === 0) { ordersHolder.innerHTML = '<p>No orders</p>'; return; }
+  function renderOrders(orders, reset) {
+    if (!orders || orders.length === 0) {
+      ordersHolder.innerHTML = '<p>No orders found</p>';
+      return;
+    }
     let html = '<table><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
     orders.forEach(o => {
-      const safeProd = (o.prod_name||'').replace(/,/g,'<br/>');
+      const safeProd = (o.prod_name||'').replace(/,/g, '<br/>');
       html += `<tr>
         <td><strong>${o.order_id}</strong><br/><small>${o.created_at || ''}</small></td>
         <td style="max-width:300px">${safeProd}</td>
@@ -307,20 +233,15 @@ async function loadOrders(reset=false){
     });
     html += '</tbody></table>';
     ordersHolder.innerHTML = html;
-
-    // set selects to current status and attach click handlers
-    orders.forEach(o=>{
+    orders.forEach(o => {
       const sel = document.getElementById('s-'+o.order_id);
-      if(sel && (o.order_status || o.pymt_status)) {
-        try { sel.value = o.order_status || o.pymt_status; } catch(e){}
-      }
+      if (sel) sel.value = o.order_status || o.pymt_status || 'Pending Payment';
       const btn = ordersHolder.querySelector(`button[data-order="${o.order_id}"]`);
-      if(btn) btn.addEventListener('click', () => updateOrder(o.order_id));
+      if (btn) btn.addEventListener('click', () => updateOrder(o.order_id));
     });
   }
 
-  // update order (PUT)
-  async function updateOrder(order_id){
+  async function updateOrder(order_id) {
     const status = document.getElementById('s-'+order_id).value;
     const courier = document.getElementById('courier-'+order_id).value;
     const track = document.getElementById('track-'+order_id).value;
@@ -331,28 +252,25 @@ async function loadOrders(reset=false){
         headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
         body: JSON.stringify(body)
       });
-      if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
+      if (res.status === 403) return alert('Unauthorized');
       const data = await res.json();
       if (data.success || data.result) {
         document.getElementById('status-'+order_id).textContent = status;
-        alert('Order updated');
-      } else {
-        alert('Update failed: ' + (data.error || JSON.stringify(data)));
-      }
+        alert('✅ Order updated');
+      } else alert('❌ Update failed: ' + (data.error || JSON.stringify(data)));
     } catch (err) {
       console.error('Update order failed', err);
       alert('Failed to update order (see console)');
     }
   }
 
-  // === PRODUCTS: loadProducts -> populate dropdown ===
+  // === Products ===
   async function loadProducts() {
     try {
       const res = await fetch(PRODUCTS_API, { headers: { 'x-admin-token': token() }});
       if (res.status === 403) { console.warn('Unauthorized loading products'); return; }
       const products = await res.json();
-      if (!Array.isArray(products)) { console.error('Products response not array', products); return; }
-      if (!prodSelect) return;
+      if (!Array.isArray(products)) return console.error('Products not array', products);
       prodSelect.innerHTML = '<option value="">— Select Product —</option>';
       products.forEach(p => {
         const opt = document.createElement('option');
@@ -360,65 +278,42 @@ async function loadOrders(reset=false){
         opt.textContent = `${p.prod_id} — ${p.prod_name}`;
         prodSelect.appendChild(opt);
       });
-    } catch (err) {
-      console.error('Error loading products:', err);
-    }
+    } catch (err) { console.error('Error loading products:', err); }
   }
 
-  // when a product selected -> fetch details
-  prodSelect && prodSelect.addEventListener('change', async () => {
+  prodSelect.addEventListener('change', async () => {
     const id = prodSelect.value;
-    if (!id) {
-      currPrice.value = '';
-      currStock.value = '';
-      newPrice.value = '';
-      newStock.value = '';
-      return;
-    }
+    if (!id) return currPrice.value = currStock.value = newPrice.value = newStock.value = '';
     try {
-      const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(id)}`, {
-        headers: { 'x-admin-token': token() }
-      });
-      if (res.status === 403) { alert('Unauthorized'); return; }
+      const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(id)}`, { headers: { 'x-admin-token': token() }});
       const data = await res.json();
-      if (!data || !data.prod_id) {
-        alert('Product not found');
-        return;
-      }
+      if (!data || !data.prod_id) return alert('Product not found');
       currPrice.value = data.price ?? '';
       currStock.value = data.stock ?? '';
       newPrice.value = '';
       newStock.value = '';
-    } catch (err) {
-      console.error('Error fetching product detail:', err);
-    }
+    } catch (err) { console.error('Error fetching product detail:', err); }
   });
 
-  // update product handler -> PUT /api/admin/products/:id
-  btnUpdateProduct && btnUpdateProduct.addEventListener('click', async () => {
+  btnUpdateProduct.addEventListener('click', async () => {
     const prodId = prodSelect.value;
-    if (!prodId) { alert('Select a product first'); return; }
+    if (!prodId) return alert('Select a product first');
     const body = {};
-    if (newPrice.value.trim() !== '') body.price = parseFloat(newPrice.value);
-    if (newStock.value.trim() !== '') body.stock = parseInt(newStock.value, 10);
-    if (Object.keys(body).length === 0) { alert('Enter new price and/or new stock'); return; }
+    if (newPrice.value.trim()) body.price = parseFloat(newPrice.value);
+    if (newStock.value.trim()) body.stock = parseInt(newStock.value, 10);
+    if (!Object.keys(body).length) return alert('Enter new price and/or new stock');
 
     try {
       const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(prodId)}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': token()
-        },
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
         body: JSON.stringify(body)
       });
-      if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
       const data = await res.json();
       if (data.success) {
         updateResult.textContent = `✅ ${prodId} updated successfully`;
         updateResult.style.color = '#006600';
-        // refresh displayed data
-        if (body.price !== undefined) currPrice.value = parseFloat(body.price).toFixed(2);
+        if (body.price !== undefined) currPrice.value = body.price.toFixed(2);
         if (body.stock !== undefined) currStock.value = body.stock;
       } else {
         updateResult.textContent = '❌ Update failed: ' + (data.error || 'Unknown');
@@ -431,11 +326,9 @@ async function loadOrders(reset=false){
     }
   });
 
-  // auto show panel if already logged in
-  if (sessionStorage.getItem('ADMIN_TOKEN')) {
-    showPanel();
-  }
+  // === Auto login ===
+  if (sessionStorage.getItem('ADMIN_TOKEN')) showPanel();
 });
 </script>
 </body>
-          </html>
+  </html>
