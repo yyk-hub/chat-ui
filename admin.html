@@ -181,40 +181,77 @@ const PRODUCTS_API = 'https://chat-ui-30l.pages.dev/api/admin/products';
 
   document.getElementById('btnLoad').addEventListener('click', () => loadOrders(true));
 
-  async function loadOrders(reset=false) {
-    const phone = filterPhone.value.trim();
-    const hdrs = { 'x-admin-token': token() };
-    if (reset) orderOffset = 0;
-    const q = phone
-      ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
-      : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
-    try {
-      const res = await fetch(ORDERS_API + q, { headers: hdrs });
-      if (res.status === 403) { alert('Unauthorized - please login again'); clearToken(); return; }
-      const orders = await res.json();
-      renderOrders(orders, reset);
-      loadMoreBtn.style.display = (orders.length >= ORDERS_LIMIT) ? 'block' : 'none';
-      orderOffset += orders.length;
-    } catch (e) {
-      console.error('Error loading orders', e);
-      ordersHolder.innerHTML = '<p style="color:red">Failed to load orders</p>';
-    }
-  }
+async function loadOrders(reset = false) {
+  const phone = filterPhone.value.trim();
+  const hdrs = { 'x-admin-token': token() };
 
-  function renderOrders(orders, reset) {
-    if (!orders || orders.length === 0) {
-      ordersHolder.innerHTML = '<p>No orders found</p>';
+  if (reset) orderOffset = 0;
+
+  const q = phone
+    ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
+    : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
+
+  try {
+    const res = await fetch(ORDERS_API + q, { headers: hdrs });
+
+    // Explicit unauthorized check (status)
+    if (res.status === 403) {
+      alert('Unauthorized - please login again');
+      clearToken();
       return;
     }
-    let html = '<table><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-    orders.forEach(o => {
-      const safeProd = (o.prod_name||'').replace(/,/g, '<br/>');
-      html += `<tr>
+
+    const data = await res.json();
+
+    // Handle unauthorized object response
+    if (data.success === false && data.error === 'Unauthorized') {
+      alert('Unauthorized - please login again');
+      clearToken();
+      return;
+    }
+
+    // Validate array
+    if (!Array.isArray(data)) {
+      console.error('Unexpected response:', data);
+      ordersHolder.innerHTML = '<p style="color:red">Unexpected data format</p>';
+      return;
+    }
+
+    // Render orders (append or reset)
+    renderOrders(data, reset);
+
+    // Toggle Load More button
+    loadMoreBtn.style.display = (data.length >= ORDERS_LIMIT) ? 'block' : 'none';
+
+    // Update offset
+    orderOffset += data.length;
+  } catch (e) {
+    console.error('Error loading orders', e);
+    ordersHolder.innerHTML = '<p style="color:red">Failed to load orders</p>';
+  }
+}
+
+
+function renderOrders(orders, reset) {
+  if (!orders || orders.length === 0) {
+    if (reset) ordersHolder.innerHTML = '<p>No orders found</p>';
+    return;
+  }
+
+  // Build HTML table rows
+  let html = reset
+    ? '<table><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>'
+    : ordersHolder.querySelector('tbody')?.innerHTML || '';
+
+  orders.forEach(o => {
+    const safeProd = (o.prod_name || '').replace(/,/g, '<br/>');
+    html += `
+      <tr>
         <td><strong>${o.order_id}</strong><br/><small>${o.created_at || ''}</small></td>
         <td style="max-width:300px">${safeProd}</td>
-        <td>RM ${parseFloat(o.total_amt||0).toFixed(2)}</td>
-        <td>${o.phone||''}</td>
-        <td id="status-${o.order_id}">${o.order_status||o.pymt_status||'—'}</td>
+        <td>RM ${parseFloat(o.total_amt || 0).toFixed(2)}</td>
+        <td>${o.phone || ''}</td>
+        <td id="status-${o.order_id}">${o.order_status || o.pymt_status || '—'}</td>
         <td>
           <select id="s-${o.order_id}">
             <option>Pending Payment</option>
@@ -224,23 +261,27 @@ const PRODUCTS_API = 'https://chat-ui-30l.pages.dev/api/admin/products';
             <option>Cancelled</option>
           </select>
           <br/>
-          <input id="courier-${o.order_id}" placeholder="courier" style="width:140px;margin-top:6px" value="${o.courier_name||''}"/>
-          <input id="track-${o.order_id}" placeholder="tracking link" style="width:220px;margin-top:6px" value="${o.tracking_link||''}"/>
+          <input id="courier-${o.order_id}" placeholder="courier" style="width:140px;margin-top:6px" value="${o.courier_name || ''}"/>
+          <input id="track-${o.order_id}" placeholder="tracking link" style="width:220px;margin-top:6px" value="${o.tracking_link || ''}"/>
           <br/>
           <button class="btn" data-order="${o.order_id}">Save</button>
         </td>
       </tr>`;
-    });
-    html += '</tbody></table>';
-    ordersHolder.innerHTML = html;
-    orders.forEach(o => {
-      const sel = document.getElementById('s-'+o.order_id);
-      if (sel) sel.value = o.order_status || o.pymt_status || 'Pending Payment';
-      const btn = ordersHolder.querySelector(`button[data-order="${o.order_id}"]`);
-      if (btn) btn.addEventListener('click', () => updateOrder(o.order_id));
-    });
-  }
+  });
 
+  if (reset) html += '</tbody></table>';
+  else html = `<table><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>${html}</tbody></table>`;
+
+  ordersHolder.innerHTML = html;
+
+  // Re-attach Save button listeners
+  orders.forEach(o => {
+    const sel = document.getElementById('s-' + o.order_id);
+    if (sel) sel.value = o.order_status || o.pymt_status || 'Pending Payment';
+    const btn = ordersHolder.querySelector(`button[data-order="${o.order_id}"]`);
+    if (btn) btn.addEventListener('click', () => updateOrder(o.order_id));
+  });
+}
   async function updateOrder(order_id) {
     const status = document.getElementById('s-'+order_id).value;
     const courier = document.getElementById('courier-'+order_id).value;
