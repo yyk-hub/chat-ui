@@ -110,26 +110,27 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // ✅ Use absolute URLs so it works anywhere
-const BASE_URL = 'https://chat-ui-30l.pages.dev/admin';
-const ORDERS_API = 'https://chat-ui-30l.pages.dev/api/admin/orders';
-const PRODUCTS_API = 'https://chat-ui-30l.pages.dev/api/admin/products';
+  const ORDERS_API = '/api/admin/orders';
+  const PRODUCTS_API = '/api/admin/products';
 
-  // === Helpers ===
+  // util token helpers
   function token(){ return sessionStorage.getItem('ADMIN_TOKEN') || ''; }
   function setToken(t){ sessionStorage.setItem('ADMIN_TOKEN', t); }
   function clearToken(){ sessionStorage.removeItem('ADMIN_TOKEN'); }
 
-  // === Elements ===
-  const admTokenInput = document.getElementById('admToken');
+  // elements
   const btnLogin = document.getElementById('btnLogin');
   const btnLogout = document.getElementById('btnLogout');
+  const admTokenInput = document.getElementById('admToken');
   const loginMsg = document.getElementById('loginMsg');
+
   const adminPanel = document.getElementById('adminPanel');
   const updateProductSection = document.getElementById('updateProductSection');
+  const btnLoad = document.getElementById('btnLoad');
   const ordersHolder = document.getElementById('ordersHolder');
   const filterPhone = document.getElementById('filterPhone');
   const loadMoreBtn = document.getElementById('loadMoreBtn');
+
   const prodSelect = document.getElementById('prodSelect');
   const currPrice = document.getElementById('currPrice');
   const currStock = document.getElementById('currStock');
@@ -138,120 +139,126 @@ const PRODUCTS_API = 'https://chat-ui-30l.pages.dev/api/admin/products';
   const btnUpdateProduct = document.getElementById('btnUpdateProduct');
   const updateResult = document.getElementById('updateResult');
 
-  // === Login ===
-  btnLogin.addEventListener('click', () => {
-    const v = admTokenInput.value.trim().replace(/[<>]/g, '');
-    if (!v) return alert('Enter token');
-    validateTokenAndShow(v);
-  });
-  btnLogout.addEventListener('click', () => { clearToken(); location.reload(); });
+  let orderOffset = 0;
+  const ORDERS_LIMIT = 10;
 
+  // Basic login check
   async function validateTokenAndShow(t) {
     try {
       const r = await fetch(ORDERS_API, { headers: { 'x-admin-token': t }});
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const text = await r.text();
-      console.log('Token validation response:', text);
-      JSON.parse(text);
+      if (r.status === 403) throw new Error('Unauthorized');
+      await r.json();
       setToken(t);
       showPanel();
     } catch (err) {
-      console.error('Token validation failed:', err);
-      loginMsg.textContent = '❌ Invalid token or server error';
+      console.error('Token validation failed', err);
+      loginMsg.textContent = 'Invalid token or server error';
       loginMsg.style.color = '#a00';
     }
   }
 
-  // === Panel ===
-  function showPanel() {
+  // show admin UI
+  function showPanel(){
     adminPanel.style.display = 'block';
     updateProductSection.style.display = 'block';
     btnLogout.style.display = 'inline-block';
     btnLogin.style.display = 'none';
     admTokenInput.style.display = 'none';
     loginMsg.textContent = '';
+    
     orderOffset = 0;
     loadOrders(true);
     loadProducts();
   }
 
-  // === Orders ===
-  let orderOffset = 0;
-  const ORDERS_LIMIT = 10;
+  // login / logout
+  btnLogin.addEventListener('click', () => {
+    const v = admTokenInput.value.trim();
+    if (!v) { alert('Enter token'); return; }
+    validateTokenAndShow(v);
+  });
 
-  document.getElementById('btnLoad').addEventListener('click', () => loadOrders(true));
+  btnLogout.addEventListener('click', () => {
+    clearToken();
+    location.reload();
+  });
 
-async function loadOrders(reset = false) {
-  const phone = filterPhone.value.trim();
-  const hdrs = { 'x-admin-token': token() };
+  // FIXED: Add click handler for Load button
+  btnLoad.addEventListener('click', () => {
+    orderOffset = 0;
+    loadOrders(true); // Reset and load with filter
+  });
 
-  if (reset) orderOffset = 0;
+  // FIXED: Load More button handler
+  loadMoreBtn.addEventListener('click', () => {
+    loadOrders(false); // Append more orders
+  });
 
-  const q = phone
-    ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
-    : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
+  // FIXED: Load orders function
+  async function loadOrders(reset = false){
+    const phone = filterPhone.value.trim();
+    const hdrs = { 'x-admin-token': token() };
 
-  try {
-    const res = await fetch(ORDERS_API + q, { headers: hdrs });
+    if (reset) orderOffset = 0;
 
-    // Explicit unauthorized check (status)
-    if (res.status === 403) {
-      alert('Unauthorized - please login again');
-      clearToken();
-      return;
+    const q = phone 
+      ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
+      : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
+
+    try {
+      const res = await fetch(ORDERS_API + q, { headers: hdrs });
+      if (res.status === 403) { 
+        alert('Unauthorized - please login again'); 
+        clearToken(); 
+        return; 
+      }
+
+      const orders = await res.json();
+      
+      if (reset) {
+        renderOrders(orders, true); // Replace table
+      } else {
+        renderOrders(orders, false); // Append to table
+      }
+
+      // Show/hide Load More button
+      if (orders.length >= ORDERS_LIMIT) {
+        loadMoreBtn.style.display = 'inline-block';
+      } else {
+        loadMoreBtn.style.display = 'none';
+      }
+
+      orderOffset += orders.length;
+    } catch (err) {
+      console.error('Load orders error:', err);
+      ordersHolder.innerHTML = '<p style="color:#a00">Failed to load orders</p>';
     }
-
-    const data = await res.json();
-
-    // Handle unauthorized object response
-    if (data.success === false && data.error === 'Unauthorized') {
-      alert('Unauthorized - please login again');
-      clearToken();
-      return;
-    }
-
-    // Validate array
-    if (!Array.isArray(data)) {
-      console.error('Unexpected response:', data);
-      ordersHolder.innerHTML = '<p style="color:red">Unexpected data format</p>';
-      return;
-    }
-
-    // Render orders (append or reset)
-    renderOrders(data, reset);
-
-    // Toggle Load More button
-    loadMoreBtn.style.display = (data.length >= ORDERS_LIMIT) ? 'block' : 'none';
-
-    // Update offset
-    orderOffset += data.length;
-  } catch (e) {
-    console.error('Error loading orders', e);
-    ordersHolder.innerHTML = '<p style="color:red">Failed to load orders</p>';
   }
-}
 
+  // FIXED: Render orders (append or replace)
+  function renderOrders(orders, replace = true){
+    if(!orders || orders.length === 0) { 
+      if (replace) {
+        ordersHolder.innerHTML = '<p>No orders found</p>'; 
+      }
+      return; 
+    }
 
-function renderOrders(orders, reset) {
-  if (!orders || orders.length === 0) {
-    if (reset) ordersHolder.innerHTML = '<p>No orders found</p>';
-    return;
-  }
+    let html = '';
+    
+    // If replacing, create new table
+    if (replace) {
+      html = '<table id="ordersTable"><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+    }
 
-  // Build HTML table rows
-  let html = reset
-    ? '<table><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>'
-    : ordersHolder.querySelector('tbody')?.innerHTML || '';
-
-  orders.forEach(o => {
-    const safeProd = (o.prod_name || '').replace(/,/g, '<br/>');
-    html += `
-      <tr>
+    orders.forEach(o => {
+      const safeProd = (o.prod_name||'').replace(/,/g,'<br/>');
+      html += `<tr>
         <td><strong>${o.order_id}</strong><br/><small>${o.created_at || ''}</small></td>
         <td style="max-width:300px">${safeProd}</td>
-        <td>RM ${parseFloat(o.total_amt || 0).toFixed(2)}</td>
-        <td>${o.phone || ''}</td>
-        <td id="status-${o.order_id}">${o.order_status || o.pymt_status || '—'}</td>
+        <td>RM ${parseFloat(o.total_amt||0).toFixed(2)}</td>
+        <td>${o.phone||''}</td>
+        <td id="status-${o.order_id}">${o.order_status||o.pymt_status||'—'}</td>
         <td>
           <select id="s-${o.order_id}">
             <option>Pending Payment</option>
@@ -261,28 +268,38 @@ function renderOrders(orders, reset) {
             <option>Cancelled</option>
           </select>
           <br/>
-          <input id="courier-${o.order_id}" placeholder="courier" style="width:140px;margin-top:6px" value="${o.courier_name || ''}"/>
-          <input id="track-${o.order_id}" placeholder="tracking link" style="width:220px;margin-top:6px" value="${o.tracking_link || ''}"/>
+          <input id="courier-${o.order_id}" placeholder="courier" style="width:140px;margin-top:6px" value="${o.courier_name||''}"/>
+          <input id="track-${o.order_id}" placeholder="tracking link" style="width:220px;margin-top:6px" value="${o.tracking_link||''}"/>
           <br/>
           <button class="btn" data-order="${o.order_id}">Save</button>
         </td>
       </tr>`;
-  });
+    });
 
-  if (reset) html += '</tbody></table>';
-  else html = `<table><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>${html}</tbody></table>`;
+    if (replace) {
+      html += '</tbody></table>';
+      ordersHolder.innerHTML = html;
+    } else {
+      // Append to existing tbody
+      const tbody = document.querySelector('#ordersTable tbody');
+      if (tbody) {
+        tbody.insertAdjacentHTML('beforeend', html);
+      }
+    }
 
-  ordersHolder.innerHTML = html;
+    // Set selects and attach handlers
+    orders.forEach(o=>{
+      const sel = document.getElementById('s-'+o.order_id);
+      if(sel && (o.order_status || o.pymt_status)) {
+        try { sel.value = o.order_status || o.pymt_status; } catch(e){}
+      }
+      const btn = document.querySelector(`button[data-order="${o.order_id}"]`);
+      if(btn) btn.addEventListener('click', () => updateOrder(o.order_id));
+    });
+  }
 
-  // Re-attach Save button listeners
-  orders.forEach(o => {
-    const sel = document.getElementById('s-' + o.order_id);
-    if (sel) sel.value = o.order_status || o.pymt_status || 'Pending Payment';
-    const btn = ordersHolder.querySelector(`button[data-order="${o.order_id}"]`);
-    if (btn) btn.addEventListener('click', () => updateOrder(o.order_id));
-  });
-}
-  async function updateOrder(order_id) {
+  // update order (PUT)
+  async function updateOrder(order_id){
     const status = document.getElementById('s-'+order_id).value;
     const courier = document.getElementById('courier-'+order_id).value;
     const track = document.getElementById('track-'+order_id).value;
@@ -293,25 +310,28 @@ function renderOrders(orders, reset) {
         headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
         body: JSON.stringify(body)
       });
-      if (res.status === 403) return alert('Unauthorized');
+      if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
       const data = await res.json();
       if (data.success || data.result) {
         document.getElementById('status-'+order_id).textContent = status;
-        alert('✅ Order updated');
-      } else alert('❌ Update failed: ' + (data.error || JSON.stringify(data)));
+        alert('Order updated');
+      } else {
+        alert('Update failed: ' + (data.error || JSON.stringify(data)));
+      }
     } catch (err) {
       console.error('Update order failed', err);
       alert('Failed to update order (see console)');
     }
   }
 
-  // === Products ===
+  // Load products
   async function loadProducts() {
     try {
       const res = await fetch(PRODUCTS_API, { headers: { 'x-admin-token': token() }});
       if (res.status === 403) { console.warn('Unauthorized loading products'); return; }
       const products = await res.json();
-      if (!Array.isArray(products)) return console.error('Products not array', products);
+      if (!Array.isArray(products)) { console.error('Products response not array', products); return; }
+      if (!prodSelect) return;
       prodSelect.innerHTML = '<option value="">— Select Product —</option>';
       products.forEach(p => {
         const opt = document.createElement('option');
@@ -319,42 +339,64 @@ function renderOrders(orders, reset) {
         opt.textContent = `${p.prod_id} — ${p.prod_name}`;
         prodSelect.appendChild(opt);
       });
-    } catch (err) { console.error('Error loading products:', err); }
+    } catch (err) {
+      console.error('Error loading products:', err);
+    }
   }
 
-  prodSelect.addEventListener('change', async () => {
+  // Product selection handler
+  prodSelect && prodSelect.addEventListener('change', async () => {
     const id = prodSelect.value;
-    if (!id) return currPrice.value = currStock.value = newPrice.value = newStock.value = '';
+    if (!id) {
+      currPrice.value = '';
+      currStock.value = '';
+      newPrice.value = '';
+      newStock.value = '';
+      return;
+    }
     try {
-      const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(id)}`, { headers: { 'x-admin-token': token() }});
+      const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(id)}`, {
+        headers: { 'x-admin-token': token() }
+      });
+      if (res.status === 403) { alert('Unauthorized'); return; }
       const data = await res.json();
-      if (!data || !data.prod_id) return alert('Product not found');
+      if (!data || !data.prod_id) {
+        alert('Product not found');
+        return;
+      }
       currPrice.value = data.price ?? '';
       currStock.value = data.stock ?? '';
       newPrice.value = '';
       newStock.value = '';
-    } catch (err) { console.error('Error fetching product detail:', err); }
+    } catch (err) {
+      console.error('Error fetching product detail:', err);
+    }
   });
 
-  btnUpdateProduct.addEventListener('click', async () => {
+  // Update product handler
+  btnUpdateProduct && btnUpdateProduct.addEventListener('click', async () => {
     const prodId = prodSelect.value;
-    if (!prodId) return alert('Select a product first');
+    if (!prodId) { alert('Select a product first'); return; }
     const body = {};
-    if (newPrice.value.trim()) body.price = parseFloat(newPrice.value);
-    if (newStock.value.trim()) body.stock = parseInt(newStock.value, 10);
-    if (!Object.keys(body).length) return alert('Enter new price and/or new stock');
+    if (newPrice.value.trim() !== '') body.price = parseFloat(newPrice.value);
+    if (newStock.value.trim() !== '') body.stock = parseInt(newStock.value, 10);
+    if (Object.keys(body).length === 0) { alert('Enter new price and/or new stock'); return; }
 
     try {
       const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(prodId)}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token()
+        },
         body: JSON.stringify(body)
       });
+      if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
       const data = await res.json();
       if (data.success) {
         updateResult.textContent = `✅ ${prodId} updated successfully`;
         updateResult.style.color = '#006600';
-        if (body.price !== undefined) currPrice.value = body.price.toFixed(2);
+        if (body.price !== undefined) currPrice.value = parseFloat(body.price).toFixed(2);
         if (body.stock !== undefined) currStock.value = body.stock;
       } else {
         updateResult.textContent = '❌ Update failed: ' + (data.error || 'Unknown');
@@ -367,8 +409,10 @@ function renderOrders(orders, reset) {
     }
   });
 
-  // === Auto login ===
-  if (sessionStorage.getItem('ADMIN_TOKEN')) showPanel();
+  // Auto show panel if already logged in
+  if (sessionStorage.getItem('ADMIN_TOKEN')) {
+    showPanel();
+  }
 });
 </script>
 </body>
