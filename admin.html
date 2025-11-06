@@ -112,8 +112,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   // ✅ Use absolute URLs so it works anywhere
 const BASE_URL = 'https://chat-ui-30l.pages.dev/admin';
-const ORDERS_API = BASE_URL + '/api/orders';
-const PRODUCTS_API = BASE_URL + '/api/products';
+const ORDERS_API = 'https://chat-ui-30l.pages.dev/api/admin/orders';
+const PRODUCTS_API = 'https://chat-ui-30l.pages.dev/api/admin/products';
 
   // === Helpers ===
   function token(){ return sessionStorage.getItem('ADMIN_TOKEN') || ''; }
