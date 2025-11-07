@@ -460,18 +460,15 @@ async function syncFeatured() {
       const data = map[pid];
       const img = el.querySelector('.featured-thumb');
       const title = el.querySelector('h4');
-      const price = el.querySelector('.price');
 
       if (data) {
         if (data.image_url) img.src = data.image_url;
         else img.src = img.src || 'https://via.placeholder.com/90';
         if (data.prod_name) title.textContent = data.prod_name;
-        if (data.price !== undefined) price.textContent = 'RM ' + parseFloat(data.price).toFixed(2);
       } else {
         // product not returned from API (maybe out of DB) — keep placeholders
         img.src = img.src || 'https://via.placeholder.com/90';
         title.textContent = title.textContent || pid;
-        price.textContent = price.textContent || '';
       }
     });
 
@@ -503,4 +500,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
     </html>
+
 
