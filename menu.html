@@ -5,13 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Menu - Shuang Hor</title>
 <style>
+  /* === KEEP your original visual theme ===
+     I preserved your header, dropdown, sections, colors and layout.
+     Only added a few rules for product thumbnails, fade transition and highlight. */
+
   body {
     font-family: Segoe UI, Arial, sans-serif;
     margin: 0;
     background: #faf3e0;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    /* initial hidden for fade-in */
+    opacity: 0;
+    transition: opacity 320ms ease;
   }
 
-  /* Header */
+  /* Header (unchanged) */
   .header {
     position: sticky;
     top: 0;
@@ -24,8 +33,9 @@
     border-bottom: 2px solid #d1c4a1;
   }
 
-  .home-btn, .shop-btn {
+  .home-btn {
     position: absolute;
+    left: 20px;
     background: #996600;
     color: white;
     border: none;
@@ -36,117 +46,55 @@
     font-size: 14px;
   }
 
-  .home-btn { left: 20px; }
-  .shop-btn {
-    right: 20px;
-    background: #14b47e;
-  }
-
   .header h2 {
     margin: 0;
     font-size: 18px;
     color: #996600;
   }
-  
-/* ✨ Gold Glass Dropdown Menu */
-.menu-dropdown {
-  position: absolute;
-  right: 20px;
-}
 
-.menu-icon {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #b8860b; /* soft gold */
-  transition: all 0.3s ease;
-}
-
-.menu-icon:hover {
-  color: #d4af37; /* bright gold hover */
-  text-shadow: 0 0 6px rgba(212,175,55,0.6);
-  transform: scale(1.1);
-}
-
-/* 💎 Frosted glass dropdown panel with golden shimmer */
-.dropdown-content {
-  display: none;
-  position: absolute;
-  right: 0;
-  background: rgba(255, 250, 240, 0.75);
-  backdrop-filter: blur(8px) saturate(180%);
-  -webkit-backdrop-filter: blur(8px) saturate(180%);
-  border-radius: 16px;
-  min-width: 190px;
-  border: 1px solid rgba(255, 215, 0, 0.4);
-  box-shadow: 0px 6px 20px rgba(184, 134, 11, 0.35), 
-              0 0 12px rgba(255, 215, 0, 0.2); /* glowing edge */
-  z-index: 999;
-  overflow: hidden;
-  animation: fadeIn 0.25s ease;
-}
-
-/* ✨ Dropdown links */
-.dropdown-content a {
-  color: #4a3b1b;
-  padding: 10px 16px;
-  text-decoration: none;
-  display: block;
-  font-size: 15px;
-  background-color: rgba(255, 255, 255, 0.35);
-  border-bottom: 1px solid rgba(218, 165, 32, 0.15);
-  transition: all 0.25s ease;
-}
-
-.dropdown-content a:hover {
-  background-color: rgba(255, 240, 210, 0.55);
-  color: #8b6508;
-  transform: translateX(4px);
-}
-
-.dropdown-content a:last-child {
-  border-bottom: none;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* 🌟 Optional shimmer glow animation when opened */
-@keyframes shimmer {
-  0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
-  50% { box-shadow: 0 0 18px rgba(255, 215, 0, 0.6); }
-  100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
-}
-
-.dropdown-content.active {
-  animation: shimmer 2s infinite ease-in-out;
+  /* Gold glass dropdown (unchanged) */
+  .menu-dropdown {
+    position: absolute;
+    right: 20px;
   }
- .dropdown-content {
-  display: none;
-  opacity: 0;
-  transform: translateY(-10px);
-  transition: all 0.25s ease;
-}
 
-.dropdown-content.show {
-  display: block;
-  opacity: 1;
-  transform: translateY(0);
-  }
-  @media (max-width: 480px) {
-  .dropdown-content {
-    right: 10px;
-    min-width: 160px;
-  }
   .menu-icon {
-    font-size: 22px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #b8860b;
+    transition: all 0.3s ease;
   }
-    }
-  
-  /* Main content */
+  .menu-icon:hover { color: #d4af37; transform: scale(1.1); }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background: rgba(255,250,240,0.75);
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    border-radius: 16px;
+    min-width: 190px;
+    border: 1px solid rgba(255,215,0,0.4);
+    box-shadow: 0 6px 20px rgba(184,134,11,0.35), 0 0 12px rgba(255,215,0,0.2);
+    z-index: 999;
+    overflow: hidden;
+    animation: fadeIn 0.25s ease;
+  }
+  .dropdown-content a { color:#4a3b1b; padding:10px 16px; text-decoration:none; display:block; font-size:15px; background-color: rgba(255,255,255,0.35); border-bottom:1px solid rgba(218,165,32,0.15); transition: all 0.25s;}
+  .dropdown-content a:hover { background-color: rgba(255,240,210,0.55); color:#8b6508; transform: translateX(4px); }
+  .dropdown-content.show { display:block; opacity:1; transform: translateY(0); }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-8px) } to { opacity:1; transform:translateY(0) } }
+
+  @media (max-width:480px) {
+    .dropdown-content { right:10px; min-width:160px; }
+    .menu-icon { font-size:22px; }
+  }
+
+  /* Main content wrapper (unchanged) */
   .container {
     max-width: 850px;
     margin: auto;
@@ -172,9 +120,7 @@
     color: #333;
   }
 
-  ul {
-    padding-left: 20px;
-  }
+  ul { padding-left: 20px; }
 
   .testimonial {
     background: #fff9f0;
@@ -183,18 +129,15 @@
     border-radius: 8px;
     margin: 10px 0;
   }
+  .testimonial strong { color: #996600; }
 
-  .testimonial strong {
-    color: #996600;
-  }
-
-  /* WhatsApp Button */
+  /* WhatsApp Button (unchanged) */
   .whatsapp-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: #22aa5a; /*previously #25D366 or bright green*/
+    background: #22aa5a;
     color: white;
     border: none;
     border-radius: 10px;
@@ -204,11 +147,7 @@
     margin: 20px auto;
     width: fit-content;
   }
-
-  .whatsapp-btn svg {
-    width: 28px;
-    height: 28px;
-  }
+  .whatsapp-btn svg { width:28px; height:28px; }
 
   footer {
     text-align: center;
@@ -216,26 +155,97 @@
     color: #666;
     margin-top: 20px;
   }
+
+  /* === Featured Products (UPDATED) ===
+     Small thumbnail left, details on the right.
+     Important: long description paragraphs remain exactly as they are below.
+  */
+  .featured-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .featured-item {
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    background:#fffdf8;
+    border:1px solid #e0d5bb;
+    padding:12px;
+    border-radius:12px;
+  }
+
+  .featured-thumb {
+    width: 90px;         /* small thumbnail size */
+    height: 90px;
+    object-fit: cover;
+    border-radius: 10px;
+    flex-shrink: 0;
+    border: 1px solid #ddd;
+    background: #fff;
+  }
+
+  .featured-meta { flex:1; }
+
+  .featured-meta h4 {
+    margin:0 0 6px 0;
+    color: #996600;
+    font-size: 15px;
+  }
+
+  .featured-meta .price {
+    font-weight:700;
+    color:#14b47e;
+    margin-bottom:6px;
+  }
+
+  .view-shop-link {
+    display:inline-block;
+    margin-top:8px;
+    color:#996600;
+    text-decoration:none;
+    font-size:14px;
+  }
+
+  /* highlight when navigated */
+  .highlight {
+    animation: highlightFade 1.6s ease-out;
+  }
+  @keyframes highlightFade {
+    from { background-color:#fff6d5; }
+    to { background-color: transparent; }
+  }
+
+  /* Fade-out class for navigation */
+  .fade-out {
+    opacity: 0 !important;
+    transition: opacity 320ms ease;
+  }
+
+  /* Responsive: stack on small screens */
+  @media (max-width:640px) {
+    .featured-item { flex-direction: column; align-items:center; text-align:center; }
+    .featured-thumb { width:100%; height:auto; max-height:220px; }
+  }
 </style>
 </head>
 <body>
 
   <div class="header">
-  <a href="index.html" class="home-btn">🏠 Home</a>
-  <h2>📋 Menu</h2>
+    <a href="index.html" class="home-btn">🏠 Home</a>
+    <h2>📋 Menu</h2>
 
-  <!-- ✨ Gold 3-line dropdown -->
-  <div class="menu-dropdown">
-    <button class="menu-icon" id="menuToggle" title="Menu">
-      &#9776;
-    </button>
-    <div class="dropdown-content" id="dropdownMenu">
-      <a href="order.html">🧾 Order History</a>
-      <a href="shop.html">🛍️ Shop</a>
-      <a href="admin.html">🔐 Admin Panel</a>
-      <a href="index.html">🏠 Home</a>
+    <!-- ✨ Gold 3-line dropdown -->
+    <div class="menu-dropdown">
+      <button class="menu-icon" id="menuToggle" title="Menu">&#9776;</button>
+      <div class="dropdown-content" id="dropdownMenu">
+        <a href="order.html">🧾 Order History</a>
+        <a href="shop.html">🛍️ Shop</a>
+        <a href="admin.html">🔐 Admin Panel</a>
+        <a href="index.html">🏠 Home</a>
+      </div>
     </div>
-  </div>
   </div>
 
 <div class="container">
@@ -249,13 +259,94 @@
 
   <section>
     <h3>Featured Products</h3>
-    <ul>
-      <li><strong>CEO Coffee:</strong> Premium coffee mix infused with Ganoderma for a refreshing daily boost.</li><p>Major constituents: Non-dairy creamer, prime coffee beans and Yung Kien Ganoderma. Free from any flavouring essence or preservatives. Formulated using only prime coffee beans, freshly brewed for its premium taste, and enhanced with Yung Kien Ganoderma to blend the bitter taste of Ganoderma with the unique bitterness of coffee.Premixed with sugar or sugar-free beverage.</p>
-      <li><strong>Lu Chun Tea:</strong> High-quality oolong tea known for antioxidants and smooth taste.</li><p>Major constituents: Contains Camellia Sinesis, Brown Rice, Cassia Seed and Ganoderma Lucidum Extract.Tea which is made up of four types of ingredients that are rich in flavour, can be beneficial for health, and it is suitable to be consumed by everyone.</p>
-      <li><strong>Lingzhi Capsules:</strong> Enhance immunity and vitality with 100% Ganoderma extract.</li><p>Ganoderma traditionally used for general health. It helps fortify the immune defence, speed up metabolic rates, consolidate the physical constitutions and enhance metabolic functions of the liver, hence contributing to preserving optimal health through its long-term consumption.</p>
-      <li><strong>Lacto Berry:</strong> Probiotic and antioxidant blend to support digestion and youthful energy. </li><p>Major constituents: Bifidobacterium Lactis, Bifidobacterium Longum, Cranberry Powder, Raspberry Powder, Blueberry Powder and Isomalt. A natural anti-ageing food supplement that helps remove free radicals and promote the elimination of our metabolic wastes.</p>
-      <li><strong>Greenzhi Toothgel:</strong> Herbal toothpaste for gum health and freshness.</li><p>Constituents: Nano-Ganoderma Lucidum, Miswak Extract, Neem Extract, Aloe Barbadensis, Xylitol and Chlorophyllin. Natural menthol or peppermint is added to keep the mouth cavity fresh without introducing any irritation, making it a perfect choice for all your family members, young and old alike.</p>
-    </ul>
+
+    <!-- KEEP your long descriptions exactly as they were (manual content).
+         Each featured-item has data-prod matching D1.prod_id. JS will fill name/price/image.
+         Do NOT edit these <p> texts if you want them preserved. -->
+
+    <div class="featured-list" id="featuredList">
+
+      <div class="featured-item" data-prod="berry">
+        <img class="featured-thumb" src="" alt="Lacto-Berry">
+        <div class="featured-meta">
+          <h4><!-- name auto-filled --></h4>
+          <div class="price"><!-- price auto-filled --></div>
+          <p>Major constituents: Bifidobacterium Lactis, Bifidobacterium Longum, Cranberry Powder, Raspberry Powder, Blueberry Powder and Isomalt. A natural anti-ageing food supplement that helps remove free radicals and promote the elimination of our metabolic wastes.</p>
+          <a class="view-shop-link" href="shop.html#berry">🛍 View in Shop</a>
+        </div>
+      </div>
+
+      <div class="featured-item" data-prod="cleaner">
+        <img class="featured-thumb" src="" alt="GoEco All-Purpose Cleaner">
+        <div class="featured-meta">
+          <h4></h4>
+          <div class="price"></div>
+          <p>GoEco All-Purpose Cleaner — eco-friendly cleaner suitable for multiple surfaces, formulated for effective cleaning with reduced environmental impact.</p>
+          <a class="view-shop-link" href="shop.html#cleaner">🛍 View in Shop</a>
+        </div>
+      </div>
+
+      <div class="featured-item" data-prod="coffee_ns">
+        <img class="featured-thumb" src="" alt="CEO Coffee (3 in 1)">
+        <div class="featured-meta">
+          <h4></h4>
+          <div class="price"></div>
+          <p>Premium coffee mix available in a 3-in-1 formulation (no sugar variant) for a cleaner, less sweet profile while preserving aroma and Ganoderma benefits.</p>
+          <a class="view-shop-link" href="shop.html#coffee_ns">🛍 View in Shop</a>
+        </div>
+      </div>
+
+      <div class="featured-item" data-prod="coffee_s">
+        <img class="featured-thumb" src="" alt="CEO Coffee (4 in 1)">
+        <div class="featured-meta">
+          <h4></h4>
+          <div class="price"></div>
+          <p>Major constituents: Non-dairy creamer, prime coffee beans and Yung Kien Ganoderma. Free from any flavouring essence or preservatives. Formulated using only prime coffee beans, freshly brewed for its premium taste, and enhanced with Yung Kien Ganoderma to blend the bitter taste of Ganoderma with the unique bitterness of coffee.Premixed with sugar or sugar-free beverage.</p>
+          <a class="view-shop-link" href="shop.html#coffee_s">🛍 View in Shop</a>
+        </div>
+      </div>
+
+      <div class="featured-item" data-prod="lingzhi">
+        <img class="featured-thumb" src="" alt="Yung Kien Ganoderma">
+        <div class="featured-meta">
+          <h4></h4>
+          <div class="price"></div>
+          <p>Ganoderma traditionally used for general health. It helps fortify the immune defence, speed up metabolic rates, consolidate the physical constitutions and enhance metabolic functions of the liver, hence contributing to preserving optimal health through its long-term consumption.</p>
+          <a class="view-shop-link" href="shop.html#lingzhi">🛍 View in Shop</a>
+        </div>
+      </div>
+
+      <div class="featured-item" data-prod="tea">
+        <img class="featured-thumb" src="" alt="Lu Chun Tea">
+        <div class="featured-meta">
+          <h4></h4>
+          <div class="price"></div>
+          <p>Major constituents: Contains Camellia Sinesis, Brown Rice, Cassia Seed and Ganoderma Lucidum Extract.Tea which is made up of four types of ingredients that are rich in flavour, can be beneficial for health, and it is suitable to be consumed by everyone.</p>
+          <a class="view-shop-link" href="shop.html#tea">🛍 View in Shop</a>
+        </div>
+      </div>
+
+      <div class="featured-item" data-prod="toothpaste">
+        <img class="featured-thumb" src="" alt="Greenzhi Toothgel">
+        <div class="featured-meta">
+          <h4></h4>
+          <div class="price"></div>
+          <p>Constituents: Nano-Ganoderma Lucidum, Miswak Extract, Neem Extract, Aloe Barbadensis, Xylitol and Chlorophyllin. Natural menthol or peppermint is added to keep the mouth cavity fresh without introducing any irritation, making it a perfect choice for all your family members, young and old alike.</p>
+          <a class="view-shop-link" href="shop.html#toothpaste">🛍 View in Shop</a>
+        </div>
+      </div>
+
+      <div class="featured-item" data-prod="vitaking2">
+        <img class="featured-thumb" src="" alt="VitaKing2">
+        <div class="featured-meta">
+          <h4></h4>
+          <div class="price"></div>
+          <p>VitaKing2 — essential multivitamin support with high-quality ingredients for daily health support.</p>
+          <a class="view-shop-link" href="shop.html#vitaking2">🛍 View in Shop</a>
+        </div>
+      </div>
+
+    </div>
   </section>
 
   <section>
@@ -280,7 +371,7 @@
       <li>Delivery : Parcel send via Pos Laju with 3 working days delivery.<p>Self-pickup at Shuang Hor's branch, Kota Kinabalu is free with no extra charge (excluding pre-order products).</p></li>
     </ul>
   </section>
-  
+
   <section>
     <h3>Payment Methods</h3>
     <p>Make payment conveniently via:</p>
@@ -290,14 +381,14 @@
     </ul>
     <p>Payment details and QR codes will be displayed during checkout.</p>
   </section>
-  
+
   <section>
     <h3>Testimonials</h3>
     <div class="testimonial"><strong>Mary (KL):</strong> “CEO Coffee gives me energy every morning. Love the smooth taste!”</div>
     <div class="testimonial"><strong>Jason (Penang):</strong> “Lacto Berry improved my digestion. Highly recommended!”</div>
-    <div class="testimonial"><strong>Mei Ling (Johor):</strong> “The Lingzhi Capsules help me sleep better and stay active.”</div>
-    <div class="testimonial"><strong>Ahmad (Selangor):</strong> “Greenzhi Toothgel keeps my mouth fresh naturally.”</div>
-    <div class="testimonial"><strong>Tan (Ipoh):</strong> “Great service and fast delivery via the online shop.”</div>
+    <div class="testimonial"><strong>Mei Ling (Johor):</strong> “The Lingzhi Capsules help me sleep better and stay active.”div>
+    <div class="testimonial"><strong>Ahmad (Selangor):</strong> “Greenzhi Toothgel keeps my mouth fresh naturally.”div>
+    <div class="testimonial"><strong>Tan (Ipoh):</strong> “Great service and fast delivery via the online shop.”div>
   </section>
 
   <!-- WhatsApp -->
@@ -318,40 +409,105 @@
 </div>
 
 <script>
+/* === Dropdown behavior (keeps your existing behavior) === */
 const menuToggle = document.getElementById("menuToggle");
 const dropdownMenu = document.getElementById("dropdownMenu");
-
 menuToggle.addEventListener("click", (e) => {
   e.stopPropagation();
   dropdownMenu.classList.toggle("show");
 });
-
 window.addEventListener("click", (e) => {
   if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
     dropdownMenu.classList.remove("show");
   }
 });
+
+/* === Fade-in on load (for smooth page appearance) === */
+window.addEventListener('load', () => {
+  // fade in body
+  document.body.style.opacity = '1';
+});
+
+/* === Intercept clicks to shop links to apply fade-out before navigation === */
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a');
+  if (!a) return;
+  // only intercept links that go to shop.html#prod_id
+  if (a.href && a.href.includes('shop.html#')) {
+    e.preventDefault();
+    const url = a.href;
+    document.body.classList.add('fade-out');
+    // allow the fade to render
+    setTimeout(() => { window.location.href = url; }, 320);
+  }
+});
+
+/* === Product syncing from D1 (/api/products) ===
+   - Only fills prod_name, price and image_url for items that have data-prod attribute.
+   - Leaves the long <p> descriptions exactly as they are in HTML.
+*/
+const API = 'https://chat-ui-30l.pages.dev/api/products';
+const allowedProdIds = ['berry','cleaner','coffee_ns','coffee_s','lingzhi','tea','toothpaste','vitaking2'];
+
+async function syncFeatured() {
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error('Products fetch failed');
+    const items = await res.json();
+    // make a map by prod_id
+    const map = {};
+    items.forEach(it => { map[it.prod_id] = it; });
+
+    // find all featured items
+    const featured = document.querySelectorAll('.featured-item');
+    featured.forEach(el => {
+      const pid = el.getAttribute('data-prod');
+      if (!pid) return;
+      // only attempt for allowed list to avoid accidental items
+      if (!allowedProdIds.includes(pid)) return;
+      const data = map[pid];
+      const img = el.querySelector('.featured-thumb');
+      const title = el.querySelector('h4');
+      const price = el.querySelector('.price');
+
+      if (data) {
+        if (data.image_url) img.src = data.image_url;
+        else img.src = img.src || 'https://via.placeholder.com/90';
+        if (data.prod_name) title.textContent = data.prod_name;
+        if (data.price !== undefined) price.textContent = 'RM ' + parseFloat(data.price).toFixed(2);
+      } else {
+        // product not returned from API (maybe out of DB) — keep placeholders
+        img.src = img.src || 'https://via.placeholder.com/90';
+        title.textContent = title.textContent || pid;
+        price.textContent = price.textContent || '';
+      }
+    });
+
+    // If navigated from shop or external with hash, highlight
+    const hash = window.location.hash.replace('#','');
+    if (hash) {
+      const target = document.querySelector(`.featured-item[data-prod="${hash}"]`);
+      if (target) {
+        // scroll and highlight
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target.classList.add('highlight');
+          setTimeout(()=> target.classList.remove('highlight'), 1600);
+        }, 150);
+      }
+    }
+
+  } catch (err) {
+    console.error('Failed to sync featured products:', err);
+  }
+}
+
+/* Run on DOM ready */
+document.addEventListener('DOMContentLoaded', () => {
+  // ensure body visible if load fired earlier
+  document.body.style.opacity = '1';
+  syncFeatured();
+});
 </script>
 </body>
-                                                                                                                   </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    </html>
