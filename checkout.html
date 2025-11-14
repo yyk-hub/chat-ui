@@ -345,6 +345,22 @@
   </div>
 
   <script>
+    // --- PROPER PI BROWSER DETECTION (DROP-IN FIX) ---
+function detectPiBrowser() {
+  try {
+    return /PiBrowser/i.test(navigator.userAgent);
+  } catch {
+    return false;
+  }
+}
+
+// Set global flag before anything else
+window.isPiBrowser = detectPiBrowser();
+
+// Prevent Pi SDK from executing in Chrome even if loaded
+if (!window.isPiBrowser) {
+  window.Pi = undefined;
+}
     const BACKEND_URL = "";
     const PI_EXCHANGE_RATE = 2.0; // 1 Pi = RM 2.00
 
