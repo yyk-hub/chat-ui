@@ -4,19 +4,22 @@
   <meta charset="UTF-8">
   <title>Checkout - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Pi SDK (only loads in Pi Browser) -->
+  <script src="https://sdk.minepi.com/pi-sdk.js" onerror="console.log('Not in Pi Browser')"></script>
+  
   <style>
+    /* Your existing styles... */
     body {
       background: #f4ecd6;
       font-family: Segoe UI, Arial, sans-serif;
       margin: 0;
     }
-
     .container {
       padding: 20px;
       max-width: 800px;
       margin: auto;
     }
-
     .header {
       position: sticky;
       top: 0;
@@ -28,10 +31,8 @@
       padding: 12px 0;
       border-bottom: 2px solid #d1c4a1;
     }
-
-    .home-btn {
+    .home-btn, .shop-btn {
       position: absolute;
-      left: 20px;
       background: #996600;
       color: white;
       border: none;
@@ -44,60 +45,24 @@
       align-items: center;
       gap: 5px;
     }
-
-    .shop-btn {
-      position: absolute;
-      right: 20px;
-      background: #14b47e;
-      color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .header-title {
-      color: #996600;
-      margin: 0;
-      font-size: 20px;
-    }
-
+    .home-btn { left: 20px; }
+    .shop-btn { right: 20px; background: #14b47e; }
+    .header-title { color: #996600; margin: 0; font-size: 20px; }
     .section {
       background: #fffbe6;
       border-radius: 16px;
       padding: 16px;
       margin-bottom: 20px;
     }
-
     h3 {
       margin-top: 0;
       color: #996600;
       border-bottom: 1px solid #d1c4a1;
       padding-bottom: 4px;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-      font-size: 14px;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 8px;
-    }
-
-    th {
-      background: #e9d8a6;
-      color: #654321;
-    }
-
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+    th, td { text-align: left; padding: 8px; }
+    th { background: #e9d8a6; color: #654321; }
     .qr-section {
       display: flex;
       justify-content: center;
@@ -106,29 +71,10 @@
       margin-top: 10px;
       flex-wrap: nowrap;
       padding: 0 10px;
-      box-sizing: border-box;
     }
-
-    .qr-box {
-      text-align: center;
-      margin: 5px;
-      flex: 1 1 0;
-      max-width: 160px;
-    }
-
-    .qr-box img {
-      width: 140px;
-      height: 140px;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-    }
-
-    label {
-      display: block;
-      margin-top: 10px;
-      color: #654321;
-    }
-
+    .qr-box { text-align: center; margin: 5px; flex: 1 1 0; max-width: 160px; }
+    .qr-box img { width: 140px; height: 140px; border: 1px solid #ccc; border-radius: 12px; }
+    label { display: block; margin-top: 10px; color: #654321; }
     input, textarea, select {
       width: 95%;
       padding: 8px;
@@ -137,7 +83,6 @@
       margin-top: 4px;
       font-size: 14px;
     }
-
     .confirm-btn {
       background: #14b47e;
       color: white;
@@ -150,48 +95,40 @@
       font-size: 16px;
       font-weight: 600;
     }
-
-    .confirm-btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    .print-btn {
-      background: #996600;
-      margin-top: 15px;
-    }
-
-    .shipping-note {
-      font-size: 13px;
-      color: #654321;
-      font-style: italic;
-      margin-top: 5px;
-    }
-
-    .pickup-warning {
-      color: #d32f2f;
-      font-size: 13px;
-      margin-top: 5px;
-      display: none;
-    }
-
+    .confirm-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .shipping-note { font-size: 13px; color: #654321; font-style: italic; margin-top: 5px; }
+    .pickup-warning { color: #d32f2f; font-size: 13px; margin-top: 5px; display: none; }
     .whatsapp-instruction {
       font-size: 14px;
       color: #d32f2f;
       margin-top: 10px;
       text-align: center;
     }
-
-    .whatsapp-instruction a {
-      color: #14b47e;
-      text-decoration: none;
-      font-weight: 500;
+    .whatsapp-instruction a { color: #14b47e; text-decoration: none; font-weight: 500; }
+    
+    /* Pi-specific styles */
+    .pi-only { display: none; }
+    .fiat-only { display: block; }
+    .pi-badge {
+      background: linear-gradient(135deg, #7b2cbf 0%, #5a189a 100%);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 12px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-weight: 600;
     }
-
-    .whatsapp-instruction a:hover {
-      text-decoration: underline;
+    .pi-price { 
+      color: #7b2cbf !important; 
+      font-weight: 700;
+      background: #f3e5f5;
+      padding: 4px 8px;
+      border-radius: 6px;
     }
-
+    
     @media print {
       body * { visibility: hidden; }
       #OrderDisplay, #OrderDisplay * { visibility: visible; }
@@ -201,7 +138,6 @@
         width: 100%;
         padding: 20px;
         background: white;
-        font-family: Arial, sans-serif;
       }
       .print-btn, .confirm-btn, .header, .section:not(#OrderDisplay) { display: none; }
     }
@@ -215,8 +151,13 @@
   </div>
 
   <div class="container">
+    
+    <!-- Pi Badge (only shows in Pi Browser) -->
+    <div class="pi-badge pi-only">
+      🥧 Pay with Pi Network • Secure & Instant
+    </div>
 
-    <!-- DELIVERY DETAILS + SHIPPING METHOD -->
+    <!-- DELIVERY DETAILS -->
     <div class="section">
       <h3>🚚 Delivery Details</h3>
       <label>Name</label>
@@ -240,7 +181,6 @@
       <label>Country</label>
       <input type="text" id="custCountry" value="Malaysia" readonly>
 
-      <!-- SHIPPING METHOD -->
       <label>Shipping Option</label>
       <select id="shippingMethod">
         <option value="courier">Standard Courier</option>
@@ -252,8 +192,8 @@
       </p>
     </div>
 
-    <!-- PAYMENT -->
-    <div class="section">
+    <!-- PAYMENT (only show in normal browser, hide in Pi Browser) -->
+    <div class="section fiat-only">
       <h3>💳 Payment</h3>
       <p>Scan one of the QR codes below to make payment:</p>
       <div class="qr-section">
@@ -296,7 +236,15 @@
           <th style="text-align:left; padding:8px 0; color:#996600;">Total Amount</th>
           <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
         </tr>
+        <!-- Pi Total (only shows in Pi Browser) -->
+        <tr class="pi-only" style="background:#f9f0ff;">
+          <th style="text-align:left; padding:8px 0; color:#7b2cbf;">Total in Pi 🥧</th>
+          <td id="pi-total" class="pi-price" style="text-align:right;">π 0.00</td>
+        </tr>
       </table>
+      <p class="pi-only" style="font-size:12px; color:#666; text-align:center; margin-top:8px;">
+        Exchange Rate: 1 Pi ≈ RM 0.9
+      </p>
     </div>
 
     <!-- CONFIRM BUTTON -->
@@ -309,25 +257,65 @@
 
   <script>
     const BACKEND_URL = "";
+    const PI_EXCHANGE_RATE = 0.9; // 1 Pi = RM 0.9
+
+    // Detect Pi Browser
+    const isPiBrowser = typeof Pi !== 'undefined';
+    
+    // Adapt UI based on browser
+    window.addEventListener('DOMContentLoaded', () => {
+      if (isPiBrowser) {
+        // Initialize Pi SDK
+        Pi.init({ version: "2.0", sandbox: true });
+        
+        // Show Pi elements, hide fiat elements
+        document.querySelectorAll('.pi-only').forEach(el => el.style.display = 'block');
+        document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'none');
+        
+        // Change button text
+        document.getElementById('confirmBtn').innerHTML = '🥧 Pay with Pi Network';
+        
+        // Authenticate user
+        authenticatePiUser();
+      } else {
+        // Normal browser - show fiat elements
+        document.querySelectorAll('.pi-only').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'block');
+      }
+      
+      loadOrder();
+      checkExistingOrder();
+    });
+
+    // Pi Authentication
+    async function authenticatePiUser() {
+      try {
+        const scopes = ['username', 'payments'];
+        const authResult = await Pi.authenticate(scopes, onIncompletePaymentFound);
+        console.log('Pi user authenticated:', authResult.user);
+        sessionStorage.setItem('pi_user', JSON.stringify(authResult.user));
+        sessionStorage.setItem('pi_token', authResult.accessToken);
+      } catch (error) {
+        console.error('Pi auth failed:', error);
+      }
+    }
+
+    function onIncompletePaymentFound(payment) {
+      console.log('Incomplete payment:', payment);
+      return Pi.openPaymentDialog(payment.identifier);
+    }
 
     // === SHIPPING LOGIC ===
     function calculateShippingCost(subTotal, state, weight, method) {
-      const isSabah = state === "Sabah";
       const isPickup = method === "pickup";
-
-      // 1. Express Free ≥ RM500
       if (subTotal >= 500 && method !== "pickup") {
         return { cost: 0, note: "Express Free Shipping", eta: "1–4 days" };
       }
-
-      // 2. Self Pickup
       if (isPickup) {
         return { cost: 0, note: "Self Pickup", eta: "Next working day" };
       }
-
-      // 3. Standard Courier
-      const cost = 10; // Flat RM10 for all states
-      return { cost, note: `Standard Courier (${isSabah ? 'Sabah' : 'Other'})`, eta: "1–4 days" };
+      const cost = 10;
+      return { cost, note: `Standard Courier`, eta: "1–4 days" };
     }
 
     let cart = [], subTotal = 0, totalWeight = 0;
@@ -375,46 +363,44 @@
       const state = document.getElementById("custState").value || "Sabah";
       const method = document.getElementById("shippingMethod").value;
       const { cost, note, eta } = calculateShippingCost(subTotal, state, totalWeight, method);
+      const totalRM = subTotal + cost;
+      const totalPi = (totalRM / PI_EXCHANGE_RATE).toFixed(2);
 
       document.getElementById("total-weight").textContent = `${totalWeight.toFixed(2)} kg`;
       document.getElementById("sub-total").textContent = `RM ${subTotal.toFixed(2)}`;
       document.getElementById("shipping-cost").textContent = `RM ${cost.toFixed(2)}`;
       document.getElementById("shipping-note").textContent = `${note} • ${eta}`;
-      document.getElementById("grand-total").textContent = `RM ${(subTotal + cost).toFixed(2)}`;
+      document.getElementById("grand-total").textContent = `RM ${totalRM.toFixed(2)}`;
+      
+      // Update Pi total if in Pi Browser
+      if (isPiBrowser) {
+        document.getElementById("pi-total").textContent = `π ${totalPi}`;
+      }
 
-      // Auto-select Express if ≥500
       if (subTotal >= 500 && method !== "pickup") {
         document.getElementById("shippingMethod").value = "express";
       }
 
-      // Show pickup warning
       document.getElementById("pickupWarning").style.display = method === "pickup" ? "block" : "none";
     }
 
-    // Re-run on any change
     ["custState", "shippingMethod"].forEach(id => {
       document.getElementById(id).addEventListener("change", updateSummary);
     });
 
-    // === PREVENT DUPLICATE ORDERS ===
-    
-    // Generate hash of cart to detect duplicates
+    // Duplicate order prevention
     function hashCart(cartItems) {
       const cartString = JSON.stringify(cartItems.map(i => ({
-        name: i.name,
-        qty: i.qty,
-        price: i.price
+        name: i.name, qty: i.qty, price: i.price
       })));
-      return btoa(cartString); // Simple base64 hash
+      return btoa(cartString);
     }
 
-    // Check if order was already placed for this cart
     function checkExistingOrder() {
       const orderPlaced = localStorage.getItem('orderPlaced');
       const currentCartHash = hashCart(cart);
       
       if (orderPlaced === currentCartHash) {
-        // Order already exists for this cart
         document.getElementById('confirmBtn').style.display = 'none';
         showOrderHistoryButton();
         return true;
@@ -422,7 +408,6 @@
       return false;
     }
 
-    // Show "View Order History" button instead of Confirm
     function showOrderHistoryButton() {
       const container = document.querySelector('.container');
       const existingHistoryBtn = document.getElementById('viewHistoryBtn');
@@ -442,7 +427,7 @@
       }
     }
 
-    // === CONFIRM ORDER ===
+    // === CONFIRM ORDER (handles both Pi and Fiat) ===
     async function confirmOrder() {
       const btn = document.getElementById("confirmBtn");
       if (btn.disabled) return;
@@ -459,23 +444,22 @@
       if (!name || !phone || !address || !postcode || !state_to) {
         alert("Please fill in all delivery details.");
         btn.disabled = false;
-        btn.innerText = "✅ Confirm Order";
+        btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
         return;
       }
 
-      // Validate Self Pickup locations (KL, KK, KCH, PNG, JB)
       const validPickupStates = ["Kuala Lumpur", "Kota Kinabalu", "Kuching", "Penang", "Johor Bahru"];
       if (method === "pickup" && !validPickupStates.includes(state_to)) {
-        alert("Self Pickup is only available in Kuala Lumpur, Kota Kinabalu, Kuching, Penang, or Johor Bahru.");
+        alert("Self Pickup is only available in KL, KK, KCH, PNG, JB.");
         btn.disabled = false;
-        btn.innerText = "✅ Confirm Order";
+        btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
         return;
       }
 
       if (!cart.length) {
         alert("Cart is empty!");
         btn.disabled = false;
-        btn.innerText = "✅ Confirm Order";
+        btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
         return;
       }
 
@@ -494,12 +478,14 @@
         shipping_method: method === "pickup" ? "Self Pickup" : 
                          method === "express" ? "Express Free" : "Standard Courier",
         delivery_eta: eta,
-        pymt_method: "FPX", order_status: "Pending Payment",
+        pymt_method: isPiBrowser ? "Pi Network" : "FPX",
+        order_status: "Pending Payment",
         courier_name: method === "pickup" ? "Self Pickup" : "City-Link",
-        tracking_link: "" // No tracking until paid and shipped
+        tracking_link: ""
       };
 
       try {
+        // Save order to D1
         const res = await fetch(`/api/orders`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -510,24 +496,63 @@
         const data = await res.json();
         if (!data.success) throw new Error(data.error || "Failed");
 
-        // SUCCESS: Mark order as placed
+        // If Pi Browser, initiate Pi payment
+        if (isPiBrowser) {
+          const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(2);
+          btn.innerText = "Opening Pi Wallet...";
+          
+          const payment = await Pi.createPayment({
+            amount: parseFloat(piAmount),
+            memo: `Order ${order_id}`,
+            metadata: {
+              order_id: order_id,
+              rm_amount: totalAmt
+            }
+          }, {
+            onReadyForServerApproval: (paymentId) => {
+              console.log('Payment approved:', paymentId);
+              // Handle approval on backend
+            },
+            onReadyForServerCompletion: (paymentId, txid) => {
+              console.log('Payment completed:', txid);
+              // Update order status
+              return fetch(`/api/orders/${order_id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  order_status: 'Paid',
+                  pi_txid: txid,
+                  pymt_method: 'Pi Network'
+                })
+              });
+            },
+            onCancel: () => {
+              alert('Payment cancelled');
+            },
+            onError: (error) => {
+              alert('Payment error: ' + error.message);
+            }
+          });
+        }
+
+        // Success
         const cartHash = hashCart(cart);
         localStorage.setItem('orderPlaced', cartHash);
         localStorage.setItem('lastOrderPhone', phone);
         localStorage.removeItem("cartItems");
         
-        alert("✅ Order placed successfully! Please send your bank receipt via WhatsApp at Homepage.");
+        alert(isPiBrowser 
+          ? "✅ Order placed! Complete payment in Pi app." 
+          : "✅ Order placed! Send bank receipt via WhatsApp.");
         
-        // Hide confirm button, show order history button
         btn.style.display = 'none';
         showOrderHistoryButton();
-        
         await viewMyOrder();
 
       } catch (err) {
         alert("Failed: " + err.message);
         btn.disabled = false;
-        btn.innerText = "✅ Confirm Order";
+        btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
       }
     }
 
@@ -564,8 +589,9 @@
               <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
             </p>
             <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
-            ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until order is paid and shipped.</p>'}
-            <p class="whatsapp-instruction">Please send your bank receipt via WhatsApp at <a href="index.html#whatsapp" target="_blank">Homepage</a>.</p>
+            <p><strong>Payment:</strong> ${o.pymt_method}</p>
+            ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until shipped.</p>'}
+            ${!isPiBrowser ? `<p class="whatsapp-instruction">Send bank receipt via <a href="index.html#whatsapp" target="_blank">WhatsApp</a>.</p>` : ''}
           </div>
         `;
 
@@ -582,12 +608,6 @@
         display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
       }
     }
-
-    // Initialize on page load
-    window.addEventListener('DOMContentLoaded', () => {
-      loadOrder();
-      checkExistingOrder();
-    });
   </script>
 </body>
 </html>
