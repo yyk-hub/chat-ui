@@ -6,20 +6,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
   <!-- Pi SDK (only loads in Pi Browser) -->
-  <script src="https://sdk.minepi.com/pi-sdk.js" onerror="console.log('Not in Pi Browser')"></script>
+  <script>
+    // Set flag before SDK loads
+    window.isPiBrowser = false;
+  </script>
+  <script src="https://sdk.minepi.com/pi-sdk.js" 
+          onload="window.isPiBrowser = true; Pi.init({ version: '2.0', sandbox: true });" 
+          onerror="console.log('Not in Pi Browser - SDK not loaded')">
+  </script>
   
   <style>
-    /* Your existing styles... */
     body {
       background: #f4ecd6;
       font-family: Segoe UI, Arial, sans-serif;
       margin: 0;
     }
+
     .container {
       padding: 20px;
       max-width: 800px;
       margin: auto;
     }
+
     .header {
       position: sticky;
       top: 0;
@@ -31,6 +39,7 @@
       padding: 12px 0;
       border-bottom: 2px solid #d1c4a1;
     }
+
     .home-btn, .shop-btn {
       position: absolute;
       background: #996600;
@@ -47,22 +56,44 @@
     }
     .home-btn { left: 20px; }
     .shop-btn { right: 20px; background: #14b47e; }
-    .header-title { color: #996600; margin: 0; font-size: 20px; }
+
+    .header-title {
+      color: #996600;
+      margin: 0;
+      font-size: 20px;
+    }
+
     .section {
       background: #fffbe6;
       border-radius: 16px;
       padding: 16px;
       margin-bottom: 20px;
     }
+
     h3 {
       margin-top: 0;
       color: #996600;
       border-bottom: 1px solid #d1c4a1;
       padding-bottom: 4px;
     }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-    th, td { text-align: left; padding: 8px; }
-    th { background: #e9d8a6; color: #654321; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+    }
+
+    th {
+      background: #e9d8a6;
+      color: #654321;
+    }
+
     .qr-section {
       display: flex;
       justify-content: center;
@@ -71,10 +102,29 @@
       margin-top: 10px;
       flex-wrap: nowrap;
       padding: 0 10px;
+      box-sizing: border-box;
     }
-    .qr-box { text-align: center; margin: 5px; flex: 1 1 0; max-width: 160px; }
-    .qr-box img { width: 140px; height: 140px; border: 1px solid #ccc; border-radius: 12px; }
-    label { display: block; margin-top: 10px; color: #654321; }
+
+    .qr-box {
+      text-align: center;
+      margin: 5px;
+      flex: 1 1 0;
+      max-width: 160px;
+    }
+
+    .qr-box img {
+      width: 140px;
+      height: 140px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #654321;
+    }
+
     input, textarea, select {
       width: 95%;
       padding: 8px;
@@ -83,6 +133,7 @@
       margin-top: 4px;
       font-size: 14px;
     }
+
     .confirm-btn {
       background: #14b47e;
       color: white;
@@ -95,20 +146,48 @@
       font-size: 16px;
       font-weight: 600;
     }
-    .confirm-btn:disabled { background: #ccc; cursor: not-allowed; }
-    .shipping-note { font-size: 13px; color: #654321; font-style: italic; margin-top: 5px; }
-    .pickup-warning { color: #d32f2f; font-size: 13px; margin-top: 5px; display: none; }
+
+    .confirm-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .shipping-note {
+      font-size: 13px;
+      color: #654321;
+      font-style: italic;
+      margin-top: 5px;
+    }
+
+    .pickup-warning {
+      color: #d32f2f;
+      font-size: 13px;
+      margin-top: 5px;
+      display: none;
+    }
+
     .whatsapp-instruction {
       font-size: 14px;
       color: #d32f2f;
       margin-top: 10px;
       text-align: center;
     }
-    .whatsapp-instruction a { color: #14b47e; text-decoration: none; font-weight: 500; }
-    
+
+    .whatsapp-instruction a {
+      color: #14b47e;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
     /* Pi-specific styles */
-    .pi-only { display: none; }
-    .fiat-only { display: block; }
+    .pi-only {
+      display: none !important; /* Hidden by default */
+    }
+    
+    .fiat-only {
+      display: block;
+    }
+    
     .pi-badge {
       background: linear-gradient(135deg, #7b2cbf 0%, #5a189a 100%);
       color: white;
@@ -121,25 +200,34 @@
       margin-bottom: 16px;
       font-weight: 600;
     }
-    .pi-price { 
-      color: #7b2cbf !important; 
-      font-weight: 700;
-      background: #f3e5f5;
-      padding: 4px 8px;
-      border-radius: 6px;
+    
+    /* Pi table row - full width background */
+    tr.pi-row {
+      background: #f3e5f5 !important; /* Light purple background for entire row */
     }
     
+    tr.pi-row th,
+    tr.pi-row td {
+      background: transparent !important; /* Remove individual cell backgrounds */
+      color: #7b2cbf !important;
+      font-weight: 700;
+    }
+
     @media print {
       body * { visibility: hidden; }
       #OrderDisplay, #OrderDisplay * { visibility: visible; }
       #OrderDisplay {
         position: absolute;
-        left: 0; top: 0;
+        left: 0;
+        top: 0;
         width: 100%;
         padding: 20px;
         background: white;
+        font-family: Arial, sans-serif;
       }
-      .print-btn, .confirm-btn, .header, .section:not(#OrderDisplay) { display: none; }
+      .print-btn, .confirm-btn, .header, .section:not(#OrderDisplay) {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -157,7 +245,7 @@
       🥧 Pay with Pi Network • Secure & Instant
     </div>
 
-    <!-- DELIVERY DETAILS -->
+    <!-- DELIVERY DETAILS + SHIPPING METHOD -->
     <div class="section">
       <h3>🚚 Delivery Details</h3>
       <label>Name</label>
@@ -181,6 +269,7 @@
       <label>Country</label>
       <input type="text" id="custCountry" value="Malaysia" readonly>
 
+      <!-- SHIPPING METHOD -->
       <label>Shipping Option</label>
       <select id="shippingMethod">
         <option value="courier">Standard Courier</option>
@@ -192,7 +281,7 @@
       </p>
     </div>
 
-    <!-- PAYMENT (only show in normal browser, hide in Pi Browser) -->
+    <!-- PAYMENT (only show in normal browser) -->
     <div class="section fiat-only">
       <h3>💳 Payment</h3>
       <p>Scan one of the QR codes below to make payment:</p>
@@ -236,14 +325,14 @@
           <th style="text-align:left; padding:8px 0; color:#996600;">Total Amount</th>
           <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
         </tr>
-        <!-- Pi Total (only shows in Pi Browser) -->
-        <tr class="pi-only" style="background:#f9f0ff;">
-          <th style="text-align:left; padding:8px 0; color:#7b2cbf;">Total in Pi 🥧</th>
-          <td id="pi-total" class="pi-price" style="text-align:right;">π 0.00</td>
+        <!-- Pi Total Row (only in Pi Browser) - with unified background -->
+        <tr class="pi-only pi-row">
+          <th style="text-align:left; padding:8px 0;">Total in Pi 🥧</th>
+          <td id="pi-total" style="text-align:right;">π 0.00</td>
         </tr>
       </table>
       <p class="pi-only" style="font-size:12px; color:#666; text-align:center; margin-top:8px;">
-        Exchange Rate: 1 Pi ≈ RM 0.9
+        Exchange Rate: 1 Pi ≈ RM 2.00
       </p>
     </div>
 
@@ -257,52 +346,59 @@
 
   <script>
     const BACKEND_URL = "";
-    const PI_EXCHANGE_RATE = 0.9; // 1 Pi = RM 0.9
+    const PI_EXCHANGE_RATE = 2.0; // 1 Pi = RM 2.00
 
-    // Detect Pi Browser
-    const isPiBrowser = typeof Pi !== 'undefined';
+    // Wait for page to fully load before detecting browser
+    let isPiBrowser = false;
     
-    // Adapt UI based on browser
+    // Check after DOM loads
     window.addEventListener('DOMContentLoaded', () => {
-      if (isPiBrowser) {
-        // Initialize Pi SDK
-        Pi.init({ version: "2.0", sandbox: true });
-        
-        // Show Pi elements, hide fiat elements
-        document.querySelectorAll('.pi-only').forEach(el => el.style.display = 'block');
-        document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'none');
-        
-        // Change button text
-        document.getElementById('confirmBtn').innerHTML = '🥧 Pay with Pi Network';
-        
-        // Authenticate user
-        authenticatePiUser();
-      } else {
-        // Normal browser - show fiat elements
-        document.querySelectorAll('.pi-only').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'block');
-      }
-      
-      loadOrder();
-      checkExistingOrder();
+      // Give SDK time to load
+      setTimeout(() => {
+        isPiBrowser = typeof Pi !== 'undefined' && window.isPiBrowser === true;
+        console.log('Browser detected:', isPiBrowser ? 'Pi Browser' : 'Regular Browser');
+        adaptUIForBrowser();
+        loadOrder();
+        checkExistingOrder();
+      }, 100);
     });
 
-    // Pi Authentication
-    async function authenticatePiUser() {
-      try {
-        const scopes = ['username', 'payments'];
-        const authResult = await Pi.authenticate(scopes, onIncompletePaymentFound);
-        console.log('Pi user authenticated:', authResult.user);
-        sessionStorage.setItem('pi_user', JSON.stringify(authResult.user));
-        sessionStorage.setItem('pi_token', authResult.accessToken);
-      } catch (error) {
-        console.error('Pi auth failed:', error);
+    function adaptUIForBrowser() {
+      if (isPiBrowser) {
+        // Show Pi elements
+        document.querySelectorAll('.pi-only').forEach(el => {
+          if (el.tagName === 'TR') {
+            el.style.display = 'table-row';
+          } else {
+            el.style.display = el.classList.contains('pi-badge') ? 'flex' : 'block';
+          }
+        });
+        
+        // Hide fiat elements
+        document.querySelectorAll('.fiat-only').forEach(el => {
+          el.style.display = 'none';
+        });
+        
+        // Update button text
+        document.getElementById('confirmBtn').innerHTML = '🥧 Pay with Pi Network';
+        
+        console.log('✅ Pi Browser mode activated');
+      } else {
+        // Ensure Pi elements are hidden
+        document.querySelectorAll('.pi-only').forEach(el => {
+          el.style.display = 'none';
+        });
+        
+        // Ensure fiat elements are visible
+        document.querySelectorAll('.fiat-only').forEach(el => {
+          el.style.display = 'block';
+        });
+        
+        // Standard button text
+        document.getElementById('confirmBtn').innerHTML = '✅ Confirm Order';
+        
+        console.log('✅ Regular browser mode activated');
       }
-    }
-
-    function onIncompletePaymentFound(payment) {
-      console.log('Incomplete payment:', payment);
-      return Pi.openPaymentDialog(payment.identifier);
     }
 
     // === SHIPPING LOGIC ===
@@ -372,10 +468,8 @@
       document.getElementById("shipping-note").textContent = `${note} • ${eta}`;
       document.getElementById("grand-total").textContent = `RM ${totalRM.toFixed(2)}`;
       
-      // Update Pi total if in Pi Browser
-      if (isPiBrowser) {
-        document.getElementById("pi-total").textContent = `π ${totalPi}`;
-      }
+      // Update Pi total (even if hidden, so it's ready when visible)
+      document.getElementById("pi-total").textContent = `π ${totalPi}`;
 
       if (subTotal >= 500 && method !== "pickup") {
         document.getElementById("shippingMethod").value = "express";
@@ -388,10 +482,12 @@
       document.getElementById(id).addEventListener("change", updateSummary);
     });
 
-    // Duplicate order prevention
+    // === PREVENT DUPLICATE ORDERS ===
     function hashCart(cartItems) {
       const cartString = JSON.stringify(cartItems.map(i => ({
-        name: i.name, qty: i.qty, price: i.price
+        name: i.name,
+        qty: i.qty,
+        price: i.price
       })));
       return btoa(cartString);
     }
@@ -427,10 +523,17 @@
       }
     }
 
-    // === CONFIRM ORDER (handles both Pi and Fiat) ===
+    // === CONFIRM ORDER ===
     async function confirmOrder() {
       const btn = document.getElementById("confirmBtn");
       if (btn.disabled) return;
+      
+      // CHECK: Don't allow Pi payment in regular browser
+      if (!isPiBrowser && btn.textContent.includes('Pi')) {
+        alert('Pi payments are only available in Pi Browser. Please use bank transfer.');
+        return;
+      }
+      
       btn.disabled = true;
       btn.innerText = "Processing...";
 
@@ -450,7 +553,7 @@
 
       const validPickupStates = ["Kuala Lumpur", "Kota Kinabalu", "Kuching", "Penang", "Johor Bahru"];
       if (method === "pickup" && !validPickupStates.includes(state_to)) {
-        alert("Self Pickup is only available in KL, KK, KCH, PNG, JB.");
+        alert("Self Pickup is only available in Kuala Lumpur, Kota Kinabalu, Kuching, Penang, or Johor Bahru.");
         btn.disabled = false;
         btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
         return;
@@ -463,13 +566,18 @@
         return;
       }
 
-      const { cost: shippingCost, note: shippingNote, eta } = calculateShippingCost(subTotal, state_to, totalWeight, method);
+      const { cost: shippingCost, eta } = calculateShippingCost(subTotal, state_to, totalWeight, method);
       const totalAmt = subTotal + shippingCost;
       const order_id = "ORD" + Date.now();
 
       const payload = {
-        order_id, cus_name: name, cus_address: address, postcode,
-        state_to, country: "Malaysia", phone,
+        order_id,
+        cus_name: name,
+        cus_address: address,
+        postcode,
+        state_to,
+        country: "Malaysia",
+        phone,
         prod_name: cart.map(i => i.name).join(", "),
         quantity: cart.reduce((s, i) => s + i.qty, 0),
         total_amt: totalAmt,
@@ -485,7 +593,6 @@
       };
 
       try {
-        // Save order to D1
         const res = await fetch(`/api/orders`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -498,41 +605,38 @@
 
         // If Pi Browser, initiate Pi payment
         if (isPiBrowser) {
-          const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(2);
           btn.innerText = "Opening Pi Wallet...";
+          const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(2);
           
-          const payment = await Pi.createPayment({
-            amount: parseFloat(piAmount),
-            memo: `Order ${order_id}`,
-            metadata: {
-              order_id: order_id,
-              rm_amount: totalAmt
-            }
-          }, {
-            onReadyForServerApproval: (paymentId) => {
-              console.log('Payment approved:', paymentId);
-              // Handle approval on backend
-            },
-            onReadyForServerCompletion: (paymentId, txid) => {
-              console.log('Payment completed:', txid);
-              // Update order status
-              return fetch(`/api/orders/${order_id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  order_status: 'Paid',
-                  pi_txid: txid,
-                  pymt_method: 'Pi Network'
-                })
-              });
-            },
-            onCancel: () => {
-              alert('Payment cancelled');
-            },
-            onError: (error) => {
-              alert('Payment error: ' + error.message);
-            }
-          });
+          try {
+            await Pi.createPayment({
+              amount: parseFloat(piAmount),
+              memo: `Order ${order_id}`,
+              metadata: { order_id, rm_amount: totalAmt }
+            }, {
+              onReadyForServerCompletion: async (paymentId, txid) => {
+                // Update order as paid
+                await fetch(`/api/orders/${order_id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    order_status: 'Paid',
+                    pi_txid: txid,
+                    pymt_method: 'Pi Network'
+                  })
+                });
+              },
+              onCancel: () => {
+                alert('Payment cancelled. Order saved.');
+              },
+              onError: (error) => {
+                alert('Payment error: ' + error.message);
+              }
+            });
+          } catch (piError) {
+            console.error('Pi payment error:', piError);
+            alert('Pi payment failed: ' + piError.message + '\nOrder saved. Complete payment later.');
+          }
         }
 
         // Success
