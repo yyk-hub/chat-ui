@@ -369,25 +369,37 @@ if (!window.isPiBrowser) {
     
     // Check after DOM loads
 window.addEventListener('load', async () => {
-  if (typeof Pi !== 'undefined') {
+  console.log("🔄 Waiting for Pi SDK…");
+
+  await new Promise(resolve => setTimeout(resolve, 300)); // allow Pi SDK to load
+
+  let isPiBrowser = false;
+
+  // Correct detection: Pi Browser injects window.Pi + createPayment
+  if (typeof window.Pi !== "undefined" && typeof window.Pi.createPayment === "function") {
     try {
-      await Pi.init({ version: "2.0", sandbox: true });
-      window.isPiBrowser = true;
-      console.log('✅ Pi Browser detected and SDK initialized');
-    } catch(e) {
-      window.isPiBrowser = false;
-      console.log('❌ Pi SDK init failed:', e);
+      await Pi.init({
+        version: "2.0",
+        sandbox: true,   // set to false for production
+      });
+
+      isPiBrowser = true;
+      console.log("✅ Pi Browser detected & SDK initialized");
+    } catch (err) {
+      console.log("❌ Pi SDK init failed:", err);
     }
   } else {
-    window.isPiBrowser = false;
-    console.log('❌ Pi Browser not detected');
+    console.log("❌ Pi Browser NOT detected");
   }
 
-  adaptUIForBrowser();
+  // Store result globally
+  window.isPiBrowser = isPiBrowser;
+
+  // Continue your normal app flow
+  adaptUIForBrowser(isPiBrowser);
   loadOrder();
   checkExistingOrder();
 });
-
     // --- Check if Pi user is logged in ---
     if (isPiBrowser) {
       try {
