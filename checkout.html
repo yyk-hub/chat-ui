@@ -368,15 +368,25 @@ if (!window.isPiBrowser) {
     let isPiBrowser = false;
     
     // Check after DOM loads
-window.addEventListener('DOMContentLoaded', () => {
-  // Give SDK time to load
-  setTimeout(async () => {
-    isPiBrowser = typeof Pi !== 'undefined' && window.isPiBrowser === true;
-    console.log('Browser detected:', isPiBrowser ? 'Pi Browser' : 'Regular Browser');
+window.addEventListener('load', async () => {
+  if (typeof Pi !== 'undefined') {
+    try {
+      await Pi.init({ version: "2.0", sandbox: true });
+      window.isPiBrowser = true;
+      console.log('✅ Pi Browser detected and SDK initialized');
+    } catch(e) {
+      window.isPiBrowser = false;
+      console.log('❌ Pi SDK init failed:', e);
+    }
+  } else {
+    window.isPiBrowser = false;
+    console.log('❌ Pi Browser not detected');
+  }
 
-    adaptUIForBrowser();
-    loadOrder();
-    checkExistingOrder();
+  adaptUIForBrowser();
+  loadOrder();
+  checkExistingOrder();
+});
 
     // --- Check if Pi user is logged in ---
     if (isPiBrowser) {
