@@ -5,15 +5,8 @@
   <title>Checkout - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
-  <!-- Pi SDK (only loads in Pi Browser) -->
-  <script>
-    // Set flag before SDK loads
-    window.isPiBrowser = false;
-  </script>
-  <script src="https://sdk.minepi.com/pi-sdk.js" 
-          onload="window.isPiBrowser = true; Pi.init({ version: '2.0', sandbox: true });" 
-          onerror="console.log('Not in Pi Browser - SDK not loaded')">
-  </script>
+<!-- Pi SDK (single include only) -->
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
   
   <style>
     body {
@@ -345,429 +338,450 @@
   </div>
 
   <script>
-    // --- PROPER PI BROWSER DETECTION (DROP-IN FIX) ---
-function detectPiBrowser() {
+/* -------------------------
+   Part 2 — Safe Checkout JS
+   Drop-in replace your current script
+   ------------------------- */
+//
+// Global flags / constants
+//
+window.isPiBrowser = false;             // global flag used across your code
+const BACKEND_URL = "";                 // keep as-is
+const PI_EXCHANGE_RATE = 2.0;           // 1 Pi = RM 2.00
+
+//
+// Pi SDK init / detection
+//
+async function initPiSDK() {
+  console.log("🔎 initPiSDK: waiting for SDK injection...");
+  // allow Pi SDK a moment to be injected by Pi Browser
+  await new Promise(r => setTimeout(r, 300));
+
+  if (typeof window.Pi === "undefined" || typeof Pi.createPayment !== "function") {
+    console.log("❌ Pi SDK not present (not Pi Browser)");
+    window.isPiBrowser = false;
+    return;
+  }
+
   try {
-    return /PiBrowser/i.test(navigator.userAgent);
-  } catch {
+    // Initialize the SDK (sandbox:true for dev; change to false for production)
+    await Pi.init({ version: "2.0", sandbox: true });
+    window.isPiBrowser = true;
+    console.log("✅ Pi SDK initialized - Pi Browser mode ON");
+  } catch (err) {
+    window.isPiBrowser = false;
+    console.warn("❌ Pi.init() failed:", err);
+  }
+}
+
+//
+// Load sequence - runs after window load
+//
+window.addEventListener('load', async () => {
+  try {
+    await initPiSDK();
+  } catch (e) {
+    console.error("initPiSDK error (non-fatal):", e);
+    window.isPiBrowser = false;
+  }
+
+  // adapt UI, load order & check existing order (preserve business logic)
+  try { adaptUIForBrowser(window.isPiBrowser); } catch(e){ console.error('adaptUIForBrowser error', e); }
+  try { loadOrder(); } catch(e){ console.error('loadOrder error', e); }
+  try { checkExistingOrder(); } catch(e){ console.error('checkExistingOrder error', e); }
+
+  // If Pi Browser, try to check whether user is logged in and inform user if not
+  if (window.isPiBrowser) {
+    try {
+      // safe optional call: Pi.getUser may be undefined on some SDK versions
+      const user = typeof Pi.getUser === 'function' ? await Pi.getUser() : null;
+      if (!user || !user.publicKey) {
+        // user not logged in — show instruction in .pi-only areas and disable confirm button
+        document.querySelectorAll('.pi-only').forEach(el => {
+          el.style.display = 'block';
+          // preserve existing badge text or replace with friendly instruction
+          if (el.classList.contains('pi-badge')) {
+            el.textContent = '⚠️ Log in to the Pi App to enable Pi payments';
+          } else {
+            // leave other pi-only sections visible, but show small instruction
+            el.dataset.piNotice = el.dataset.piNotice || el.innerHTML;
+            el.innerHTML = '⚠️ Log in to the Pi App to enable Pi payments';
+          }
+        });
+        const btn = document.getElementById('confirmBtn');
+        if (btn) btn.disabled = true;
+        console.log('⚠️ Pi Browser detected but user not logged in');
+      } else {
+        console.log('✅ Pi user logged in:', user);
+      }
+    } catch (err) {
+      console.warn('Pi.getUser() check failed (non-fatal):', err);
+    }
+  }
+});
+
+//
+// UI switch — accepts flag to avoid relying on ambiguous globals
+//
+function adaptUIForBrowser(isPi) {
+  if (typeof isPi === 'undefined') isPi = !!window.isPiBrowser;
+
+  if (isPi) {
+    // Show Pi-only UI elements
+    document.querySelectorAll('.pi-only').forEach(el => {
+      if (el.tagName === 'TR') el.style.display = 'table-row';
+      else el.style.display = el.classList.contains('pi-badge') ? 'flex' : 'block';
+    });
+    // Hide fiat-only UI elements
+    document.querySelectorAll('.fiat-only').forEach(el => {
+      el.style.display = 'none';
+    });
+    const btn = document.getElementById('confirmBtn');
+    if (btn) btn.innerHTML = '🥧 Pay with Pi Network';
+    console.log('adaptUIForBrowser: Pi mode active');
+  } else {
+    // Hide Pi elements, show fiat elements
+    document.querySelectorAll('.pi-only').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'block');
+    const btn = document.getElementById('confirmBtn');
+    if (btn) btn.innerHTML = '✅ Confirm Order';
+    console.log('adaptUIForBrowser: Regular browser mode');
+  }
+}
+
+//
+// SHIPPING LOGIC / ORDER SUMMARY / CART (unchanged from your logic)
+//
+function calculateShippingCost(subTotal, state, weight, method) {
+  const isPickup = method === "pickup";
+  if (subTotal >= 500 && method !== "pickup") {
+    return { cost: 0, note: "Express Free Shipping", eta: "1–4 days" };
+  }
+  if (isPickup) {
+    return { cost: 0, note: "Self Pickup", eta: "Next working day" };
+  }
+  const cost = 10;
+  return { cost, note: `Standard Courier`, eta: "1–4 days" };
+}
+
+let cart = [], subTotal = 0, totalWeight = 0;
+
+function loadOrder() {
+  cart = JSON.parse(localStorage.getItem("cartItems")) || [];
+  const itemsDiv = document.getElementById("cart-items");
+  if (!itemsDiv) {
+    console.warn('loadOrder: #cart-items not found');
+    return;
+  }
+
+  if (!cart.length) {
+    itemsDiv.innerHTML = `<p style="text-align:center; color:#999; margin:20px 0;">Your cart is empty</p>`;
+    updateSummary();
+    return;
+  }
+
+  let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+    <tr style="background:#e9d8a6; color:#654321; font-weight:600;">
+      <th style="padding:8px; text-align:left;">Product</th>
+      <th style="padding:8px; text-align:center;">Qty</th>
+      <th style="padding:8px; text-align:right;">Price</th>
+      <th style="padding:8px; text-align:right;">Subtotal</th>
+    </tr>`;
+
+  subTotal = 0;
+  totalWeight = 0;
+
+  cart.forEach(item => {
+    const lineTotal = Number(item.price || 0) * Number(item.qty || 0);
+    subTotal += lineTotal;
+    totalWeight += (Number(item.weight) || 0) * Number(item.qty || 0);
+
+    html += `<tr style="border-bottom:1px solid #eee;">
+      <td style="padding:8px;">${item.name}</td>
+      <td style="padding:8px; text-align:center;">${item.qty}</td>
+      <td style="padding:8px; text-align:right;">RM ${Number(item.price).toFixed(2)}</td>
+      <td style="padding:8px; text-align:right;">RM ${lineTotal.toFixed(2)}</td>
+    </tr>`;
+  });
+
+  html += `</table>`;
+  itemsDiv.innerHTML = html;
+  updateSummary();
+}
+
+function updateSummary() {
+  const stateEl = document.getElementById("custState");
+  const methodEl = document.getElementById("shippingMethod");
+  const state = stateEl ? stateEl.value : "Sabah";
+  const method = methodEl ? methodEl.value : "courier";
+  const { cost, note, eta } = calculateShippingCost(subTotal, state, totalWeight, method);
+  const totalRM = Number(subTotal) + Number(cost);
+  const totalPi = (totalRM / PI_EXCHANGE_RATE).toFixed(2);
+
+  const elWeight = document.getElementById("total-weight");
+  const elSub = document.getElementById("sub-total");
+  const elShip = document.getElementById("shipping-cost");
+  const elNote = document.getElementById("shipping-note");
+  const elGrand = document.getElementById("grand-total");
+  const elPiTotal = document.getElementById("pi-total");
+  const pickupWarning = document.getElementById("pickupWarning");
+
+  if (elWeight) elWeight.textContent = `${totalWeight.toFixed(2)} kg`;
+  if (elSub) elSub.textContent = `RM ${Number(subTotal).toFixed(2)}`;
+  if (elShip) elShip.textContent = `RM ${Number(cost).toFixed(2)}`;
+  if (elNote) elNote.textContent = `${note} • ${eta}`;
+  if (elGrand) elGrand.textContent = `RM ${Number(totalRM).toFixed(2)}`;
+  if (elPiTotal) elPiTotal.textContent = `π ${totalPi}`;
+
+  if (subTotal >= 500 && method !== "pickup") {
+    if (methodEl) methodEl.value = "express";
+  }
+
+  if (pickupWarning) pickupWarning.style.display = method === "pickup" ? "block" : "none";
+}
+
+["custState", "shippingMethod"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("change", updateSummary);
+});
+
+// === PREVENT DUPLICATE ORDERS / HELPERS ===
+function hashCart(cartItems) {
+  const cartString = JSON.stringify(cartItems.map(i => ({
+    name: i.name,
+    qty: i.qty,
+    price: i.price
+  })));
+  return btoa(cartString);
+}
+
+function checkExistingOrder() {
+  try {
+    const orderPlaced = localStorage.getItem('orderPlaced');
+    const currentCartHash = hashCart(cart);
+    if (orderPlaced === currentCartHash) {
+      const btn = document.getElementById('confirmBtn');
+      if (btn) btn.style.display = 'none';
+      showOrderHistoryButton();
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error('checkExistingOrder error', e);
     return false;
   }
 }
 
-// Set global flag before anything else
-window.isPiBrowser = detectPiBrowser();
+function showOrderHistoryButton() {
+  const container = document.querySelector('.container');
+  const existingHistoryBtn = document.getElementById('viewHistoryBtn');
 
-// Prevent Pi SDK from executing in Chrome even if loaded
-if (!window.isPiBrowser) {
-  window.Pi = undefined;
+  if (!existingHistoryBtn) {
+    const historyBtn = document.createElement('a');
+    historyBtn.id = 'viewHistoryBtn';
+    historyBtn.href = 'order.html';
+    historyBtn.className = 'confirm-btn';
+    historyBtn.style.background = '#996600';
+    historyBtn.innerHTML = '📋 View Order History';
+    historyBtn.style.textDecoration = 'none';
+    historyBtn.style.textAlign = 'center';
+
+    const confirmBtn = document.getElementById('confirmBtn');
+    if (confirmBtn && confirmBtn.parentNode) confirmBtn.parentNode.insertBefore(historyBtn, confirmBtn.nextSibling);
+  }
 }
-    const BACKEND_URL = "";
-    const PI_EXCHANGE_RATE = 2.0; // 1 Pi = RM 2.00
 
-    // Wait for page to fully load before detecting browser
-    let isPiBrowser = false;
-    
-    // Check after DOM loads
-window.addEventListener('load', async () => {
-  console.log("🔄 Waiting for Pi SDK…");
+// === CONFIRM ORDER (preserve your logic) ===
+async function confirmOrder() {
+  const btn = document.getElementById("confirmBtn");
+  if (!btn || btn.disabled) return;
 
-  await new Promise(resolve => setTimeout(resolve, 300)); // allow Pi SDK to load
+  // use the global flag (ensure up-to-date)
+  const isPi = !!window.isPiBrowser;
 
-  let isPiBrowser = false;
-
-  // Correct detection: Pi Browser injects window.Pi + createPayment
-  if (typeof window.Pi !== "undefined" && typeof window.Pi.createPayment === "function") {
-    try {
-      await Pi.init({
-        version: "2.0",
-        sandbox: true,   // set to false for production
-      });
-
-      isPiBrowser = true;
-      console.log("✅ Pi Browser detected & SDK initialized");
-    } catch (err) {
-      console.log("❌ Pi SDK init failed:", err);
-    }
-  } else {
-    console.log("❌ Pi Browser NOT detected");
+  // If button text mistakenly contains Pi but browser isn't Pi, prevent
+  if (!isPi && btn.textContent && btn.textContent.includes('Pi')) {
+    alert('Pi payments are only available in Pi Browser. Please use bank transfer.');
+    return;
   }
 
-  // Store result globally
-  window.isPiBrowser = isPiBrowser;
+  btn.disabled = true;
+  btn.innerText = "Processing...";
 
-  // Continue your normal app flow
-  adaptUIForBrowser(isPiBrowser);
-  loadOrder();
-  checkExistingOrder();
-});
-    // --- Check if Pi user is logged in ---
-    if (isPiBrowser) {
-      try {
-        const user = await Pi.getUser();
-        if (!user || !user.publicKey) {
-          // User not logged in
-          document.querySelectorAll('.pi-only').forEach(el => {
-            el.style.display = 'block';
-            el.innerHTML = '⚠️ You are in Pi Browser but not logged in. Log in to see Pi payment options.';
-          });
-          document.getElementById('confirmBtn').disabled = true;
-        }
-      } catch (err) {
-        console.warn('Pi user check failed:', err);
-      }
-    }
-  }, 150);
-});
+  const name = (document.getElementById("custName") || {}).value?.trim?.() || '';
+  const phone = (document.getElementById("custPhone") || {}).value?.trim?.() || '';
+  const address = (document.getElementById("custAddress") || {}).value?.trim?.() || '';
+  const postcode = (document.getElementById("custPostcode") || {}).value?.trim?.() || '';
+  const state_to = (document.getElementById("custState") || {}).value || '';
+  const method = (document.getElementById("shippingMethod") || {}).value || 'courier';
 
-    function adaptUIForBrowser() {
-      if (isPiBrowser) {
-        // Show Pi elements
-        document.querySelectorAll('.pi-only').forEach(el => {
-          if (el.tagName === 'TR') {
-            el.style.display = 'table-row';
-          } else {
-            el.style.display = el.classList.contains('pi-badge') ? 'flex' : 'block';
-          }
-        });
-        
-        // Hide fiat elements
-        document.querySelectorAll('.fiat-only').forEach(el => {
-          el.style.display = 'none';
-        });
-        
-        // Update button text
-        document.getElementById('confirmBtn').innerHTML = '🥧 Pay with Pi Network';
-        
-        console.log('✅ Pi Browser mode activated');
-      } else {
-        // Ensure Pi elements are hidden
-        document.querySelectorAll('.pi-only').forEach(el => {
-          el.style.display = 'none';
-        });
-        
-        // Ensure fiat elements are visible
-        document.querySelectorAll('.fiat-only').forEach(el => {
-          el.style.display = 'block';
-        });
-        
-        // Standard button text
-        document.getElementById('confirmBtn').innerHTML = '✅ Confirm Order';
-        
-        console.log('✅ Regular browser mode activated');
-      }
-    }
+  if (!name || !phone || !address || !postcode || !state_to) {
+    alert("Please fill in all delivery details.");
+    btn.disabled = false;
+    btn.innerText = isPi ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
+    return;
+  }
 
-    // === SHIPPING LOGIC ===
-    function calculateShippingCost(subTotal, state, weight, method) {
-      const isPickup = method === "pickup";
-      if (subTotal >= 500 && method !== "pickup") {
-        return { cost: 0, note: "Express Free Shipping", eta: "1–4 days" };
-      }
-      if (isPickup) {
-        return { cost: 0, note: "Self Pickup", eta: "Next working day" };
-      }
-      const cost = 10;
-      return { cost, note: `Standard Courier`, eta: "1–4 days" };
-    }
+  const validPickupStates = ["Kuala Lumpur", "Kota Kinabalu", "Kuching", "Penang", "Johor Bahru"];
+  if (method === "pickup" && !validPickupStates.includes(state_to)) {
+    alert("Self Pickup is only available in Kuala Lumpur, Kota Kinabalu, Kuching, Penang, or Johor Bahru.");
+    btn.disabled = false;
+    btn.innerText = isPi ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
+    return;
+  }
 
-    let cart = [], subTotal = 0, totalWeight = 0;
+  if (!cart.length) {
+    alert("Cart is empty!");
+    btn.disabled = false;
+    btn.innerText = isPi ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
+    return;
+  }
 
-    function loadOrder() {
-      cart = JSON.parse(localStorage.getItem("cartItems")) || [];
-      const itemsDiv = document.getElementById("cart-items");
+  const { cost: shippingCost, eta } = calculateShippingCost(subTotal, state_to, totalWeight, method);
+  const totalAmt = Number(subTotal) + Number(shippingCost);
+  const order_id = "ORD" + Date.now();
 
-      if (!cart.length) {
-        itemsDiv.innerHTML = `<p style="text-align:center; color:#999; margin:20px 0;">Your cart is empty</p>`;
-        updateSummary();
-        return;
-      }
+  const payload = {
+    order_id,
+    cus_name: name,
+    cus_address: address,
+    postcode,
+    state_to,
+    country: "Malaysia",
+    phone,
+    prod_name: cart.map(i => i.name).join(", "),
+    quantity: cart.reduce((s, i) => s + (i.qty || 0), 0),
+    total_amt: totalAmt,
+    shipping_wt: totalWeight,
+    shipping_cost: shippingCost,
+    shipping_method: method === "pickup" ? "Self Pickup" :
+                   method === "express" ? "Express Free" : "Standard Courier",
+    delivery_eta: eta,
+    pymt_method: isPi ? "Pi Network" : "FPX",
+    order_status: "Pending Payment",
+    courier_name: method === "pickup" ? "Self Pickup" : "City-Link",
+    tracking_link: ""
+  };
 
-      let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
-        <tr style="background:#e9d8a6; color:#654321; font-weight:600;">
-          <th style="padding:8px; text-align:left;">Product</th>
-          <th style="padding:8px; text-align:center;">Qty</th>
-          <th style="padding:8px; text-align:right;">Price</th>
-          <th style="padding:8px; text-align:right;">Subtotal</th>
-        </tr>`;
-
-      subTotal = 0;
-      totalWeight = 0;
-
-      cart.forEach(item => {
-        const lineTotal = item.price * item.qty;
-        subTotal += lineTotal;
-        totalWeight += (item.weight || 0) * item.qty;
-
-        html += `<tr style="border-bottom:1px solid #eee;">
-          <td style="padding:8px;">${item.name}</td>
-          <td style="padding:8px; text-align:center;">${item.qty}</td>
-          <td style="padding:8px; text-align:right;">RM ${item.price.toFixed(2)}</td>
-          <td style="padding:8px; text-align:right;">RM ${lineTotal.toFixed(2)}</td>
-        </tr>`;
-      });
-
-      html += `</table>`;
-      itemsDiv.innerHTML = html;
-      updateSummary();
-    }
-
-    function updateSummary() {
-      const state = document.getElementById("custState").value || "Sabah";
-      const method = document.getElementById("shippingMethod").value;
-      const { cost, note, eta } = calculateShippingCost(subTotal, state, totalWeight, method);
-      const totalRM = subTotal + cost;
-      const totalPi = (totalRM / PI_EXCHANGE_RATE).toFixed(2);
-
-      document.getElementById("total-weight").textContent = `${totalWeight.toFixed(2)} kg`;
-      document.getElementById("sub-total").textContent = `RM ${subTotal.toFixed(2)}`;
-      document.getElementById("shipping-cost").textContent = `RM ${cost.toFixed(2)}`;
-      document.getElementById("shipping-note").textContent = `${note} • ${eta}`;
-      document.getElementById("grand-total").textContent = `RM ${totalRM.toFixed(2)}`;
-      
-      // Update Pi total (even if hidden, so it's ready when visible)
-      document.getElementById("pi-total").textContent = `π ${totalPi}`;
-
-      if (subTotal >= 500 && method !== "pickup") {
-        document.getElementById("shippingMethod").value = "express";
-      }
-
-      document.getElementById("pickupWarning").style.display = method === "pickup" ? "block" : "none";
-    }
-
-    ["custState", "shippingMethod"].forEach(id => {
-      document.getElementById(id).addEventListener("change", updateSummary);
+  try {
+    const res = await fetch(`/api/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
 
-    // === PREVENT DUPLICATE ORDERS ===
-    function hashCart(cartItems) {
-      const cartString = JSON.stringify(cartItems.map(i => ({
-        name: i.name,
-        qty: i.qty,
-        price: i.price
-      })));
-      return btoa(cartString);
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Failed");
 
-    function checkExistingOrder() {
-      const orderPlaced = localStorage.getItem('orderPlaced');
-      const currentCartHash = hashCart(cart);
-      
-      if (orderPlaced === currentCartHash) {
-        document.getElementById('confirmBtn').style.display = 'none';
-        showOrderHistoryButton();
-        return true;
-      }
-      return false;
-    }
-
-    function showOrderHistoryButton() {
-      const container = document.querySelector('.container');
-      const existingHistoryBtn = document.getElementById('viewHistoryBtn');
-      
-      if (!existingHistoryBtn) {
-        const historyBtn = document.createElement('a');
-        historyBtn.id = 'viewHistoryBtn';
-        historyBtn.href = 'order.html';
-        historyBtn.className = 'confirm-btn';
-        historyBtn.style.background = '#996600';
-        historyBtn.innerHTML = '📋 View Order History';
-        historyBtn.style.textDecoration = 'none';
-        historyBtn.style.textAlign = 'center';
-        
-        const confirmBtn = document.getElementById('confirmBtn');
-        confirmBtn.parentNode.insertBefore(historyBtn, confirmBtn.nextSibling);
-      }
-    }
-
-    // === CONFIRM ORDER ===
-    async function confirmOrder() {
-      const btn = document.getElementById("confirmBtn");
-      if (btn.disabled) return;
-      
-      // CHECK: Don't allow Pi payment in regular browser
-      if (!isPiBrowser && btn.textContent.includes('Pi')) {
-        alert('Pi payments are only available in Pi Browser. Please use bank transfer.');
-        return;
-      }
-      
-      btn.disabled = true;
-      btn.innerText = "Processing...";
-
-      const name = document.getElementById("custName").value.trim();
-      const phone = document.getElementById("custPhone").value.trim();
-      const address = document.getElementById("custAddress").value.trim();
-      const postcode = document.getElementById("custPostcode").value.trim();
-      const state_to = document.getElementById("custState").value;
-      const method = document.getElementById("shippingMethod").value;
-
-      if (!name || !phone || !address || !postcode || !state_to) {
-        alert("Please fill in all delivery details.");
-        btn.disabled = false;
-        btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
-        return;
-      }
-
-      const validPickupStates = ["Kuala Lumpur", "Kota Kinabalu", "Kuching", "Penang", "Johor Bahru"];
-      if (method === "pickup" && !validPickupStates.includes(state_to)) {
-        alert("Self Pickup is only available in Kuala Lumpur, Kota Kinabalu, Kuching, Penang, or Johor Bahru.");
-        btn.disabled = false;
-        btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
-        return;
-      }
-
-      if (!cart.length) {
-        alert("Cart is empty!");
-        btn.disabled = false;
-        btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
-        return;
-      }
-
-      const { cost: shippingCost, eta } = calculateShippingCost(subTotal, state_to, totalWeight, method);
-      const totalAmt = subTotal + shippingCost;
-      const order_id = "ORD" + Date.now();
-
-      const payload = {
-        order_id,
-        cus_name: name,
-        cus_address: address,
-        postcode,
-        state_to,
-        country: "Malaysia",
-        phone,
-        prod_name: cart.map(i => i.name).join(", "),
-        quantity: cart.reduce((s, i) => s + i.qty, 0),
-        total_amt: totalAmt,
-        shipping_wt: totalWeight,
-        shipping_cost: shippingCost,
-        shipping_method: method === "pickup" ? "Self Pickup" : 
-                         method === "express" ? "Express Free" : "Standard Courier",
-        delivery_eta: eta,
-        pymt_method: isPiBrowser ? "Pi Network" : "FPX",
-        order_status: "Pending Payment",
-        courier_name: method === "pickup" ? "Self Pickup" : "City-Link",
-        tracking_link: ""
-      };
+    // If Pi Browser (pay flow)
+    if (isPi) {
+      btn.innerText = "Opening Pi Wallet...";
+      const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(2);
 
       try {
-        const res = await fetch(`/api/orders`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || "Failed");
-
-        // If Pi Browser, initiate Pi payment
-        if (isPiBrowser) {
-          btn.innerText = "Opening Pi Wallet...";
-          const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(2);
-          
-          try {
-            await Pi.createPayment({
-              amount: parseFloat(piAmount),
-              memo: `Order ${order_id}`,
-              metadata: { order_id, rm_amount: totalAmt }
-            }, {
-              onReadyForServerCompletion: async (paymentId, txid) => {
-                // Update order as paid
-                await fetch(`/api/orders/${order_id}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    order_status: 'Paid',
-                    pi_txid: txid,
-                    pymt_method: 'Pi Network'
-                  })
-                });
-              },
-              onCancel: () => {
-                alert('Payment cancelled. Order saved.');
-              },
-              onError: (error) => {
-                alert('Payment error: ' + error.message);
-              }
+        await Pi.createPayment({
+          amount: parseFloat(piAmount),
+          memo: `Order ${order_id}`,
+          metadata: { order_id, rm_amount: totalAmt }
+        }, {
+          onReadyForServerCompletion: async (paymentId, txid) => {
+            // Update order as paid
+            await fetch(`/api/orders/${order_id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                order_status: 'Paid',
+                pi_txid: txid,
+                pymt_method: 'Pi Network'
+              })
             });
-          } catch (piError) {
-            console.error('Pi payment error:', piError);
-            alert('Pi payment failed: ' + piError.message + '\nOrder saved. Complete payment later.');
+          },
+          onCancel: () => {
+            alert('Payment cancelled. Order saved.');
+          },
+          onError: (error) => {
+            alert('Payment error: ' + (error && error.message ? error.message : String(error)));
           }
-        }
-
-        // Success
-        const cartHash = hashCart(cart);
-        localStorage.setItem('orderPlaced', cartHash);
-        localStorage.setItem('lastOrderPhone', phone);
-        localStorage.removeItem("cartItems");
-        
-        alert(isPiBrowser 
-          ? "✅ Order placed! Complete payment in Pi app." 
-          : "✅ Order placed! Send bank receipt via WhatsApp.");
-        
-        btn.style.display = 'none';
-        showOrderHistoryButton();
-        await viewMyOrder();
-
-      } catch (err) {
-        alert("Failed: " + err.message);
-        btn.disabled = false;
-        btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
+        });
+      } catch (piError) {
+        console.error('Pi payment error:', piError);
+        alert('Pi payment failed: ' + (piError && piError.message ? piError.message : String(piError)) + '\nOrder saved. Complete payment later.');
       }
     }
 
-    // === VIEW MY ORDER ===
-    async function viewMyOrder() {
-      const phone = document.getElementById("custPhone").value.trim();
-      if (!phone) return;
+    // Success (common)
+    const cartHash = hashCart(cart);
+    localStorage.setItem('orderPlaced', cartHash);
+    localStorage.setItem('lastOrderPhone', phone);
+    localStorage.removeItem("cartItems");
 
-      const display = document.getElementById("OrderDisplay");
-      display.innerHTML = "<p style='color:#666;'>Loading order...</p>";
+    alert(isPi ? "✅ Order placed! Complete payment in Pi app." : "✅ Order placed! Send bank receipt via WhatsApp.");
 
-      try {
-        const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const orders = await res.json();
-        if (!orders || orders.length === 0) {
-          display.innerHTML = "<p>No orders found.</p>";
-          return;
-        }
+    if (btn) btn.style.display = 'none';
+    showOrderHistoryButton();
+    await viewMyOrder();
 
-        const o = orders[0];
-        display.innerHTML = `
-          <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;">
-            <p><strong>Order ID:</strong> ${o.order_id}</p>
-            <p><strong>Customer:</strong> ${o.cus_name}</p>
-            <p><strong>Delivery:</strong> ${o.cus_address}, ${o.postcode}, ${o.state_to}</p>
-            <p><strong>Method:</strong> ${o.shipping_method} • ${o.delivery_eta}</p>
-            <p><strong>Product(s):</strong> ${o.prod_name}</p>
-            <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg</p>
-            <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
-            <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
-            <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
-            <p style="font-size:1.1em;"><strong>Total:</strong> 
-              <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
-            </p>
-            <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
-            <p><strong>Payment:</strong> ${o.pymt_method}</p>
-            ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until shipped.</p>'}
-            ${!isPiBrowser ? `<p class="whatsapp-instruction">Send bank receipt via <a href="index.html#whatsapp" target="_blank">WhatsApp</a>.</p>` : ''}
-          </div>
-        `;
+  } catch (err) {
+    alert("Failed: " + err.message);
+    btn.disabled = false;
+    btn.innerText = isPi ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
+  }
+}
 
-        if (!display.querySelector(".print-btn")) {
-          const printBtn = document.createElement("button");
-          printBtn.textContent = "Print (PDF)";
-          printBtn.className = "confirm-btn print-btn";
-          printBtn.style.background = "#996600";
-          printBtn.onclick = () => window.print();
-          display.appendChild(printBtn);
-        }
+// === VIEW MY ORDER (unchanged except safe isPi use)
+async function viewMyOrder() {
+  const phone = (document.getElementById("custPhone") || {}).value?.trim?.();
+  if (!phone) return;
 
-      } catch (err) {
-        display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-      }
+  const display = document.getElementById("OrderDisplay");
+  if (!display) return;
+  display.innerHTML = "<p style='color:#666;'>Loading order...</p>";
+
+  try {
+    const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const orders = await res.json();
+    if (!orders || orders.length === 0) {
+      display.innerHTML = "<p>No orders found.</p>";
+      return;
     }
+
+    const o = orders[0];
+    display.innerHTML = `
+      <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;">
+        <p><strong>Order ID:</strong> ${o.order_id}</p>
+        <p><strong>Customer:</strong> ${o.cus_name}</p>
+        <p><strong>Delivery:</strong> ${o.cus_address}, ${o.postcode}, ${o.state_to}</p>
+        <p><strong>Method:</strong> ${o.shipping_method} • ${o.delivery_eta}</p>
+        <p><strong>Product(s):</strong> ${o.prod_name}</p>
+        <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg</p>
+        <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
+        <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
+        <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
+        <p style="font-size:1.1em;"><strong>Total:</strong> 
+          <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
+        </p>
+        <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
+        <p><strong>Payment:</strong> ${o.pymt_method}</p>
+        ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until shipped.</p>'}
+        ${!window.isPiBrowser ? `<p class="whatsapp-instruction">Send bank receipt via <a href="index.html#whatsapp" target="_blank">WhatsApp</a>.</p>` : ''}
+      </div>
+    `;
+
+    if (!display.querySelector(".print-btn")) {
+      const printBtn = document.createElement("button");
+      printBtn.textContent = "Print (PDF)";
+      printBtn.className = "confirm-btn print-btn";
+      printBtn.style.background = "#996600";
+      printBtn.onclick = () => window.print();
+      display.appendChild(printBtn);
+    }
+
+  } catch (err) {
+    display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+  }
+}
   </script>
 </body>
 </html>
