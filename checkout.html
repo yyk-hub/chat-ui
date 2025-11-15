@@ -368,16 +368,34 @@ if (!window.isPiBrowser) {
     let isPiBrowser = false;
     
     // Check after DOM loads
-    window.addEventListener('DOMContentLoaded', () => {
-      // Give SDK time to load
-      setTimeout(() => {
-        isPiBrowser = typeof Pi !== 'undefined' && window.isPiBrowser === true;
-        console.log('Browser detected:', isPiBrowser ? 'Pi Browser' : 'Regular Browser');
-        adaptUIForBrowser();
-        loadOrder();
-        checkExistingOrder();
-      }, 150);
-    });
+window.addEventListener('DOMContentLoaded', () => {
+  // Give SDK time to load
+  setTimeout(async () => {
+    isPiBrowser = typeof Pi !== 'undefined' && window.isPiBrowser === true;
+    console.log('Browser detected:', isPiBrowser ? 'Pi Browser' : 'Regular Browser');
+
+    adaptUIForBrowser();
+    loadOrder();
+    checkExistingOrder();
+
+    // --- Check if Pi user is logged in ---
+    if (isPiBrowser) {
+      try {
+        const user = await Pi.getUser();
+        if (!user || !user.publicKey) {
+          // User not logged in
+          document.querySelectorAll('.pi-only').forEach(el => {
+            el.style.display = 'block';
+            el.innerHTML = '⚠️ You are in Pi Browser but not logged in. Log in to see Pi payment options.';
+          });
+          document.getElementById('confirmBtn').disabled = true;
+        }
+      } catch (err) {
+        console.warn('Pi user check failed:', err);
+      }
+    }
+  }, 150);
+});
 
     function adaptUIForBrowser() {
       if (isPiBrowser) {
