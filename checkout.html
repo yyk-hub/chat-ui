@@ -342,14 +342,11 @@ const BACKEND_URL = "";
     const PI_EXCHANGE_RATE = 2.0;
     let isPiBrowser = false;
 
-// FIXED: Detect Pi Sandbox Browser correctly
+// FINAL: Detect Pi Browser (Sandbox + Production)
   function detectPiBrowser() {
     const ua = (navigator.userAgent || "").toLowerCase();
-    return (
-      ua.includes("pibrowser") ||
-      ua.includes("pi browser") ||
-      (typeof window.Pi !== "undefined" && typeof window.Pi.init === "function")
-    );
+    const hasPiSDK = typeof window.Pi !== "undefined" && typeof window.Pi.init === "function";
+    return hasPiSDK && ua.includes("pibrowser");
   }
 
     async function initPiSDK() {
