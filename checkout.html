@@ -343,8 +343,9 @@ const BACKEND_URL = "";
     let isPiBrowser = false;
 
     function detectPiBrowser() {
-      return /PiBrowser/i.test(navigator.userAgent) || typeof window.Pi !== "undefined";
-    }
+    const ua = navigator.userAgent || "";
+    return /PiBrowser/i.test(ua);
+  }
 
     async function initPiSDK() {
       if (typeof window.Pi === "undefined") return;
