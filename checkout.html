@@ -347,10 +347,29 @@ const PI_EXCHANGE_RATE = 2.0;
 // CRITICAL: Proper Pi Browser detection
 let isPiBrowser = false;
 
-// Detect Pi Browser by User Agent (most reliable method)
+// Enhanced Pi Browser detection with multiple checks
 function detectPiBrowser() {
+  // Method 1: User Agent
   const ua = navigator.userAgent || '';
-  return /PiBrowser/i.test(ua);
+  if (/PiBrowser/i.test(ua)) {
+    console.log('✅ Pi Browser detected via User Agent');
+    return true;
+  }
+  
+  // Method 2: Check if Pi SDK is available (fallback)
+  if (typeof window.Pi !== 'undefined') {
+    console.log('✅ Pi Browser detected via SDK presence');
+    return true;
+  }
+  
+  // Method 3: Check for Pi-specific window properties
+  if (window.PiNetwork || window.__PI_SDK__) {
+    console.log('✅ Pi Browser detected via window properties');
+    return true;
+  }
+  
+  console.log('❌ Regular browser detected');
+  return false;
 }
 
 // Initialize on page load
