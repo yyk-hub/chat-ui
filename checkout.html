@@ -342,12 +342,25 @@ const BACKEND_URL = "";
     const PI_EXCHANGE_RATE = 2.0;
     let isPiBrowser = false;
 
-// FINAL: Detect Pi Browser in Sandbox ONLY
-  function detectPiBrowser() {
-    const hasPiSDK = typeof window.Pi !== "undefined" && typeof window.Pi.init === "function";
-    const isSandbox = location.hostname === "sandbox.minepi.com";
-    const isPiApp = location.pathname.includes("/mobile-app-ui/app/");
-    return hasPiSDK && isSandbox && isPiApp;
+// FINAL: Wait for Pi SDK in Sandbox
+  async function detectPiBrowser() {
+    return new Promise(resolve => {
+      const check = () => {
+        if (
+          typeof window.Pi !== "undefined" &&
+          typeof window.Pi.init === "function" &&
+          location.hostname === "sandbox.minepi.com" &&
+          location.pathname.includes("/mobile-app-ui/app/")
+        ) {
+          resolve(true);
+        } else if (document.readyState === "complete") {
+          resolve(false);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
   }
     async function initPiSDK() {
       if (typeof window.Pi === "undefined") return;
