@@ -338,57 +338,43 @@
 /* -------------------------
    FIXED Pi Browser Detection
    ------------------------- */
-
-// Global constants
 const BACKEND_URL = "";
-const PI_EXCHANGE_RATE = 2.0;
+    const PI_EXCHANGE_RATE = 2.0;
+    let isPiBrowser = false;
 
-// CRITICAL: Proper Pi Browser detection
-let isPiBrowser = false;
+    function detectPiBrowser() {
+      return /PiBrowser/i.test(navigator.userAgent) || typeof window.Pi !== "undefined";
+    }
 
-// Enhanced Pi Browser detection with multiple checks
-function detectPiBrowser() {
-  // Method 1: User Agent
-  const ua = navigator.userAgent || '';
-  if (/PiBrowser/i.test(ua)) {
-    console.log('✅ Pi Browser detected via User Agent');
-    return true;
-  }
-  
-  // Method 2: Check if Pi SDK is available (fallback)
-  if (typeof window.Pi !== 'undefined') {
-    console.log('✅ Pi Browser detected via SDK presence');
-    return true;
-  }
-  
-  // Method 3: Check for Pi-specific window properties
-  if (window.PiNetwork || window.__PI_SDK__) {
-    console.log('✅ Pi Browser detected via window properties');
-    return true;
-  }
-  
-  console.log('❌ Regular browser detected');
-  return false;
-}
+    async function initPiSDK() {
+      if (typeof window.Pi === "undefined") return;
+      try {
+        await Pi.init({
+          version: "2.0",
+          sandbox: location.hostname.includes("sandbox")
+        });
+      } catch (e) {
+        console.error("Pi SDK failed:", e);
+      }
+    }
+  function adaptUIForBrowser(isPi) {
+      document.querySelectorAll('.pi-only').forEach(el => {
+        el.style.display = isPi
+          ? (el.tagName === 'TR' ? 'table-row' : el.classList.contains('pi-badge') ? 'flex' : 'block')
+          : 'none';
+      });
+      document.querySelectorAll('.fiat-only').forEach(el => el.style.display = isPi ? 'none' : 'block');
+      const btn = document.getElementById('confirmBtn');
+      if (btn) btn.innerHTML = isPi ? 'Pay with Pi Network' : 'Confirm Order';
+    }
 
-// Initialize on page load
-window.addEventListener('load', async () => {
-  // Step 1: Detect browser type
-  isPiBrowser = detectPiBrowser();
-  console.log('🔍 Browser detected:', isPiBrowser ? 'Pi Browser' : 'Regular Browser');
-  
-  // Step 2: If Pi Browser, initialize SDK
-  if (isPiBrowser) {
-    await initPiSDK();
-  }
-  
-  // Step 3: Adapt UI based on detection
-  adaptUIForBrowser(isPiBrowser);
-  
-  // Step 4: Load order data
-  loadOrder();
-  checkExistingOrder();
-});
+    window.addEventListener("load", async () => {
+      isPiBrowser = detectPiBrowser();
+      if (isPiBrowser) await initPiSDK();
+      adaptUIForBrowser(isPiBrowser);
+      loadOrder();
+      checkExistingOrder();
+    });
 
 // Initialize Pi SDK (only called if isPiBrowser is true)
 async function initPiSDK() {
