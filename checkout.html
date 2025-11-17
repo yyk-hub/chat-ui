@@ -171,7 +171,7 @@
 
     /* Pi-specific styles */
     .pi-only {
-      display: none !important; /* Hidden by default */
+      display: none; /* Hidden by default - removed !important */
     }
     
     .fiat-only {
@@ -183,7 +183,7 @@
       color: white;
       padding: 10px 16px;
       border-radius: 12px;
-      display: none;
+      display: none; /* Will be changed to flex by JS */
       align-items: center;
       justify-content: center;
       gap: 8px;
@@ -650,66 +650,101 @@ async function viewMyOrder() {
 
 // === PAGE INITIALIZATION - CRITICAL FIX FOR DUAL CURRENCY ===
 window.addEventListener('load', async () => {
-  console.log('🚀 Initializing page...');
+  console.log('🚀 Page loading...');
+  console.log('🔍 Checking for Pi SDK...', typeof window.Pi);
   
   // Wait for Pi SDK to load
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 800));
   
-  // Detect Pi Browser
-  if (typeof window.Pi !== 'undefined') {
-    console.log('✅ Pi Browser detected');
+  console.log('🔍 After wait, Pi SDK exists?', typeof window.Pi !== 'undefined');
+  
+  // Detect Pi Browser - check both SDK and User Agent
+  const hasPiSDK = typeof window.Pi !== 'undefined';
+  const userAgent = navigator.userAgent || '';
+  const isPiBrowserUA = /PiBrowser/i.test(userAgent);
+  
+  console.log('📱 User Agent:', userAgent);
+  console.log('🔍 Has Pi SDK:', hasPiSDK);
+  console.log('🔍 Pi Browser UA:', isPiBrowserUA);
+  
+  // Consider it Pi Browser if EITHER condition is true
+  if (hasPiSDK || isPiBrowserUA) {
+    console.log('✅ PI BROWSER DETECTED');
     isPiBrowser = true;
     
-    try {
-      // Initialize Pi SDK
-      await Pi.init({ 
-        version: "2.0", 
-        sandbox: true  // ⚠️ Change to false for production!
-      });
-      console.log('✅ Pi SDK initialized');
-      
-      // SHOW ONLY PI ELEMENTS
-      document.querySelectorAll('.pi-only').forEach(el => {
-        if (el.tagName === 'TR') {
-          el.style.display = 'table-row';
-        } else if (el.classList.contains('pi-badge')) {
-          el.style.display = 'flex';
-        } else {
-          el.style.display = 'block';
-        }
-      });
-      
-      // HIDE ALL FIAT ELEMENTS
-      document.querySelectorAll('.fiat-only').forEach(el => {
-        el.style.display = 'none';
-      });
-      
-      // Update button text
-      document.getElementById('confirmBtn').innerHTML = '🥧 Pay with Pi Network';
-      
-    } catch (err) {
-      console.error('❌ Pi init failed:', err);
-      isPiBrowser = false;
+    // Try to initialize Pi SDK if available
+    if (hasPiSDK) {
+      try {
+        await window.Pi.init({ 
+          version: "2.0", 
+          sandbox: true  // ⚠️ Change to false for production!
+        });
+        console.log('✅ Pi SDK initialized successfully');
+      } catch (err) {
+        console.error('❌ Pi init failed:', err);
+      }
     }
-  } else {
-    console.log('❌ Regular browser detected');
-    isPiBrowser = false;
-  }
-  
-  // If not Pi Browser, ensure fiat display
-  if (!isPiBrowser) {
-    // HIDE ALL PI ELEMENTS
-    document.querySelectorAll('.pi-only').forEach(el => {
+    
+    // SHOW ONLY PI ELEMENTS
+    console.log('🎨 Showing Pi UI...');
+    const piElements = document.querySelectorAll('.pi-only');
+    console.log('Found', piElements.length, 'Pi elements');
+    piElements.forEach(el => {
+      if (el.tagName === 'TR') {
+        el.style.display = 'table-row';
+      } else if (el.classList.contains('pi-badge')) {
+        el.style.display = 'flex';
+      } else {
+        el.style.display = 'block';
+      }
+      console.log('Showing Pi element:', el.className);
+    });
+    
+    // HIDE ALL FIAT ELEMENTS
+    const fiatElements = document.querySelectorAll('.fiat-only');
+    console.log('Found', fiatElements.length, 'Fiat elements');
+    fiatElements.forEach(el => {
       el.style.display = 'none';
+      console.log('Hiding Fiat element:', el.className);
+    });
+    
+    // Update button
+    const btn = document.getElementById('confirmBtn');
+    if (btn) {
+      btn.innerHTML = '🥧 Pay with Pi Network';
+      console.log('✅ Button updated to Pi payment');
+    }
+    
+  } else {
+    console.log('❌ REGULAR BROWSER DETECTED');
+    isPiBrowser = false;
+    
+    // HIDE ALL PI ELEMENTS
+    console.log('🎨 Showing Fiat UI...');
+    const piElements = document.querySelectorAll('.pi-only');
+    console.log('Found', piElements.length, 'Pi elements to hide');
+    piElements.forEach(el => {
+      el.style.display = 'none';
+      console.log('Hiding Pi element:', el.className);
     });
     
     // SHOW ONLY FIAT ELEMENTS
-    document.querySelectorAll('.fiat-only').forEach(el => {
+    const fiatElements = document.querySelectorAll('.fiat-only');
+    console.log('Found', fiatElements.length, 'Fiat elements to show');
+    fiatElements.forEach(el => {
       el.style.display = 'block';
+      console.log('Showing Fiat element');
     });
+    
+    // Update button
+    const btn = document.getElementById('confirmBtn');
+    if (btn) {
+      btn.innerHTML = '✅ Confirm Order';
+      console.log('✅ Button updated to Confirm Order');
+    }
   }
   
-  console.log('💰 Currency display:', isPiBrowser ? 'Pi only' : 'RM only');
+  console.log('💰 Final state - isPiBrowser:', isPiBrowser);
   
   // Load cart and check for existing orders
   loadOrder();
