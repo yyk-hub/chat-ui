@@ -654,48 +654,51 @@ document.addEventListener('DOMContentLoaded', async function() {
   console.log('🚀 CHECKOUT PAGE INITIALIZING');
   console.log('========================================');
   
-  // Check immediately
-  console.log('Step 1: Check if Pi SDK exists RIGHT NOW');
-  console.log('typeof window.Pi =', typeof window.Pi);
-  console.log('window.Pi =', window.Pi);
+  // Wait a moment for SDK to load
+  await new Promise(resolve => setTimeout(resolve, 500));
   
-  // Wait for SDK to load
-  console.log('Step 2: Waiting 1 second for Pi SDK to load...');
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  console.log('Step 3: Check again after waiting');
-  console.log('typeof window.Pi =', typeof window.Pi);
-  
-  // Check User Agent
+  // Check User Agent FIRST (most reliable)
   const userAgent = navigator.userAgent || '';
-  console.log('Step 4: User Agent =', userAgent);
-  console.log('Contains "PiBrowser"?', userAgent.includes('PiBrowser'));
+  console.log('User Agent:', userAgent);
   
-  // DECISION: Is this Pi Browser?
-  const hasPiSDK = typeof window.Pi !== 'undefined';
   const hasPiUA = userAgent.includes('PiBrowser') || userAgent.includes('Pi/');
+  console.log('Has Pi Browser User Agent:', hasPiUA);
+  
+  // Check if Pi SDK exists
+  const hasPiSDK = typeof window.Pi !== 'undefined';
+  console.log('Pi SDK script loaded:', hasPiSDK);
+  
+  // CRITICAL: Test if Pi SDK actually works (not just loaded)
+  let piSDKWorks = false;
+  if (hasPiSDK && hasPiUA) {
+    try {
+      console.log('Testing if Pi SDK actually works...');
+      // Try to initialize with a timeout
+      const initPromise = window.Pi.init({ version: "2.0", sandbox: true });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Init timeout')), 3000)
+      );
+      
+      await Promise.race([initPromise, timeoutPromise]);
+      piSDKWorks = true;
+      console.log('✅ Pi SDK works!');
+    } catch (err) {
+      console.log('❌ Pi SDK init failed/timeout:', err.message);
+      piSDKWorks = false;
+    }
+  }
   
   console.log('========================================');
   console.log('DETECTION RESULTS:');
-  console.log('Has Pi SDK:', hasPiSDK);
   console.log('Has Pi User Agent:', hasPiUA);
+  console.log('Pi SDK Works:', piSDKWorks);
   console.log('========================================');
   
-  if (hasPiSDK || hasPiUA) {
+  // DECISION: Only treat as Pi Browser if BOTH conditions are true
+  if (hasPiUA && piSDKWorks) {
     // ============== PI BROWSER ==============
     console.log('✅✅✅ DETECTED: PI BROWSER ✅✅✅');
     isPiBrowser = true;
-    
-    // Initialize SDK if available
-    if (hasPiSDK) {
-      try {
-        console.log('Initializing Pi SDK...');
-        await window.Pi.init({ version: "2.0", sandbox: true });
-        console.log('✅ Pi SDK initialized');
-      } catch (err) {
-        console.error('❌ Pi SDK init error:', err);
-      }
-    }
     
     console.log('Setting up Pi UI...');
     
@@ -703,29 +706,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     const badge = document.querySelector('.pi-badge');
     if (badge) {
       badge.style.display = 'flex';
-      badge.style.visibility = 'visible';
       console.log('✅ Pi badge shown');
-    } else {
-      console.log('❌ Pi badge not found');
     }
     
     // SHOW Pi table row
     const piRow = document.querySelector('.pi-row');
     if (piRow) {
       piRow.style.display = 'table-row';
-      piRow.style.visibility = 'visible';
       console.log('✅ Pi row shown');
-    } else {
-      console.log('❌ Pi row not found');
     }
     
     // HIDE all fiat sections
     const fiatSections = document.querySelectorAll('.fiat-only');
-    console.log('Found', fiatSections.length, 'fiat sections to hide');
-    fiatSections.forEach((el, i) => {
+    console.log('Hiding', fiatSections.length, 'fiat sections');
+    fiatSections.forEach((el) => {
       el.style.display = 'none';
       el.style.visibility = 'hidden';
-      console.log('  ✅ Hidden fiat section', i);
     });
     
     // Update button
@@ -733,8 +729,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (btn) {
       btn.textContent = '🥧 Pay with Pi Network';
       console.log('✅ Button changed to Pi payment');
-    } else {
-      console.log('❌ Button not found');
     }
     
     console.log('========================================');
@@ -743,7 +737,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     
   } else {
     // ============== REGULAR BROWSER ==============
-    console.log('❌❌❌ DETECTED: REGULAR BROWSER (Chrome/Safari/etc) ❌❌❌');
+    console.log('❌❌❌ DETECTED: REGULAR BROWSER ❌❌❌');
+    console.log('Reason: User Agent is not Pi Browser OR SDK does not work');
     isPiBrowser = false;
     
     console.log('Setting up Fiat UI...');
@@ -752,29 +747,23 @@ document.addEventListener('DOMContentLoaded', async function() {
     const badge = document.querySelector('.pi-badge');
     if (badge) {
       badge.style.display = 'none';
-      badge.style.visibility = 'hidden';
       console.log('✅ Pi badge hidden');
-    } else {
-      console.log('❌ Pi badge not found');
     }
     
     // HIDE Pi table row
     const piRow = document.querySelector('.pi-row');
     if (piRow) {
       piRow.style.display = 'none';
-      piRow.style.visibility = 'hidden';
       console.log('✅ Pi row hidden');
-    } else {
-      console.log('❌ Pi row not found');
     }
     
     // SHOW all fiat sections
     const fiatSections = document.querySelectorAll('.fiat-only');
-    console.log('Found', fiatSections.length, 'fiat sections to show');
-    fiatSections.forEach((el, i) => {
+    console.log('Showing', fiatSections.length, 'fiat sections');
+    fiatSections.forEach((el) => {
       el.style.display = 'block';
       el.style.visibility = 'visible';
-      console.log('  ✅ Shown fiat section', i, '- innerHTML length:', el.innerHTML.length);
+      console.log('  ✅ Shown fiat section, content length:', el.innerHTML.length);
     });
     
     // Update button
@@ -782,8 +771,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (btn) {
       btn.textContent = '✅ Confirm Order';
       console.log('✅ Button changed to Confirm Order');
-    } else {
-      console.log('❌ Button not found');
     }
     
     console.log('========================================');
