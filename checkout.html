@@ -682,20 +682,32 @@ document.addEventListener('DOMContentLoaded', async function() {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(userAgent);
   console.log('Is Mobile Device:', isMobile);
   
+  // Check if in standalone app (Pi Browser is a webview)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                       window.navigator.standalone || 
+                       document.referrer.includes('android-app://');
+  console.log('Is Standalone/WebView:', isStandalone);
+  
   // Check if Pi SDK exists
   const hasPiSDK = typeof window.Pi !== 'undefined';
   console.log('Pi SDK loaded:', hasPiSDK);
   
   if (debugDiv) {
-    debugDiv.innerHTML = '🔍 STEP 3: Testing SDK...<br><small>' + 
-      (hasPiSDK ? 'SDK Found' : 'No SDK') + 
-      ' | ' + (isMobile ? 'Mobile' : 'Desktop') + '</small>';
+    debugDiv.innerHTML = '🔍 STEP 3: Testing...<br><small>' + 
+      (isMobile ? '📱Mobile' : '💻Desktop') + 
+      ' | SDK:' + (hasPiSDK ? '✅' : '❌') + '</small>';
   }
   
-  // Try to call Pi SDK to see if it actually works
-  // IMPORTANT: Only test SDK if on mobile device
+  // CRITICAL: Only use Pi interface if:
+  // 1. On mobile device AND
+  // 2. Pi SDK exists AND  
+  // 3. SDK actually initializes successfully
   let piSDKWorks = false;
-  if (hasPiSDK && isMobile) {
+  
+  if (!isMobile) {
+    console.log('❌ Desktop detected - forcing FIAT interface');
+    piSDKWorks = false;
+  } else if (hasPiSDK) {
     try {
       console.log('Testing Pi SDK functionality...');
       
@@ -715,10 +727,14 @@ document.addEventListener('DOMContentLoaded', async function() {
       console.log('❌ Pi SDK init failed:', err.message);
       piSDKWorks = false;
     }
+  } else {
+    console.log('❌ Skipping SDK test - not mobile or SDK missing');
+    piSDKWorks = false;
   }
   
   console.log('========================================');
   console.log('FINAL DETECTION:');
+  console.log('Is Mobile:', isMobile);
   console.log('Pi SDK Works:', piSDKWorks);
   console.log('========================================');
   
