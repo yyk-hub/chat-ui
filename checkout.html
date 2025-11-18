@@ -342,7 +342,8 @@
 
 <script>
 /* -------------------------
-   FIXED Pi Browser Detection
+   COMPLETE CHECKOUT SCRIPT
+   Copy everything from here to end
    ------------------------- */
 
 // Global constants
@@ -659,50 +660,73 @@ document.addEventListener('DOMContentLoaded', async function() {
   console.log('🚀 CHECKOUT PAGE INITIALIZING');
   console.log('========================================');
   
-  // Wait a moment for SDK to load
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // Get debug div
+  const debugDiv = document.getElementById('debug');
+  if (debugDiv) {
+    debugDiv.textContent = '🔍 STEP 1: Detecting...';
+    debugDiv.style.background = 'orange';
+  }
   
-  // Check User Agent FIRST (most reliable)
+  // Wait for SDK to fully load
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  if (debugDiv) {
+    debugDiv.textContent = '🔍 STEP 2: Checking SDK...';
+  }
+  
+  // Check User Agent
   const userAgent = navigator.userAgent || '';
   console.log('User Agent:', userAgent);
   
-  const hasPiUA = userAgent.includes('PiBrowser') || userAgent.includes('Pi/');
-  console.log('Has Pi Browser User Agent:', hasPiUA);
-  
   // Check if Pi SDK exists
   const hasPiSDK = typeof window.Pi !== 'undefined';
-  console.log('Pi SDK script loaded:', hasPiSDK);
+  console.log('Pi SDK loaded:', hasPiSDK);
   
-  // CRITICAL: Test if Pi SDK actually works (not just loaded)
+  if (debugDiv) {
+    debugDiv.innerHTML = '🔍 STEP 3: Testing SDK...<br><small>' + (hasPiSDK ? 'SDK Found' : 'No SDK') + '</small>';
+  }
+  
+  // Try to call Pi SDK to see if it actually works
   let piSDKWorks = false;
-  if (hasPiSDK && hasPiUA) {
+  if (hasPiSDK) {
     try {
-      console.log('Testing if Pi SDK actually works...');
-      // Try to initialize with a timeout
+      console.log('Testing Pi SDK functionality...');
+      
+      // Try to initialize with timeout
       const initPromise = window.Pi.init({ version: "2.0", sandbox: true });
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Init timeout')), 3000)
+        setTimeout(() => reject(new Error('timeout')), 5000)
       );
       
       await Promise.race([initPromise, timeoutPromise]);
+      
+      // If we got here, SDK works!
       piSDKWorks = true;
-      console.log('✅ Pi SDK works!');
+      console.log('✅ Pi SDK initialized successfully - THIS IS PI BROWSER!');
+      
     } catch (err) {
-      console.log('❌ Pi SDK init failed/timeout:', err.message);
+      console.log('❌ Pi SDK init failed:', err.message);
       piSDKWorks = false;
     }
   }
   
   console.log('========================================');
-  console.log('DETECTION RESULTS:');
-  console.log('Has Pi User Agent:', hasPiUA);
+  console.log('FINAL DETECTION:');
   console.log('Pi SDK Works:', piSDKWorks);
   console.log('========================================');
   
-  // DECISION: Only treat as Pi Browser if BOTH conditions are true
-  if (hasPiUA && piSDKWorks) {
+  // UPDATE DEBUG INDICATOR
+  if (debugDiv) {
+    debugDiv.innerHTML = piSDKWorks ? 
+      '✅ PI BROWSER<br><small>SDK Works!</small>' : 
+      '❌ REGULAR BROWSER<br><small>SDK Timeout/Failed</small>';
+    debugDiv.style.background = piSDKWorks ? '#2e7d32' : '#d32f2f';
+  }
+  
+  // DECISION: Use Pi interface ONLY if SDK actually works
+  if (piSDKWorks) {
     // ============== PI BROWSER ==============
-    console.log('✅✅✅ DETECTED: PI BROWSER ✅✅✅');
+    console.log('✅✅✅ USING PI BROWSER INTERFACE ✅✅✅');
     isPiBrowser = true;
     
     console.log('Setting up Pi UI...');
@@ -711,6 +735,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const badge = document.querySelector('.pi-badge');
     if (badge) {
       badge.style.display = 'flex';
+      badge.style.visibility = 'visible';
       console.log('✅ Pi badge shown');
     }
     
@@ -718,6 +743,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const piRow = document.querySelector('.pi-row');
     if (piRow) {
       piRow.style.display = 'table-row';
+      piRow.style.visibility = 'visible';
       console.log('✅ Pi row shown');
     }
     
@@ -728,6 +754,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       el.style.display = 'none';
       el.style.visibility = 'hidden';
     });
+    console.log('✅ QR codes hidden');
     
     // Update button
     const btn = document.getElementById('confirmBtn');
@@ -736,14 +763,17 @@ document.addEventListener('DOMContentLoaded', async function() {
       console.log('✅ Button changed to Pi payment');
     }
     
+    if (debugDiv) {
+      debugDiv.innerHTML = '✅ PI BROWSER<br><small>Badge:✅ QR:❌</small>';
+    }
+    
     console.log('========================================');
-    console.log('✅ PI BROWSER SETUP COMPLETE');
+    console.log('✅ PI INTERFACE SETUP COMPLETE');
     console.log('========================================');
     
   } else {
     // ============== REGULAR BROWSER ==============
-    console.log('❌❌❌ DETECTED: REGULAR BROWSER ❌❌❌');
-    console.log('Reason: User Agent is not Pi Browser OR SDK does not work');
+    console.log('❌❌❌ USING REGULAR BROWSER INTERFACE ❌❌❌');
     isPiBrowser = false;
     
     console.log('Setting up Fiat UI...');
@@ -752,13 +782,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     const badge = document.querySelector('.pi-badge');
     if (badge) {
       badge.style.display = 'none';
+      badge.style.visibility = 'hidden';
       console.log('✅ Pi badge hidden');
     }
     
-    // HIDE Pi table row
+    // HIDE Pi table row  
     const piRow = document.querySelector('.pi-row');
     if (piRow) {
       piRow.style.display = 'none';
+      piRow.style.visibility = 'hidden';
       console.log('✅ Pi row hidden');
     }
     
@@ -768,8 +800,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     fiatSections.forEach((el) => {
       el.style.display = 'block';
       el.style.visibility = 'visible';
-      console.log('  ✅ Shown fiat section, content length:', el.innerHTML.length);
     });
+    console.log('✅ QR codes shown');
     
     // Update button
     const btn = document.getElementById('confirmBtn');
@@ -778,8 +810,12 @@ document.addEventListener('DOMContentLoaded', async function() {
       console.log('✅ Button changed to Confirm Order');
     }
     
+    if (debugDiv) {
+      debugDiv.innerHTML = '❌ REGULAR BROWSER<br><small>QR:✅ Pi:❌</small>';
+    }
+    
     console.log('========================================');
-    console.log('✅ FIAT BROWSER SETUP COMPLETE');
+    console.log('✅ FIAT INTERFACE SETUP COMPLETE');
     console.log('========================================');
   }
   
