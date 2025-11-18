@@ -701,7 +701,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   // CRITICAL: Only use Pi interface if:
   // 1. On mobile device AND
   // 2. Pi SDK exists AND  
-  // 3. SDK actually initializes successfully
+  // 3. SDK actually initializes successfully AND
+  // 4. Pi-specific features are available (real Pi Browser check)
   let piSDKWorks = false;
   
   if (!isMobile) {
@@ -709,7 +710,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     piSDKWorks = false;
   } else if (hasPiSDK) {
     try {
-      console.log('Testing Pi SDK functionality...');
+      console.log('Mobile device detected, testing Pi SDK...');
       
       // Try to initialize with timeout
       const initPromise = window.Pi.init({ version: "2.0", sandbox: true });
@@ -718,31 +719,58 @@ document.addEventListener('DOMContentLoaded', async function() {
       );
       
       await Promise.race([initPromise, timeoutPromise]);
+      console.log('Pi SDK init completed');
       
-      // If we got here, SDK works!
-      piSDKWorks = true;
-      console.log('✅ Pi SDK initialized successfully - THIS IS PI BROWSER!');
+      // EXTRA CHECK: Test if Pi-specific functions exist and work
+      // These only work in real Pi Browser
+      const hasPiFeatures = typeof window.Pi.authenticate === 'function' &&
+                           typeof window.Pi.createPayment === 'function';
+      
+      console.log('Has Pi-specific features:', hasPiFeatures);
+      
+      // Final check: try to call a Pi-specific method
+      if (hasPiFeatures) {
+        try {
+          // This will only work in actual Pi Browser
+          const features = await window.Pi.nativeFeaturesList();
+          console.log('✅ Pi native features available:', features);
+          piSDKWorks = true;
+        } catch (featureErr) {
+          console.log('❌ Pi native features NOT available:', featureErr.message);
+          console.log('This is likely mobile Chrome, not Pi Browser');
+          piSDKWorks = false;
+        }
+      } else {
+        console.log('❌ Pi-specific functions not available');
+        piSDKWorks = false;
+      }
+      
+      if (piSDKWorks) {
+        console.log('✅ CONFIRMED: Real Pi Browser - Mobile + SDK + Native Features!');
+      }
       
     } catch (err) {
       console.log('❌ Pi SDK init failed:', err.message);
       piSDKWorks = false;
     }
   } else {
-    console.log('❌ Skipping SDK test - not mobile or SDK missing');
+    console.log('❌ Skipping SDK test - mobile:', isMobile, ', SDK:', hasPiSDK);
     piSDKWorks = false;
   }
   
   console.log('========================================');
   console.log('FINAL DETECTION:');
   console.log('Is Mobile:', isMobile);
+  console.log('Has Pi SDK:', hasPiSDK);
   console.log('Pi SDK Works:', piSDKWorks);
+  console.log('RESULT: Using', piSDKWorks ? 'PI INTERFACE' : 'FIAT INTERFACE');
   console.log('========================================');
   
   // UPDATE DEBUG INDICATOR
   if (debugDiv) {
     debugDiv.innerHTML = piSDKWorks ? 
-      '✅ PI BROWSER<br><small>SDK Works!</small>' : 
-      '❌ REGULAR BROWSER<br><small>SDK Timeout/Failed</small>';
+      '✅ PI BROWSER<br><small>📱Mobile + SDK OK</small>' : 
+      '❌ FIAT MODE<br><small>' + (isMobile ? '📱Mobile No SDK' : '💻Desktop') + '</small>';
     debugDiv.style.background = piSDKWorks ? '#2e7d32' : '#d32f2f';
   }
   
