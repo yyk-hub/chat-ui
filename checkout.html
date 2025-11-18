@@ -678,17 +678,24 @@ document.addEventListener('DOMContentLoaded', async function() {
   const userAgent = navigator.userAgent || '';
   console.log('User Agent:', userAgent);
   
+  // Check for mobile device
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(userAgent);
+  console.log('Is Mobile Device:', isMobile);
+  
   // Check if Pi SDK exists
   const hasPiSDK = typeof window.Pi !== 'undefined';
   console.log('Pi SDK loaded:', hasPiSDK);
   
   if (debugDiv) {
-    debugDiv.innerHTML = '🔍 STEP 3: Testing SDK...<br><small>' + (hasPiSDK ? 'SDK Found' : 'No SDK') + '</small>';
+    debugDiv.innerHTML = '🔍 STEP 3: Testing SDK...<br><small>' + 
+      (hasPiSDK ? 'SDK Found' : 'No SDK') + 
+      ' | ' + (isMobile ? 'Mobile' : 'Desktop') + '</small>';
   }
   
   // Try to call Pi SDK to see if it actually works
+  // IMPORTANT: Only test SDK if on mobile device
   let piSDKWorks = false;
-  if (hasPiSDK) {
+  if (hasPiSDK && isMobile) {
     try {
       console.log('Testing Pi SDK functionality...');
       
