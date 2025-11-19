@@ -712,13 +712,38 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
       console.log('Mobile device detected, testing Pi SDK...');
       
-      // Try to initialize with timeout
-      const initPromise = window.Pi.init({ version: "2.0", sandbox: true });
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('timeout')), 5000)
-      );
+      // IMPORTANT: Try sandbox first, then production if that fails
+      let sdkInitialized = false;
       
-      await Promise.race([initPromise, timeoutPromise]);
+      // Try sandbox mode first
+      try {
+        console.log('Trying sandbox mode...');
+        await Promise.race([
+          window.Pi.init({ version: "2.0", sandbox: true }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+        ]);
+        console.log('✅ Sandbox mode initialized');
+        sdkInitialized = true;
+      } catch (sandboxErr) {
+        console.log('⚠️ Sandbox failed, trying production...');
+        // Try production mode
+        try {
+          await Promise.race([
+            window.Pi.init({ version: "2.0", sandbox: false }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]);
+          console.log('✅ Production mode initialized');
+          sdkInitialized = true;
+        } catch (prodErr) {
+          console.log('❌ Both sandbox and production failed');
+          sdkInitialized = false;
+        }
+      }
+      
+      if (!sdkInitialized) {
+        throw new Error('SDK init failed');
+      }
+      
       console.log('Pi SDK init completed');
       
       // EXTRA CHECK: Test if Pi-specific functions exist and work
@@ -732,7 +757,10 @@ document.addEventListener('DOMContentLoaded', async function() {
       if (hasPiFeatures) {
         try {
           // This will only work in actual Pi Browser
-          const features = await window.Pi.nativeFeaturesList();
+          const features = await Promise.race([
+            window.Pi.nativeFeaturesList(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+          ]);
           console.log('✅ Pi native features available:', features);
           piSDKWorks = true;
         } catch (featureErr) {
@@ -746,11 +774,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
       
       if (piSDKWorks) {
-        console.log('✅ CONFIRMED: Real Pi Browser - Mobile + SDK + Native Features!');
+        console.log('✅ CONFIRMED: Real Pi Browser!');
       }
       
     } catch (err) {
-      console.log('❌ Pi SDK init failed:', err.message);
+      console.log('❌ Pi SDK test failed:', err.message);
       piSDKWorks = false;
     }
   } else {
@@ -870,10 +898,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('========================================');
   }
   
-  // Load cart
+  // Load cart - ALWAYS DO THIS regardless of detection result
   console.log('Loading cart...');
-  loadOrder();
-  checkExistingOrder();
+  try {
+    loadOrder();
+    checkExistingOrder();
+    console.log('✅ Cart loaded successfully');
+  } catch (cartErr) {
+    console.error('❌ Error loading cart:', cartErr);
+    // Still continue even if cart fails
+  }
+  
   console.log('✅ Page initialization complete');
 });
 </script>
