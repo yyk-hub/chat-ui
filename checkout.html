@@ -341,16 +341,14 @@
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <script>
-/* -------------------------
-   COMPLETE CHECKOUT SCRIPT
-   Copy everything from here to end
-   ------------------------- */
+/* ========================================
+   FINAL SIMPLE CHECKOUT SCRIPT
+   No mobile detection - just tests if Pi SDK works
+   ======================================== */
 
 // Global constants
 const BACKEND_URL = "";
 const PI_EXCHANGE_RATE = 2.0;
-
-// CRITICAL: Proper Pi Browser detection
 let isPiBrowser = false;
 
 // === SHIPPING CALCULATION ===
@@ -428,7 +426,6 @@ function updateSummary() {
   document.getElementById("pickupWarning").style.display = method === "pickup" ? "block" : "none";
 }
 
-// Update summary on changes
 ["custState", "shippingMethod"].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener("change", updateSummary);
@@ -528,17 +525,22 @@ async function confirmOrder() {
   };
 
   try {
-    const res = await fetch(`/api/orders`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    if (BACKEND_URL) {
+      const res = await fetch(`${BACKEND_URL}/api/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || "Failed");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          console.log('Order saved to backend');
+        }
+      }
+    }
 
-    // FIXED Pi payment flow
+    // Pi payment flow
     if (isPiBrowser && typeof Pi !== 'undefined') {
       btn.innerText = "Opening Pi Wallet...";
       const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(2);
@@ -553,27 +555,23 @@ async function confirmOrder() {
             console.log('Payment approved:', paymentId);
           },
           onReadyForServerCompletion: async (paymentId, txid) => {
-            console.log('Payment confirmed on blockchain:', txid);
-            // Update backend
-            await fetch(`/api/orders/${order_id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                order_status: 'Paid',
-                pi_payment_id: paymentId,
-                pi_txid: txid,
-                pymt_method: 'Pi Network'
-              })
-            });
-            // Complete payment
+            console.log('Payment confirmed:', txid);
+            if (BACKEND_URL) {
+              await fetch(`${BACKEND_URL}/api/orders/${order_id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  order_status: 'Paid',
+                  pi_payment_id: paymentId,
+                  pi_txid: txid,
+                  pymt_method: 'Pi Network'
+                })
+              });
+            }
             await Pi.completePayment(paymentId, txid);
           },
-          onCancel: (paymentId) => {
-            alert('Payment cancelled.');
-          },
-          onError: (error) => {
-            alert('Payment error: ' + error.message);
-          }
+          onCancel: () => alert('Payment cancelled.'),
+          onError: (error) => alert('Payment error: ' + error.message)
         });
       } catch (piError) {
         console.error('Pi payment error:', piError);
@@ -581,7 +579,6 @@ async function confirmOrder() {
       }
     }
 
-    // Success
     localStorage.setItem('orderPlaced', hashCart(cart));
     localStorage.setItem('lastOrderPhone', phone);
     localStorage.removeItem("cartItems");
@@ -609,307 +606,125 @@ async function viewMyOrder() {
   display.innerHTML = "<p style='color:#666;'>Loading order...</p>";
 
   try {
-    const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const orders = await res.json();
+    if (BACKEND_URL) {
+      const res = await fetch(`${BACKEND_URL}/api/orders?phone=${encodeURIComponent(phone)}`);
+      if (res.ok) {
+        const orders = await res.json();
+        
+        if (orders?.length) {
+          const o = orders[0];
+          display.innerHTML = `
+            <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;">
+              <p><strong>Order ID:</strong> ${o.order_id}</p>
+              <p><strong>Customer:</strong> ${o.cus_name}</p>
+              <p><strong>Delivery:</strong> ${o.cus_address}, ${o.postcode}, ${o.state_to}</p>
+              <p><strong>Method:</strong> ${o.shipping_method} • ${o.delivery_eta}</p>
+              <p><strong>Product(s):</strong> ${o.prod_name}</p>
+              <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg</p>
+              <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
+              <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
+              <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
+              <p style="font-size:1.1em;"><strong>Total:</strong> 
+                <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
+              </p>
+              <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
+              ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until shipped.</p>'}
+              ${!isPiBrowser ? `<p class="whatsapp-instruction">Send bank receipt via <a href="index.html#whatsapp" target="_blank">WhatsApp</a>.</p>` : ''}
+            </div>
+          `;
+
+          const printBtn = document.createElement("button");
+          printBtn.textContent = "Print (PDF)";
+          printBtn.className = "confirm-btn";
+          printBtn.style.background = "#996600";
+          printBtn.style.marginTop = "15px";
+          printBtn.onclick = () => window.print();
+          display.appendChild(printBtn);
+          return;
+        }
+      }
+    }
     
-    if (!orders?.length) {
-      display.innerHTML = "<p>No orders found.</p>";
-      return;
-    }
-
-    const o = orders[0];
-    display.innerHTML = `
-      <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;">
-        <p><strong>Order ID:</strong> ${o.order_id}</p>
-        <p><strong>Customer:</strong> ${o.cus_name}</p>
-        <p><strong>Delivery:</strong> ${o.cus_address}, ${o.postcode}, ${o.state_to}</p>
-        <p><strong>Method:</strong> ${o.shipping_method} • ${o.delivery_eta}</p>
-        <p><strong>Product(s):</strong> ${o.prod_name}</p>
-        <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg</p>
-        <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
-        <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
-        <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
-        <p style="font-size:1.1em;"><strong>Total:</strong> 
-          <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
-        </p>
-        <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
-        ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until shipped.</p>'}
-        ${!isPiBrowser ? `<p class="whatsapp-instruction">Send bank receipt via <a href="index.html#whatsapp" target="_blank">WhatsApp</a>.</p>` : ''}
-      </div>
-    `;
-
-    if (!display.querySelector(".print-btn")) {
-      const printBtn = document.createElement("button");
-      printBtn.textContent = "Print (PDF)";
-      printBtn.className = "confirm-btn";
-      printBtn.style.background = "#996600";
-      printBtn.style.marginTop = "15px";
-      printBtn.onclick = () => window.print();
-      display.appendChild(printBtn);
-    }
-
+    display.innerHTML = "<p>No orders found.</p>";
   } catch (err) {
     display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
   }
 }
 
-// === PAGE INITIALIZATION - CRITICAL FIX FOR DUAL CURRENCY ===
+// === SIMPLE PAGE INITIALIZATION ===
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
-  console.log('🚀 CHECKOUT PAGE INITIALIZING');
+  console.log('🚀 CHECKOUT INITIALIZING');
   console.log('========================================');
   
-  // Get debug div
   const debugDiv = document.getElementById('debug');
   if (debugDiv) {
-    debugDiv.textContent = '🔍 STEP 1: Detecting...';
+    debugDiv.textContent = '🔍 Testing Pi SDK...';
     debugDiv.style.background = 'orange';
   }
   
-  // Wait for SDK to fully load
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(resolve => setTimeout(resolve, 800));
   
-  if (debugDiv) {
-    debugDiv.textContent = '🔍 STEP 2: Checking SDK...';
-  }
-  
-  // Check User Agent
-  const userAgent = navigator.userAgent || '';
-  console.log('User Agent:', userAgent);
-  
-  // Check for mobile device
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(userAgent);
-  console.log('Is Mobile Device:', isMobile);
-  
-  // Check if in standalone app (Pi Browser is a webview)
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                       window.navigator.standalone || 
-                       document.referrer.includes('android-app://');
-  console.log('Is Standalone/WebView:', isStandalone);
-  
-  // Check if Pi SDK exists
   const hasPiSDK = typeof window.Pi !== 'undefined';
   console.log('Pi SDK loaded:', hasPiSDK);
   
-  if (debugDiv) {
-    debugDiv.innerHTML = '🔍 STEP 3: Testing...<br><small>' + 
-      (isMobile ? '📱Mobile' : '💻Desktop') + 
-      ' | SDK:' + (hasPiSDK ? '✅' : '❌') + '</small>';
-  }
-  
-  // CRITICAL: Only use Pi interface if:
-  // 1. On mobile device AND
-  // 2. Pi SDK exists AND  
-  // 3. SDK actually initializes successfully AND
-  // 4. Pi-specific features are available (real Pi Browser check)
   let piSDKWorks = false;
   
-  if (!isMobile) {
-    console.log('❌ Desktop detected - forcing FIAT interface');
-    piSDKWorks = false;
-  } else if (hasPiSDK) {
+  if (hasPiSDK) {
     try {
-      console.log('Mobile device detected, testing Pi SDK...');
-      
-      // IMPORTANT: Try sandbox first, then production if that fails
-      let sdkInitialized = false;
-      
-      // Try sandbox mode first
-      try {
-        console.log('Trying sandbox mode...');
-        await Promise.race([
-          window.Pi.init({ version: "2.0", sandbox: true }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-        ]);
-        console.log('✅ Sandbox mode initialized');
-        sdkInitialized = true;
-      } catch (sandboxErr) {
-        console.log('⚠️ Sandbox failed, trying production...');
-        // Try production mode
-        try {
-          await Promise.race([
-            window.Pi.init({ version: "2.0", sandbox: false }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-          ]);
-          console.log('✅ Production mode initialized');
-          sdkInitialized = true;
-        } catch (prodErr) {
-          console.log('❌ Both sandbox and production failed');
-          sdkInitialized = false;
-        }
-      }
-      
-      if (!sdkInitialized) {
-        throw new Error('SDK init failed');
-      }
-      
-      console.log('Pi SDK init completed');
-      
-      // EXTRA CHECK: Test if Pi-specific functions exist and work
-      // These only work in real Pi Browser
-      const hasPiFeatures = typeof window.Pi.authenticate === 'function' &&
-                           typeof window.Pi.createPayment === 'function';
-      
-      console.log('Has Pi-specific features:', hasPiFeatures);
-      
-      // Final check: try to call a Pi-specific method
-      if (hasPiFeatures) {
-        try {
-          // This will only work in actual Pi Browser
-          const features = await Promise.race([
-            window.Pi.nativeFeaturesList(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
-          ]);
-          console.log('✅ Pi native features available:', features);
-          piSDKWorks = true;
-        } catch (featureErr) {
-          console.log('❌ Pi native features NOT available:', featureErr.message);
-          console.log('This is likely mobile Chrome, not Pi Browser');
-          piSDKWorks = false;
-        }
-      } else {
-        console.log('❌ Pi-specific functions not available');
-        piSDKWorks = false;
-      }
-      
-      if (piSDKWorks) {
-        console.log('✅ CONFIRMED: Real Pi Browser!');
-      }
-      
+      console.log('Attempting Pi SDK init...');
+      await Promise.race([
+        window.Pi.init({ version: "2.0", sandbox: true }), // Change to false for production
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+      ]);
+      piSDKWorks = true;
+      console.log('✅ Pi SDK initialized!');
     } catch (err) {
-      console.log('❌ Pi SDK test failed:', err.message);
+      console.log('❌ Pi SDK failed:', err.message);
       piSDKWorks = false;
     }
-  } else {
-    console.log('❌ Skipping SDK test - mobile:', isMobile, ', SDK:', hasPiSDK);
-    piSDKWorks = false;
   }
   
   console.log('========================================');
-  console.log('FINAL DETECTION:');
-  console.log('Is Mobile:', isMobile);
-  console.log('Has Pi SDK:', hasPiSDK);
-  console.log('Pi SDK Works:', piSDKWorks);
-  console.log('RESULT: Using', piSDKWorks ? 'PI INTERFACE' : 'FIAT INTERFACE');
+  console.log('RESULT:', piSDKWorks ? 'PI INTERFACE' : 'FIAT INTERFACE');
   console.log('========================================');
   
-  // UPDATE DEBUG INDICATOR
   if (debugDiv) {
     debugDiv.innerHTML = piSDKWorks ? 
-      '✅ PI BROWSER<br><small>📱Mobile + SDK OK</small>' : 
-      '❌ FIAT MODE<br><small>' + (isMobile ? '📱Mobile No SDK' : '💻Desktop') + '</small>';
+      '✅ PI MODE<br><small>SDK OK</small>' : 
+      '❌ FIAT MODE<br><small>No SDK</small>';
     debugDiv.style.background = piSDKWorks ? '#2e7d32' : '#d32f2f';
   }
   
-  // DECISION: Use Pi interface ONLY if SDK actually works
   if (piSDKWorks) {
-    // ============== PI BROWSER ==============
-    console.log('✅✅✅ USING PI BROWSER INTERFACE ✅✅✅');
+    // PI INTERFACE
     isPiBrowser = true;
-    
-    console.log('Setting up Pi UI...');
-    
-    // SHOW Pi badge
-    const badge = document.querySelector('.pi-badge');
-    if (badge) {
-      badge.style.display = 'flex';
-      badge.style.visibility = 'visible';
-      console.log('✅ Pi badge shown');
-    }
-    
-    // SHOW Pi table row
-    const piRow = document.querySelector('.pi-row');
-    if (piRow) {
-      piRow.style.display = 'table-row';
-      piRow.style.visibility = 'visible';
-      console.log('✅ Pi row shown');
-    }
-    
-    // HIDE all fiat sections
-    const fiatSections = document.querySelectorAll('.fiat-only');
-    console.log('Hiding', fiatSections.length, 'fiat sections');
-    fiatSections.forEach((el) => {
+    document.querySelector('.pi-badge')?.setAttribute('style', 'display:flex !important; visibility:visible !important');
+    document.querySelector('.pi-row')?.setAttribute('style', 'display:table-row !important; visibility:visible !important');
+    document.querySelectorAll('.fiat-only').forEach(el => {
       el.style.display = 'none';
       el.style.visibility = 'hidden';
     });
-    console.log('✅ QR codes hidden');
-    
-    // Update button
     const btn = document.getElementById('confirmBtn');
-    if (btn) {
-      btn.textContent = '🥧 Pay with Pi Network';
-      console.log('✅ Button changed to Pi payment');
-    }
-    
-    if (debugDiv) {
-      debugDiv.innerHTML = '✅ PI BROWSER<br><small>Badge:✅ QR:❌</small>';
-    }
-    
-    console.log('========================================');
-    console.log('✅ PI INTERFACE SETUP COMPLETE');
-    console.log('========================================');
-    
+    if (btn) btn.textContent = '🥧 Pay with Pi Network';
+    console.log('✅ Pi interface ready');
   } else {
-    // ============== REGULAR BROWSER ==============
-    console.log('❌❌❌ USING REGULAR BROWSER INTERFACE ❌❌❌');
+    // FIAT INTERFACE
     isPiBrowser = false;
-    
-    console.log('Setting up Fiat UI...');
-    
-    // HIDE Pi badge
-    const badge = document.querySelector('.pi-badge');
-    if (badge) {
-      badge.style.display = 'none';
-      badge.style.visibility = 'hidden';
-      console.log('✅ Pi badge hidden');
-    }
-    
-    // HIDE Pi table row  
-    const piRow = document.querySelector('.pi-row');
-    if (piRow) {
-      piRow.style.display = 'none';
-      piRow.style.visibility = 'hidden';
-      console.log('✅ Pi row hidden');
-    }
-    
-    // SHOW all fiat sections
-    const fiatSections = document.querySelectorAll('.fiat-only');
-    console.log('Showing', fiatSections.length, 'fiat sections');
-    fiatSections.forEach((el) => {
+    document.querySelector('.pi-badge')?.setAttribute('style', 'display:none !important; visibility:hidden !important');
+    document.querySelector('.pi-row')?.setAttribute('style', 'display:none !important; visibility:hidden !important');
+    document.querySelectorAll('.fiat-only').forEach(el => {
       el.style.display = 'block';
       el.style.visibility = 'visible';
     });
-    console.log('✅ QR codes shown');
-    
-    // Update button
     const btn = document.getElementById('confirmBtn');
-    if (btn) {
-      btn.textContent = '✅ Confirm Order';
-      console.log('✅ Button changed to Confirm Order');
-    }
-    
-    if (debugDiv) {
-      debugDiv.innerHTML = '❌ REGULAR BROWSER<br><small>QR:✅ Pi:❌</small>';
-    }
-    
-    console.log('========================================');
-    console.log('✅ FIAT INTERFACE SETUP COMPLETE');
-    console.log('========================================');
+    if (btn) btn.textContent = '✅ Confirm Order';
+    console.log('✅ Fiat interface ready');
   }
   
-  // Load cart - ALWAYS DO THIS regardless of detection result
-  console.log('Loading cart...');
-  try {
-    loadOrder();
-    checkExistingOrder();
-    console.log('✅ Cart loaded successfully');
-  } catch (cartErr) {
-    console.error('❌ Error loading cart:', cartErr);
-    // Still continue even if cart fails
-  }
-  
-  console.log('✅ Page initialization complete');
+  loadOrder();
+  checkExistingOrder();
+  console.log('✅ Complete');
 });
 </script>
 </body>
