@@ -675,13 +675,36 @@ document.addEventListener('DOMContentLoaded', async function() {
       console.log('Attempting Pi SDK init...');
       await Promise.race([
         window.Pi.init({ version: "2.0", sandbox: true }), // Change to false for production
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
       ]);
-      piSDKWorks = true;
-      console.log('✅ Pi SDK initialized!');
+      
+      console.log('Init call completed. Checking if truly initialized...');
+      console.log('window.Pi.initialized =', window.Pi.initialized);
+      
+      // Wait a moment for initialization to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Check if SDK is truly initialized and connected
+      if (window.Pi.initialized === true) {
+        console.log('✅ Pi SDK fully initialized and connected!');
+        piSDKWorks = true;
+      } else {
+        console.log('❌ Pi SDK called but not fully connected (initialized =', window.Pi.initialized, ')');
+        piSDKWorks = false;
+      }
+      
     } catch (err) {
-      console.log('❌ Pi SDK failed:', err.message);
-      piSDKWorks = false;
+      console.log('❌ Pi SDK init failed/timeout:', err.message);
+      console.log('Checking initialization status anyway...');
+      console.log('window.Pi.initialized =', window.Pi?.initialized);
+      
+      // Even if init throws error, check the initialized flag
+      if (window.Pi?.initialized === true) {
+        console.log('⚠️ Init threw error but SDK is initialized - using Pi interface');
+        piSDKWorks = true;
+      } else {
+        piSDKWorks = false;
+      }
     }
   }
   
