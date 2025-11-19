@@ -351,30 +351,37 @@ const PI_EXCHANGE_RATE = 2.0;
 let isPiBrowser = false;
 let cart = [], subTotal = 0, totalWeight = 0;
 
-// —————— FIXED & SIMPLE PI DETECTION – Works 100% on 20 Nov 2025 ——————
-document.addEventListener('DOMContentLoaded', async () => {
+// —————— FINAL WORKING DETECTION – NO TIMEOUT (20 Nov 2025) ——————
+document.addEventListener('DOMContentLoaded', () => {
   const debug = document.getElementById('debug');
   isPiBrowser = false;
   if (debug) { debug.innerHTML = 'FIAT'; debug.style.background = '#d32f2f'; }
 
-  if (typeof Pi !== 'undefined') {
-    Pi.init({ version: "2.0 }).then(() => {
-      if (Pi.initialized) {
-        isPiBrowser = true;
-        if (debug) { debug.innerHTML = 'PI'; debug.style.background = '#2e7d32'; }
-        document.querySelectorAll('.pi-only').forEach(el => el.style.display = '');
-        document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'none');
-        const badge = document.querySelector('.pi-badge');
-        if (badge) badge.style.display = 'flex';
-        const row = document.querySelector('.pi-row');
-        if (row) row.style.display = 'table-row';
-        const btn = document.getElementById('confirmBtn');
-        if (btn) btn.textContent = 'Pay with Pi Network';
-      }
-    }).catch(() => {});
-  } else {
-    document.querySelectorAll('.fiat-only').forEach(el => el.style.display = '');
+  if (typeof Pi === 'undefined') {
+    loadOrder(); checkExistingOrder(); return;
   }
+
+  // Wait for Pi SDK iframe to be fully ready — this is the key fix
+  const initPi = setInterval(() => {
+    if (window.Pi && typeof Pi.createPayment === 'function') {
+      clearInterval(initPi);
+      Pi.init({ version: "2.0" }).then(() => {
+        if (Pi.initialized) {
+          isPiBrowser = true;
+          if (debug) { debug.innerHTML = 'PI'; debug.style.background = '#2e7d32'; }
+          document.querySelectorAll('.pi-only').forEach(el => el.style.display = '');
+          document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'none');
+          const badge = document.querySelector('.pi-badge'); if (badge) badge.style.display = 'flex';
+          const row   = document.querySelector('.pi-row');   if (row)   row.style.display   = 'table-row';
+          const btn   = document.getElementById('confirmBtn'); if (btn) btn.textContent = 'Pay with Pi Network';
+        }
+        loadOrder(); checkExistingOrder();
+      }).catch(() => { loadOrder(); checkExistingOrder(); });
+    }
+  }, 300);
+
+  setTimeout(() => clearInterval(initPi), 15000); // safety stop
+});
 // —————— 2. ALL YOUR ORIGINAL FUNCTIONS (100% unchanged) ——————
 function calculateShippingCost(subTotal, state, weight, method) {
   const isPickup = method === "pickup";
