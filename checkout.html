@@ -670,7 +670,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   // CRITICAL CHECK: Are we actually in sandbox environment or Pi Browser?
   const currentURL = window.location.href;
-  const isInSandbox = currentURL.includes('sandbox.minepi.com');
+  const isInSandbox = currentURL.includes('https://sandbox.minepi.com/mobile-app-ui/app/ceo-shop');
   const referrer = document.referrer || '';
   const isFromPiApp = referrer.includes('minepi.com') || referrer.includes('pi://');
   
