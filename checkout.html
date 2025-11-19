@@ -668,9 +668,20 @@ document.addEventListener('DOMContentLoaded', async function() {
   const hasPiSDK = typeof window.Pi !== 'undefined';
   console.log('Pi SDK loaded:', hasPiSDK);
   
+  // CRITICAL CHECK: Are we actually in sandbox environment or Pi Browser?
+  const currentURL = window.location.href;
+  const isInSandbox = currentURL.includes('sandbox.minepi.com');
+  const referrer = document.referrer || '';
+  const isFromPiApp = referrer.includes('minepi.com') || referrer.includes('pi://');
+  
+  console.log('Current URL:', currentURL);
+  console.log('Is in sandbox URL:', isInSandbox);
+  console.log('Referrer:', referrer);
+  console.log('Is from Pi app:', isFromPiApp);
+  
   let piSDKWorks = false;
   
-  if (hasPiSDK) {
+  if (hasPiSDK && (isInSandbox || isFromPiApp)) {
     try {
       console.log('Attempting Pi SDK init...');
       await Promise.race([
