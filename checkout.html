@@ -763,6 +763,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   console.log('Current URL:', currentURL);
   console.log('Is in iframe:', isInIframe);
+  console.log('Referrer:', referrer);
   console.log('In Pi Environment:', isInPiEnvironment);
   
   let piSDKWorks = false;
@@ -779,10 +780,24 @@ document.addEventListener('DOMContentLoaded', async function() {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       if (window.Pi.initialized === true) {
-        console.log('✅ Pi SDK fully initialized!');
-        piSDKWorks = true;
+        console.log('SDK initialized flag is true');
+        
+        // EXTRA CHECK: Try to actually call a Pi function to verify it works
+        try {
+          console.log('Testing if SDK actually works by checking host app...');
+          const hostAppInfo = await Promise.race([
+            window.Pi.getPiHostAppInfo(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+          ]);
+          console.log('✅ Pi SDK fully functional! Host app:', hostAppInfo);
+          piSDKWorks = true;
+        } catch (testErr) {
+          console.log('❌ SDK initialized but cannot communicate:', testErr.message);
+          console.log('This means: Not actually in Pi environment');
+          piSDKWorks = false;
+        }
       } else {
-        console.log('❌ SDK not fully connected');
+        console.log('❌ SDK initialized flag is false');
         piSDKWorks = false;
       }
       
@@ -791,7 +806,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       piSDKWorks = false;
     }
   } else {
-    console.log('❌ Not in Pi environment');
+    console.log('❌ Not in Pi environment (pre-check failed)');
     piSDKWorks = false;
   }
   
@@ -834,6 +849,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   checkExistingOrder();
   console.log('✅ Complete');
 });
+
 </script>
 </body>
 </html>
