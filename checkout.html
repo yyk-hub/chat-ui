@@ -707,7 +707,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       console.log('Attempting Pi SDK init...');
       await Promise.race([
         window.Pi.init({ version: "2.0", sandbox: true }), // Change to false for production
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
       ]);
       
       console.log('Init call completed. Checking if truly initialized...');
