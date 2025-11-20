@@ -552,27 +552,25 @@ async function confirmOrder() {
           memo: `Order ${order_id}`,
           metadata: { order_id, rm_amount: totalAmt }
         }, {
-          
-  onReadyForServerApproval: async (paymentId) => {
-  console.log("🔵 Calling backend APPROVE:", paymentId);
-
-  await fetch("/api/pi/approve", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ payment_id: paymentId, order_id })
-  });
-},
-  onReadyForServerCompletion: async (paymentId, txid) => {
-  console.log("🟢 Calling backend COMPLETE:", paymentId, txid);
-
-  await fetch("/api/pi/complete", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ payment_id: paymentId, txid, order_id })
-  });
-
-  await Pi.completePayment(paymentId, txid);
-},
+          onReadyForServerApproval: (paymentId) => {
+            console.log('Payment approved:', paymentId);
+          },
+          onReadyForServerCompletion: async (paymentId, txid) => {
+            console.log('Payment confirmed:', txid);
+            if (BACKEND_URL) {
+              await fetch(`${BACKEND_URL}/api/orders/${order_id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  order_status: 'Paid',
+                  pi_payment_id: paymentId,
+                  pi_txid: txid,
+                  pymt_method: 'Pi Network'
+                })
+              });
+            }
+            await Pi.completePayment(paymentId, txid);
+          },
           onCancel: () => alert('Payment cancelled.'),
           onError: (error) => alert('Payment error: ' + error.message)
         });
@@ -735,8 +733,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!hasPiSDK) {
       console.log('❌ No Pi SDK found');
     } else {
-      console.log('❌ Not in sandbox/Pi environment (URL check failed)');
-      console.log('   - Not in sandbox.minepi.com URL');
+      console.log('❌ Not in Pi environment');
+      console.log('   - Not in Pi iframe/sandbox');
       console.log('   - Not opened from Pi app');
     }
     piSDKWorks = false;
