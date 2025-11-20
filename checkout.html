@@ -343,8 +343,7 @@
 
 <script>
 /* ========================================
-   FINAL SIMPLE CHECKOUT SCRIPT
-   No mobile detection - just tests if Pi SDK works
+   COMPLETE CHECKOUT SCRIPT WITH PI AUTHENTICATION
    ======================================== */
 
 // Global constants
@@ -541,55 +540,125 @@ async function confirmOrder() {
       }
     }
 
-    // Pi payment flow
+    // Pi payment flow with authentication
     if (isPiBrowser && typeof Pi !== 'undefined') {
-      btn.innerText = "Opening Pi Wallet...";
+      btn.innerText = "Requesting permissions...";
       const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(2);
       
       try {
+        // STEP 1: Authenticate and request payment scope
+        console.log('🔐 Step 1: Requesting payment permissions...');
+        const scopes = await Pi.authenticate(['username', 'payments'], (payment) => {
+          console.log('Auth payment callback:', payment);
+        });
+        
+        console.log('✅ Permissions granted:', scopes);
+        
+        // STEP 2: Create payment
+        console.log('💰 Step 2: Creating payment for', piAmount, 'Pi');
+        btn.innerText = "Opening Pi Wallet...";
+        
         Pi.createPayment({
           amount: parseFloat(piAmount),
-          memo: `Order ${order_id}`,
-          metadata: { order_id, rm_amount: totalAmt }
+          memo: `CEO Products - Order ${order_id}`,
+          metadata: { 
+            order_id, 
+            rm_amount: totalAmt,
+            customer: name
+          }
         }, {
           onReadyForServerApproval: (paymentId) => {
-            console.log('Payment approved:', paymentId);
+            console.log('✅ Payment approved:', paymentId);
           },
+          
           onReadyForServerCompletion: async (paymentId, txid) => {
-            console.log('Payment confirmed:', txid);
+            console.log('✅ Payment confirmed on blockchain:', txid);
+            
+            // Update backend
             if (BACKEND_URL) {
-              await fetch(`${BACKEND_URL}/api/orders/${order_id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  order_status: 'Paid',
-                  pi_payment_id: paymentId,
-                  pi_txid: txid,
-                  pymt_method: 'Pi Network'
-                })
-              });
+              try {
+                await fetch(`${BACKEND_URL}/api/orders/${order_id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    order_status: 'Paid',
+                    pi_payment_id: paymentId,
+                    pi_txid: txid,
+                    pymt_method: 'Pi Network'
+                  })
+                });
+                console.log('✅ Backend updated');
+              } catch (backendErr) {
+                console.error('⚠️ Backend update failed:', backendErr);
+              }
             }
-            await Pi.completePayment(paymentId, txid);
+            
+            // Complete payment
+            try {
+              await Pi.completePayment(paymentId, txid);
+              console.log('✅ Payment completed successfully!');
+              
+              // Save order success
+              localStorage.setItem('orderPlaced', hashCart(cart));
+              localStorage.setItem('lastOrderPhone', phone);
+              localStorage.removeItem("cartItems");
+              
+              alert("✅ Payment successful! Order confirmed.");
+              
+              btn.style.display = 'none';
+              showOrderHistoryButton();
+              await viewMyOrder();
+              
+            } catch (completeErr) {
+              console.error('❌ Error completing payment:', completeErr);
+              alert('Payment processed but completion failed. Contact support with order ID: ' + order_id);
+            }
           },
-          onCancel: () => alert('Payment cancelled.'),
-          onError: (error) => alert('Payment error: ' + error.message)
+          
+          onCancel: (paymentId) => {
+            console.log('❌ Payment cancelled by user');
+            alert('Payment was cancelled. You can try again.');
+            btn.disabled = false;
+            btn.innerText = '🥧 Pay with Pi Network';
+          },
+          
+          onError: (error, payment) => {
+            console.error('❌ Payment error:', error);
+            alert('Payment error: ' + (error.message || 'Unknown error'));
+            btn.disabled = false;
+            btn.innerText = '🥧 Pay with Pi Network';
+          }
         });
-      } catch (piError) {
-        console.error('Pi payment error:', piError);
-        alert('Pi payment failed. Order saved.');
+        
+        console.log('💳 Payment dialog opened');
+        
+      } catch (authError) {
+        console.error('❌ Authentication/Payment error:', authError);
+        
+        if (authError.message && authError.message.includes('cancelled')) {
+          alert('Authentication cancelled. Please try again to complete payment.');
+        } else if (authError.message && authError.message.includes('scope')) {
+          alert('Payment permission required. Please grant access to complete purchase.');
+        } else {
+          alert('Payment failed: ' + authError.message);
+        }
+        
+        btn.disabled = false;
+        btn.innerText = '🥧 Pay with Pi Network';
       }
+      
+    } else {
+      // Fiat payment flow
+      localStorage.setItem('orderPlaced', hashCart(cart));
+      localStorage.setItem('lastOrderPhone', phone);
+      localStorage.removeItem("cartItems");
+      
+      alert("✅ Order placed! Send bank receipt via WhatsApp.");
+      
+      btn.style.display = 'none';
+      showOrderHistoryButton();
+      await viewMyOrder();
     }
-
-    localStorage.setItem('orderPlaced', hashCart(cart));
-    localStorage.setItem('lastOrderPhone', phone);
-    localStorage.removeItem("cartItems");
-    
-    alert(isPiBrowser ? "✅ Order placed! Complete payment in Pi app." 
-                      : "✅ Order placed! Send bank receipt via WhatsApp.");
-    
-    btn.style.display = 'none';
-    showOrderHistoryButton();
-    await viewMyOrder();
 
   } catch (err) {
     alert("Failed: " + err.message);
@@ -652,7 +721,7 @@ async function viewMyOrder() {
   }
 }
 
-// === SIMPLE PAGE INITIALIZATION ===
+// === PAGE INITIALIZATION ===
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
   console.log('🚀 CHECKOUT INITIALIZING');
@@ -669,35 +738,31 @@ document.addEventListener('DOMContentLoaded', async function() {
   const hasPiSDK = typeof window.Pi !== 'undefined';
   console.log('Pi SDK loaded:', hasPiSDK);
   
-  // CRITICAL CHECK: Are we inside Pi's sandbox iframe or Pi Browser?
+  // Check if in Pi environment (iframe or Pi app)
   const currentURL = window.location.href;
   const isInIframe = window.self !== window.top;
   const referrer = document.referrer || '';
   
-  // Check if parent/top frame is Pi's sandbox
   let isInPiEnvironment = false;
   try {
     if (isInIframe && window.top.location.href.includes('sandbox.minepi.com')) {
       isInPiEnvironment = true;
-      console.log('✅ Detected: Inside Pi sandbox iframe');
+      console.log('✅ In Pi sandbox iframe');
     }
   } catch (e) {
-    // Cross-origin iframe - can't access parent, but if we're in iframe with Pi SDK, likely Pi environment
     if (isInIframe && hasPiSDK) {
       isInPiEnvironment = true;
-      console.log('✅ Detected: In iframe with Pi SDK (likely sandbox)');
+      console.log('✅ In iframe with Pi SDK');
     }
   }
   
-  // Also check referrer for Pi domains
   if (referrer.includes('minepi.com') || referrer.includes('pi://')) {
     isInPiEnvironment = true;
-    console.log('✅ Detected: Opened from Pi app/domain');
+    console.log('✅ Opened from Pi app');
   }
   
   console.log('Current URL:', currentURL);
   console.log('Is in iframe:', isInIframe);
-  console.log('Referrer:', referrer);
   console.log('In Pi Environment:', isInPiEnvironment);
   
   let piSDKWorks = false;
@@ -706,37 +771,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
       console.log('Attempting Pi SDK init...');
       await Promise.race([
-        window.Pi.init({ version: "2.0", sandbox: true }), // Change to false for production
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+        window.Pi.init({ version: "2.0", sandbox: true }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
       ]);
       
-      console.log('Init call completed. Checking if truly initialized...');
-      console.log('window.Pi.initialized =', window.Pi.initialized);
-      
-      // Wait a moment for initialization to complete
+      console.log('Init call completed. Checking...');
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Check if SDK is truly initialized and connected
       if (window.Pi.initialized === true) {
-        console.log('✅ Pi SDK fully initialized and connected!');
+        console.log('✅ Pi SDK fully initialized!');
         piSDKWorks = true;
       } else {
-        console.log('❌ Pi SDK called but not fully connected (initialized =', window.Pi.initialized, ')');
+        console.log('❌ SDK not fully connected');
         piSDKWorks = false;
       }
       
     } catch (err) {
-      console.log('❌ Pi SDK init failed/timeout:', err.message);
+      console.log('❌ Pi SDK init failed:', err.message);
       piSDKWorks = false;
     }
   } else {
-    if (!hasPiSDK) {
-      console.log('❌ No Pi SDK found');
-    } else {
-      console.log('❌ Not in Pi environment');
-      console.log('   - Not in Pi iframe/sandbox');
-      console.log('   - Not opened from Pi app');
-    }
+    console.log('❌ Not in Pi environment');
     piSDKWorks = false;
   }
   
@@ -752,7 +807,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
   
   if (piSDKWorks) {
-    // PI INTERFACE
     isPiBrowser = true;
     document.querySelector('.pi-badge')?.setAttribute('style', 'display:flex !important; visibility:visible !important');
     document.querySelector('.pi-row')?.setAttribute('style', 'display:table-row !important; visibility:visible !important');
@@ -764,7 +818,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (btn) btn.textContent = '🥧 Pay with Pi Network';
     console.log('✅ Pi interface ready');
   } else {
-    // FIAT INTERFACE
     isPiBrowser = false;
     document.querySelector('.pi-badge')?.setAttribute('style', 'display:none !important; visibility:hidden !important');
     document.querySelector('.pi-row')?.setAttribute('style', 'display:none !important; visibility:hidden !important');
