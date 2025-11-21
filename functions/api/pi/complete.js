@@ -9,10 +9,10 @@ export async function onRequestPost(context) {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
-
-try {
-const { payment_id, txid, order_id } = await request.json();
-console.log('Complete payment request:', { payment_id, txid, order_id });
+  try {
+    const { payment_id, txid, order_id } = await request.json();
+    console.log('Complete payment request:', { payment_id, txid, order_id });
+    
     if (!payment_id || !txid || !order_id) {
       return new Response(JSON.stringify({ 
         success: false, 
