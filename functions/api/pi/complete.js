@@ -16,15 +16,16 @@ export async function onRequestPost(context) {
     if (!payment_id || !txid || !order_id) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Missing required fields: payment_id, txid, or order_id' 
+       error: 'Missing required fields: payment_id, txid, or order_id' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-
-    // Verify payment completed on Pi blockchain
+    
+    // Verify payment with Pi API
     const PI_API_KEY = env.PI_API_KEY;
+    
     if (!PI_API_KEY) {
       throw new Error('PI_API_KEY not configured in environment');
     }
