@@ -1,40 +1,48 @@
-// pi-auth.js - Add this to your Pi site
-// Include this script in all pages that need Pi authentication
+// pi-auth.js - Fixed version
+// Only authenticates when needed, not on page load
 
 (function() {
   'use strict';
 
-  // Pi Auth Manager
   const PiAuth = {
     user: null,
     accessToken: null,
+    scopes: null,
 
-    // Initialize and authenticate user
+    // Authenticate user (call this before payment)
     async authenticate() {
       try {
-        // Check if Pi SDK is loaded
         if (typeof Pi === 'undefined') {
           console.error('Pi SDK not loaded');
-          return null;
+          throw new Error('Pi SDK not available');
         }
 
-        // Authenticate with Pi
-        const scopes = ['username', 'payments'];
-        const authResult = await Pi.authenticate(scopes, onIncompletePaymentFound);
+        console.log('🔐 Authenticating with Pi...');
+        
+        // Request username and payments scope
+        const authResult = await Pi.authenticate(
+          ['username', 'payments'], 
+          onIncompletePaymentFound
+        );
         
         this.user = authResult.user;
         this.accessToken = authResult.accessToken;
+        this.scopes = authResult.scopes;
         
         // Store in sessionStorage
         sessionStorage.setItem('pi_user', JSON.stringify(this.user));
         sessionStorage.setItem('pi_token', this.accessToken);
+        sessionStorage.setItem('pi_scopes', JSON.stringify(this.scopes));
         
-        console.log('Pi Authentication successful:', this.user);
-        return this.user;
+        console.log('✅ Authentication successful');
+        console.log('User:', this.user.username);
+        console.log('Scopes:', this.scopes);
+        
+        return authResult;
         
       } catch (error) {
-        console.error('Pi Authentication failed:', error);
-        return null;
+        console.error('❌ Authentication failed:', error);
+        throw error;
       }
     },
 
@@ -46,103 +54,61 @@
       if (storedUser) {
         this.user = JSON.parse(storedUser);
         this.accessToken = sessionStorage.getItem('pi_token');
+        
+        const storedScopes = sessionStorage.getItem('pi_scopes');
+        if (storedScopes) {
+          this.scopes = JSON.parse(storedScopes);
+        }
+        
         return this.user;
       }
       
       return null;
     },
 
+    // Check if user has payment scope
+    hasPaymentScope() {
+      if (!this.scopes && sessionStorage.getItem('pi_scopes')) {
+        this.scopes = JSON.parse(sessionStorage.getItem('pi_scopes'));
+      }
+      return this.scopes && this.scopes.includes('payments');
+    },
+
     // Sign out
     signOut() {
       this.user = null;
       this.accessToken = null;
+      this.scopes = null;
       sessionStorage.removeItem('pi_user');
       sessionStorage.removeItem('pi_token');
+      sessionStorage.removeItem('pi_scopes');
     },
 
-    // Check if user is authenticated
+    // Check if authenticated
     isAuthenticated() {
       return this.getCurrentUser() !== null;
     }
   };
 
-  // Handle incomplete payments (required by Pi SDK)
+  // Handle incomplete payments
   function onIncompletePaymentFound(payment) {
-    console.log('Incomplete payment found:', payment);
-    // Handle incomplete payment - show UI to complete it
-    // You can store this and show a notification
-    return Pi.openPaymentDialog(payment.identifier);
-  }
-
-  // Auto-authenticate on page load if in Pi Browser
-  window.addEventListener('load', async () => {
-    // Check if running in Pi Browser
-    const isPiBrowser = typeof Pi !== 'undefined';
+    console.log('⚠️ Incomplete payment found:', payment);
+    // Show dialog to complete
+    const complete = confirm(
+      `You have an incomplete payment of ${payment.amount} Pi.\n\n` +
+      `Would you like to complete it now?`
+    );
     
-    if (isPiBrowser && !PiAuth.isAuthenticated()) {
-      // Show loading indicator
-      showPiAuthLoading();
-      
-      // Authenticate
-      const user = await PiAuth.authenticate();
-      
-      if (user) {
-        // Update UI with user info
-        updateUIWithPiUser(user);
-      } else {
-        alert('Pi authentication failed. Please try again.');
-      }
-      
-      hidePiAuthLoading();
-    }
-  });
-
-  // UI Helper Functions
-  function showPiAuthLoading() {
-    const loader = document.createElement('div');
-    loader.id = 'pi-auth-loader';
-    loader.style.cssText = `
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7); z-index: 9999;
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 18px;
-    `;
-    loader.innerHTML = '<div>🥧 Connecting to Pi Network...</div>';
-    document.body.appendChild(loader);
-  }
-
-  function hidePiAuthLoading() {
-    const loader = document.getElementById('pi-auth-loader');
-    if (loader) loader.remove();
-  }
-
-  function updateUIWithPiUser(user) {
-    // Update header with Pi username
-    const headerTitle = document.querySelector('.header-title');
-    if (headerTitle) {
-      headerTitle.innerHTML = `☕ CEO Shop <span style="font-size:12px; color:#14b47e;">(${user.username})</span>`;
-    }
-    
-    // Show welcome message
-    const container = document.querySelector('.container');
-    if (container && !document.getElementById('pi-welcome')) {
-      const welcome = document.createElement('div');
-      welcome.id = 'pi-welcome';
-      welcome.style.cssText = `
-        background: linear-gradient(135deg, #7b2cbf 0%, #5a189a 100%);
-        color: white; padding: 12px 16px; border-radius: 12px;
-        margin-bottom: 16px; text-align: center;
-        box-shadow: 0 4px 12px rgba(123,44,191,0.3);
-      `;
-      welcome.innerHTML = `
-        <strong>🥧 Welcome, ${user.username}!</strong><br>
-        <small>Pay with Pi • Earn rewards • Join the future</small>
-      `;
-      container.insertBefore(welcome, container.firstChild);
+    if (complete) {
+      return Pi.openPaymentDialog(payment.identifier);
     }
   }
 
   // Expose PiAuth globally
   window.PiAuth = PiAuth;
+  
+  // DO NOT auto-authenticate on page load
+  // Let the payment flow handle authentication when needed
+  console.log('✅ PiAuth loaded (auth will happen on payment)');
 
 })();
