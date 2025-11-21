@@ -37,12 +37,13 @@ export async function onRequestPost(context) {
         }
       }
     );
-
+    
     if (!verifyResponse.ok) {
       throw new Error(`Pi API verification failed: ${verifyResponse.status}`);
     }
-
+    
     const paymentData = await verifyResponse.json();
+    console.log('Payment data from Pi:', paymentData);
 
     // Complete payment on Pi Network
     if (!paymentData.status.developer_completed) {
