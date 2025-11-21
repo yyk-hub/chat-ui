@@ -798,17 +798,33 @@ document.addEventListener('DOMContentLoaded', async function() {
       if (window.Pi.initialized === true) {
         console.log('SDK initialized=true, verifying...');
         
-        // Verify SDK actually works
+        // Verify SDK actually works - try multiple checks
+        let verified = false;
+        
+        // Try 1: Get host app info
         try {
           const hostInfo = await Promise.race([
             window.Pi.getPiHostAppInfo(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
           ]);
-          console.log('✅ VERIFIED: Pi SDK functional!', hostInfo);
+          console.log('✅ VERIFIED Method 1: Host app info', hostInfo);
+          verified = true;
+        } catch (err1) {
+          console.log('⚠️ Method 1 failed:', err1.message);
+          
+          // Try 2: Check if we're in iframe AND SDK says initialized
+          // If in iframe with initialized SDK, likely in Pi environment
+          if (isInIframe) {
+            console.log('✅ VERIFIED Method 2: In iframe + SDK initialized');
+            verified = true;
+          }
+        }
+        
+        if (verified) {
           piSDKWorks = true;
           sessionStorage.setItem('isPiEnvironment', 'true');
-        } catch (verifyErr) {
-          console.log('❌ SDK init but cannot verify:', verifyErr.message);
+          console.log('✅ Pi environment confirmed and saved to session');
+        } else {
           piSDKWorks = false;
           sessionStorage.removeItem('isPiEnvironment');
         }
@@ -868,7 +884,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   checkExistingOrder();
   console.log('✅ Initialization complete');
 });
-
 </script>
 </body>
 </html>
