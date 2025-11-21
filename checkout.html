@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <title>Checkout - CEO Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta property="pi:metadata" content='{"name":"CEO Products Shop","description":"Premium health and wellness products","image":"https://ceo-9xi.pages.dev/img/logo.jpg"}'>
-  
+  <meta property="pi:metadata" content='{"name":"CEO Products Shop","description":"Premium health and wellness products","image":"https://ceo-9xi.pages.dev/img/logo.jpg"}'>
+
   <style>
     body {
       background: #f4ecd6;
@@ -170,9 +170,8 @@
       font-weight: 500;
     }
 
-    /* Pi-specific styles */
     .pi-only {
-      display: none; /* Hidden by default - removed !important */
+      display: none;
     }
     
     .fiat-only {
@@ -184,7 +183,7 @@
       color: white;
       padding: 10px 16px;
       border-radius: 12px;
-      display: none; /* Will be changed to flex by JS */
+      display: none;
       align-items: center;
       justify-content: center;
       gap: 8px;
@@ -192,14 +191,13 @@
       font-weight: 600;
     }
     
-    /* Pi table row - full width background */
     tr.pi-row {
-      background: #f3e5f5 !important; /* Light purple background for entire row */
+      background: #f3e5f5 !important;
     }
     
     tr.pi-row th,
     tr.pi-row td {
-      background: transparent !important; /* Remove individual cell backgrounds */
+      background: transparent !important;
       color: #7b2cbf !important;
       font-weight: 700;
     }
@@ -223,11 +221,11 @@
   </style>
 </head>
 <body>
-  <!-- DEBUG INDICATOR - Remove after testing -->
+  <!-- DEBUG INDICATOR -->
   <div id="debug" style="position:fixed; top:0; left:0; background:orange; color:white; padding:10px; z-index:9999; font-size:12px; font-weight:bold; border-radius:0 0 8px 0;">
     🔍 DETECTING...
   </div>
-  
+
   <div class="header">
     <a href="cart.html" class="home-btn">🛒 Cart</a>
     <h2 class="header-title">Checkout</h2>
@@ -236,12 +234,10 @@
 
   <div class="container">
     
-    <!-- Pi Badge (only shows in Pi Browser) -->
     <div class="pi-badge pi-only">
       🥧 Pay with Pi Network • Secure & Instant
     </div>
 
-    <!-- DELIVERY DETAILS + SHIPPING METHOD -->
     <div class="section">
       <h3>🚚 Delivery Details</h3>
       <label>Name</label>
@@ -265,7 +261,6 @@
       <label>Country</label>
       <input type="text" id="custCountry" value="Malaysia" readonly>
 
-      <!-- SHIPPING METHOD -->
       <label>Shipping Option</label>
       <select id="shippingMethod">
         <option value="courier">Standard Courier</option>
@@ -277,7 +272,6 @@
       </p>
     </div>
 
-    <!-- PAYMENT (only show in normal browser) -->
     <div class="section fiat-only">
       <h3>💳 Payment</h3>
       <p>Scan one of the QR codes below to make payment:</p>
@@ -296,7 +290,6 @@
       </p>
     </div>
 
-    <!-- ORDER SUMMARY -->
     <div class="section">
       <h3>Order Summary</h3>
       <div id="cart-items"></div>
@@ -321,7 +314,6 @@
           <th style="text-align:left; padding:8px 0; color:#996600;">Total Amount</th>
           <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
         </tr>
-        <!-- Pi Total Row (only in Pi Browser) - with unified background -->
         <tr class="pi-only pi-row">
           <th style="text-align:left; padding:8px 0;">Total in Pi 🥧</th>
           <td id="pi-total" style="text-align:right;">π 0.00</td>
@@ -332,35 +324,21 @@
       </p>
     </div>
 
-    <!-- CONFIRM BUTTON -->
     <button class="confirm-btn" id="confirmBtn" onclick="confirmOrder()">✅ Confirm Order</button>
 
-    <!-- ORDER DISPLAY + PRINT -->
     <div id="OrderDisplay" style="margin-top:20px; font-size:14px; min-height:30px;"></div>
 
   </div>
+
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script src="js/pi-auth.js"></script>
+<script src="js/pi-payment.js"></script>
 
 <script>
-/* ========================================
-   CHECKOUT SCRIPT WITH SESSION PERSISTENCE
-   Remembers Pi environment across navigation
-   ======================================== */
-
-// Global constants
-const BACKEND_URL = "";
+// === CONFIGURATION ===
 const PI_EXCHANGE_RATE = 2.0;
 let isPiBrowser = false;
-
-/* ========================================
-   CHECKOUT SCRIPT WITH SESSION PERSISTENCE
-   Remembers Pi environment across navigation
-   ======================================== */
-
-// Global constants
-const BACKEND_URL = "";
-const PI_EXCHANGE_RATE = 2.0;
-let isPiBrowser = false;
+let cart = [], subTotal = 0, totalWeight = 0;
 
 // === SHIPPING CALCULATION ===
 function calculateShippingCost(subTotal, state, weight, method) {
@@ -374,9 +352,7 @@ function calculateShippingCost(subTotal, state, weight, method) {
   return { cost: 10, note: "Standard Courier", eta: "1–4 days" };
 }
 
-// === CART & ORDER MANAGEMENT ===
-let cart = [], subTotal = 0, totalWeight = 0;
-
+// === CART MANAGEMENT ===
 function loadOrder() {
   cart = JSON.parse(localStorage.getItem("cartItems")) || [];
   const itemsDiv = document.getElementById("cart-items");
@@ -442,7 +418,7 @@ function updateSummary() {
   if (el) el.addEventListener("change", updateSummary);
 });
 
-// === DUPLICATE ORDER PREVENTION ===
+// === ORDER MANAGEMENT ===
 function hashCart(cartItems) {
   return btoa(JSON.stringify(cartItems.map(i => ({
     name: i.name, qty: i.qty, price: i.price
@@ -479,7 +455,7 @@ function showOrderHistoryButton() {
   }
 }
 
-// === CONFIRM ORDER ===
+// === CONFIRM ORDER - INTEGRATED WITH PI-PAYMENT.JS ===
 async function confirmOrder() {
   const btn = document.getElementById("confirmBtn");
   if (!btn || btn.disabled) return;
@@ -520,7 +496,7 @@ async function confirmOrder() {
   const totalAmt = subTotal + shippingCost;
   const order_id = "ORD" + Date.now();
 
-  const payload = {
+  const orderData = {
     order_id, cus_name: name, cus_address: address, postcode,
     state_to, country: "Malaysia", phone,
     prod_name: cart.map(i => i.name).join(", "),
@@ -529,182 +505,61 @@ async function confirmOrder() {
     shipping_method: method === "pickup" ? "Self Pickup" : 
                      method === "express" ? "Express Free" : "Standard Courier",
     delivery_eta: eta,
-    pymt_method: isPiBrowser ? "Pi Network" : "FPX",
+    pymt_method: isPiBrowser ? "Pi Network" : "Bank Transfer",
     order_status: "Pending Payment",
     courier_name: method === "pickup" ? "Self Pickup" : "City-Link",
     tracking_link: ""
   };
 
   try {
-    if (BACKEND_URL) {
-      const res = await fetch(`${BACKEND_URL}/api/orders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+    // Save order to database
+    const res = await fetch(`/api/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData)
+    });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          console.log('Order saved to backend');
-        }
-      }
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Failed to save order");
 
-    // Pi payment flow with authentication
-    if (isPiBrowser && typeof Pi !== 'undefined') {
-      btn.innerText = "Requesting permissions...";
-      const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(2);
+    console.log('✅ Order saved:', order_id);
+
+    // Process payment based on browser
+    if (isPiBrowser && typeof PiPayment !== 'undefined') {
+      // Use your pi-payment.js
+      btn.innerText = "Authenticating...";
       
       try {
-        // STEP 1: Authenticate and request payment scope
-        console.log('🔐 Step 1: Requesting payment permissions...');
-        
-        let hasPaymentScope = false;
-        
-        try {
-          const scopes = await Promise.race([
-            Pi.authenticate(['username', 'payments'], (payment) => {
-              console.log('Auth payment callback:', payment);
-            }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('auth timeout')), 10000))
-          ]);
-          
-          console.log('✅ Permissions granted:', scopes);
-          hasPaymentScope = true;
-        } catch (authErr) {
-          console.log('⚠️ Authentication timeout/failed:', authErr.message);
-          console.log('Attempting payment without pre-authentication (sandbox test mode)');
-          hasPaymentScope = false; // Will try anyway
+        // Show Pi amount
+        const piAmount = PiPayment.rmToPi(totalAmt);
+        const confirmed = confirm(
+          `Order Total: RM ${totalAmt.toFixed(2)}\n` +
+          `Pi Amount: π ${piAmount}\n\n` +
+          `Proceed with Pi payment?`
+        );
+
+        if (!confirmed) {
+          btn.disabled = false;
+          btn.innerText = "🥧 Pay with Pi Network";
+          return;
         }
-        
-        // STEP 2: Create payment (client-side approval for testing)
-        console.log('💰 Step 2: Creating payment for', piAmount, 'Pi');
+
+        // Create Pi payment using your pi-payment.js
         btn.innerText = "Opening Pi Wallet...";
+        await PiPayment.createPayment(orderData);
+
+        // Success handled by pi-payment.js callbacks
         
-        // For sandbox/testing without backend, we handle approval on client side
-        const paymentData = {
-          amount: parseFloat(piAmount),
-          memo: `CEO Products - Order ${order_id}`,
-          metadata: { 
-            order_id, 
-            rm_amount: totalAmt,
-            customer: name
-          }
-        };
-        
-        console.log('Creating payment with data:', paymentData);
-        
-        const paymentCallbacks = {
-          onReadyForServerApproval: async (paymentId) => {
-            console.log('⏳ Payment ready for server approval:', paymentId);
-            
-            // CRITICAL: Approve the payment immediately (no backend)
-            try {
-              console.log('Approving payment on server side (simulated)...');
-              
-              // Call the platform API to approve (if you have backend)
-              if (BACKEND_URL) {
-                await fetch(`${BACKEND_URL}/api/approve_payment`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ paymentId })
-                });
-              } else {
-                // No backend - payment should auto-approve OR check portal settings
-                console.log('⚠️ No backend URL - payment needs manual approval in Pi Developer Portal');
-                console.log('OR set "Server Approval Required" to NO in app settings');
-              }
-              
-              console.log('✅ Approval stage complete');
-            } catch (approvalErr) {
-              console.error('❌ Approval failed:', approvalErr);
-            }
-          },
-          
-          onReadyForServerCompletion: async (paymentId, txid) => {
-            console.log('🎉 Payment READY FOR COMPLETION!');
-            console.log('Payment ID:', paymentId);
-            console.log('Transaction ID:', txid);
-            
-            try {
-              // Complete the payment
-              console.log('Calling Pi.completePayment...');
-              await Pi.completePayment(paymentId, txid);
-              console.log('✅ Payment completed!');
-              
-              // Update backend if available
-              if (BACKEND_URL) {
-                try {
-                  await fetch(`${BACKEND_URL}/api/orders/${order_id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      order_status: 'Paid',
-                      pi_payment_id: paymentId,
-                      pi_txid: txid,
-                      pymt_method: 'Pi Network'
-                    })
-                  });
-                  console.log('✅ Backend updated');
-                } catch (backendErr) {
-                  console.error('⚠️ Backend update skipped:', backendErr);
-                }
-              }
-              
-              // Save order success
-              localStorage.setItem('orderPlaced', hashCart(cart));
-              localStorage.setItem('lastOrderPhone', phone);
-              localStorage.removeItem("cartItems");
-              
-              alert("✅ Payment successful! Order #" + order_id + " confirmed.");
-              
-              btn.style.display = 'none';
-              showOrderHistoryButton();
-              await viewMyOrder();
-              
-            } catch (completeErr) {
-              console.error('❌ Completion error:', completeErr);
-              alert('Payment error: ' + completeErr.message);
-              btn.disabled = false;
-              btn.innerText = '🥧 Pay with Pi Network';
-            }
-          },
-          
-          onCancel: (paymentId) => {
-            console.log('❌ Payment cancelled by user');
-            alert('Payment was cancelled. You can try again.');
-            btn.disabled = false;
-            btn.innerText = '🥧 Pay with Pi Network';
-          },
-          
-          onError: (error, payment) => {
-            console.error('❌ Payment error:', error);
-            alert('Payment error: ' + (error.message || 'Unknown error'));
-            btn.disabled = false;
-            btn.innerText = '🥧 Pay with Pi Network';
-          }
-        });
-        
-        console.log('💳 Payment dialog opened');
-        
-      } catch (authError) {
-        console.error('❌ Authentication/Payment error:', authError);
-        
-        if (authError.message && authError.message.includes('cancelled')) {
-          alert('Authentication cancelled. Please try again to complete payment.');
-        } else if (authError.message && authError.message.includes('scope')) {
-          alert('Payment permission required. Please grant access to complete purchase.');
-        } else {
-          alert('Payment failed: ' + authError.message);
-        }
-        
+      } catch (piErr) {
+        console.error('Pi payment error:', piErr);
+        alert('Payment failed: ' + piErr.message);
         btn.disabled = false;
-        btn.innerText = '🥧 Pay with Pi Network';
+        btn.innerText = "🥧 Pay with Pi Network";
       }
       
     } else {
-      // Fiat payment flow
+      // Fiat payment
       localStorage.setItem('orderPlaced', hashCart(cart));
       localStorage.setItem('lastOrderPhone', phone);
       localStorage.removeItem("cartItems");
@@ -717,6 +572,7 @@ async function confirmOrder() {
     }
 
   } catch (err) {
+    console.error('Order error:', err);
     alert("Failed: " + err.message);
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
@@ -732,52 +588,50 @@ async function viewMyOrder() {
   display.innerHTML = "<p style='color:#666;'>Loading order...</p>";
 
   try {
-    if (BACKEND_URL) {
-      const res = await fetch(`${BACKEND_URL}/api/orders?phone=${encodeURIComponent(phone)}`);
-      if (res.ok) {
-        const orders = await res.json();
-        
-        if (orders?.length) {
-          const o = orders[0];
-          display.innerHTML = `
-            <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;">
-              <p><strong>Order ID:</strong> ${o.order_id}</p>
-              <p><strong>Customer:</strong> ${o.cus_name}</p>
-              <p><strong>Delivery:</strong> ${o.cus_address}, ${o.postcode}, ${o.state_to}</p>
-              <p><strong>Method:</strong> ${o.shipping_method} • ${o.delivery_eta}</p>
-              <p><strong>Product(s):</strong> ${o.prod_name}</p>
-              <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg</p>
-              <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
-              <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
-              <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
-              <p style="font-size:1.1em;"><strong>Total:</strong> 
-                <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
-              </p>
-              <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
-              ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until shipped.</p>'}
-              ${!isPiBrowser ? `<p class="whatsapp-instruction">Send bank receipt via <a href="index.html#whatsapp" target="_blank">WhatsApp</a>.</p>` : ''}
-            </div>
-          `;
-
-          const printBtn = document.createElement("button");
-          printBtn.textContent = "Print (PDF)";
-          printBtn.className = "confirm-btn";
-          printBtn.style.background = "#996600";
-          printBtn.style.marginTop = "15px";
-          printBtn.onclick = () => window.print();
-          display.appendChild(printBtn);
-          return;
-        }
-      }
-    }
+    const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const orders = await res.json();
     
-    display.innerHTML = "<p>No orders found.</p>";
+    if (!orders?.length) {
+      display.innerHTML = "<p>No orders found.</p>";
+      return;
+    }
+
+    const o = orders[0];
+    display.innerHTML = `
+      <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;">
+        <p><strong>Order ID:</strong> ${o.order_id}</p>
+        <p><strong>Customer:</strong> ${o.cus_name}</p>
+        <p><strong>Delivery:</strong> ${o.cus_address}, ${o.postcode}, ${o.state_to}</p>
+        <p><strong>Method:</strong> ${o.shipping_method} • ${o.delivery_eta}</p>
+        <p><strong>Product(s):</strong> ${o.prod_name}</p>
+        <p><strong>Weight:</strong> ${o.shipping_wt?.toFixed(2)} kg</p>
+        <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
+        <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
+        <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
+        <p style="font-size:1.1em;"><strong>Total:</strong> 
+          <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
+        </p>
+        <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
+        ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until shipped.</p>'}
+        ${!isPiBrowser ? `<p class="whatsapp-instruction">Send bank receipt via <a href="index.html#whatsapp" target="_blank">WhatsApp</a>.</p>` : ''}
+      </div>
+    `;
+
+    const printBtn = document.createElement("button");
+    printBtn.textContent = "Print (PDF)";
+    printBtn.className = "confirm-btn";
+    printBtn.style.background = "#996600";
+    printBtn.style.marginTop = "15px";
+    printBtn.onclick = () => window.print();
+    display.appendChild(printBtn);
+
   } catch (err) {
     display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
   }
 }
 
-// === PAGE INITIALIZATION WITH SESSION PERSISTENCE ===
+// === PAGE INITIALIZATION - FIXED DETECTION ===
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
   console.log('🚀 CHECKOUT INITIALIZING');
@@ -785,153 +639,81 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   const debugDiv = document.getElementById('debug');
   if (debugDiv) {
-    debugDiv.textContent = '🔍 Detecting environment...';
+    debugDiv.textContent = '🔍 Detecting...';
     debugDiv.style.background = 'orange';
   }
   
-  await new Promise(resolve => setTimeout(resolve, 800));
+  await new Promise(r => setTimeout(r, 1000));
   
   const hasPiSDK = typeof window.Pi !== 'undefined';
-  console.log('Pi SDK loaded:', hasPiSDK);
-  
-  // Check environment with session persistence
-  const currentURL = window.location.href;
   const isInIframe = window.self !== window.top;
-  const referrer = document.referrer || '';
+  const sessionPi = sessionStorage.getItem('isPiEnvironment') === 'true';
   
-  // Check session storage for previous detection
-  const sessionPiEnv = sessionStorage.getItem('isPiEnvironment');
-  console.log('Session storage isPiEnvironment:', sessionPiEnv);
-  
-  let isInPiEnvironment = false;
-  
-  // Method 1: Check parent frame
-  try {
-    if (isInIframe && window.top.location.href.includes('sandbox.minepi.com')) {
-      isInPiEnvironment = true;
-      console.log('✅ Method 1: Parent is sandbox.minepi.com');
-    }
-  } catch (e) {
-    // Cross-origin, can't access parent
-  }
-  
-  // Method 2: Referrer check
-  if (referrer.includes('sandbox.minepi.com') || referrer.includes('minepi.com')) {
-    isInPiEnvironment = true;
-    console.log('✅ Method 2: Referrer from Pi domain');
-  }
-  
-  // Method 3: Session persistence (trusted if in iframe with SDK)
-  if (sessionPiEnv === 'true' && isInIframe && hasPiSDK) {
-    isInPiEnvironment = true;
-    console.log('✅ Method 3: Session says Pi environment');
-  }
-  
-  // Method 4: In iframe with SDK (potential Pi environment)
-  if (isInIframe && hasPiSDK && !isInPiEnvironment) {
-    // Might be Pi, need to verify
-    console.log('⚠️ In iframe with SDK - needs verification');
-  }
-  
-  console.log('URL:', currentURL);
+  console.log('Pi SDK loaded:', hasPiSDK);
   console.log('In iframe:', isInIframe);
-  console.log('Referrer:', referrer);
-  console.log('Initial detection - In Pi Environment:', isInPiEnvironment);
+  console.log('Session Pi:', sessionPi);
   
-  let piSDKWorks = false;
+  let piWorks = false;
   
-  if (hasPiSDK && (isInPiEnvironment || isInIframe)) {
+  if (hasPiSDK && (isInIframe || sessionPi)) {
     try {
-      console.log('Testing Pi SDK...');
-      await Promise.race([
-        window.Pi.init({ version: "2.0", sandbox: true }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-      ]);
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('Initializing Pi SDK...');
+      await window.Pi.init({ version: "2.0", sandbox: true });
+      await new Promise(r => setTimeout(r, 500));
       
       if (window.Pi.initialized === true) {
-        console.log('SDK initialized=true, verifying...');
+        console.log('SDK initialized, verifying...');
         
-        // Verify SDK actually works - try multiple checks
-        let verified = false;
-        
-        // Try 1: Get host app info
         try {
-          const hostInfo = await Promise.race([
+          await Promise.race([
             window.Pi.getPiHostAppInfo(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
           ]);
-          console.log('✅ VERIFIED Method 1: Host app info', hostInfo);
-          verified = true;
-        } catch (err1) {
-          console.log('⚠️ Method 1 failed:', err1.message);
-          
-          // Try 2: Check if we're in iframe AND SDK says initialized
-          // If in iframe with initialized SDK, likely in Pi environment
+          console.log('✅ Pi SDK verified!');
+          piWorks = true;
+        } catch (verifyErr) {
+          console.log('Verify timeout, using fallback...');
           if (isInIframe) {
-            console.log('✅ VERIFIED Method 2: In iframe + SDK initialized');
-            verified = true;
+            console.log('✅ In iframe + SDK init = Pi environment');
+            piWorks = true;
           }
         }
         
-        if (verified) {
-          piSDKWorks = true;
+        if (piWorks) {
           sessionStorage.setItem('isPiEnvironment', 'true');
-          console.log('✅ Pi environment confirmed and saved to session');
-        } else {
-          piSDKWorks = false;
-          sessionStorage.removeItem('isPiEnvironment');
         }
-      } else {
-        console.log('SDK initialized=false');
-        piSDKWorks = false;
-        sessionStorage.removeItem('isPiEnvironment');
       }
-      
     } catch (err) {
-      console.log('❌ SDK init failed:', err.message);
-      piSDKWorks = false;
+      console.log('SDK init failed:', err.message);
       sessionStorage.removeItem('isPiEnvironment');
     }
   } else {
-    console.log('Skipping SDK test - not in Pi environment');
-    piSDKWorks = false;
+    console.log('No Pi environment detected');
     sessionStorage.removeItem('isPiEnvironment');
   }
   
   console.log('========================================');
-  console.log('FINAL RESULT:', piSDKWorks ? 'PI INTERFACE ✅' : 'FIAT INTERFACE ❌');
+  console.log('RESULT:', piWorks ? 'PI INTERFACE ✅' : 'FIAT INTERFACE ❌');
   console.log('========================================');
   
   if (debugDiv) {
-    debugDiv.innerHTML = piSDKWorks ? 
-      '✅ PI MODE<br><small>Sandbox/Pi Browser</small>' : 
-      '❌ FIAT MODE<br><small>Regular Browser</small>';
-    debugDiv.style.background = piSDKWorks ? '#2e7d32' : '#d32f2f';
+    debugDiv.innerHTML = piWorks ? '✅ PI MODE<br><small>Sandbox/Pi Browser</small>' : '❌ FIAT MODE<br><small>Regular Browser</small>';
+    debugDiv.style.background = piWorks ? '#2e7d32' : '#d32f2f';
   }
   
-  if (piSDKWorks) {
-    isPiBrowser = true;
-    document.querySelector('.pi-badge')?.setAttribute('style', 'display:flex !important; visibility:visible !important');
-    document.querySelector('.pi-row')?.setAttribute('style', 'display:table-row !important; visibility:visible !important');
-    document.querySelectorAll('.fiat-only').forEach(el => {
-      el.style.display = 'none';
-      el.style.visibility = 'hidden';
-    });
-    const btn = document.getElementById('confirmBtn');
-    if (btn) btn.textContent = '🥧 Pay with Pi Network';
+  isPiBrowser = piWorks;
+  
+  if (piWorks) {
+    document.querySelector('.pi-badge').style.cssText = 'display:flex !important; visibility:visible !important';
+    document.querySelector('.pi-row').style.cssText = 'display:table-row !important; visibility:visible !important';
+    document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'none');
+    document.getElementById('confirmBtn').textContent = '🥧 Pay with Pi Network';
     console.log('✅ Pi interface activated');
   } else {
-    isPiBrowser = false;
-    document.querySelector('.pi-badge')?.setAttribute('style', 'display:none !important; visibility:hidden !important');
-    document.querySelector('.pi-row')?.setAttribute('style', 'display:none !important; visibility:hidden !important');
-    document.querySelectorAll('.fiat-only').forEach(el => {
-      el.style.display = 'block';
-      el.style.visibility = 'visible';
-    });
-    const btn = document.getElementById('confirmBtn');
-    if (btn) btn.textContent = '✅ Confirm Order';
+    document.querySelector('.pi-badge').style.cssText = 'display:none !important';
+    document.querySelector('.pi-row').style.cssText = 'display:none !important';
+    document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'block');
+    document.getElementById('confirmBtn').textContent = '✅ Confirm Order';
     console.log('✅ Fiat interface activated');
   }
   
