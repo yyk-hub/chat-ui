@@ -477,9 +477,9 @@ async function confirmOrder() {
     return;
   }
 
-  const validPickupStates = ["Kuala Lumpur", "Kota Kinabalu", "Kuching", "Penang", "Johor Bahru"];
+  const validPickupStates = ["Kuala Lumpur", "Sabah", "Sarawak", "Penang", "Johor"];
   if (method === "pickup" && !validPickupStates.includes(state_to)) {
-    alert("Self Pickup is only available in KL, KK, KCH, PNG, JB.");
+    alert("Self Pickup is only available in Kuala Lumpur, Sabah, Sarawak, Penang, and Johor.");
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
     return;
