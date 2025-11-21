@@ -10,13 +10,13 @@ export async function onRequestPost(context) {
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
-  try {
-    const { payment_id, txid, order_id } = await request.json();
-
+try {
+const { payment_id, txid, order_id } = await request.json();
+console.log('Complete payment request:', { payment_id, txid, order_id });
     if (!payment_id || !txid || !order_id) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Missing required fields' 
+        error: 'Missing required fields: payment_id, txid, or order_id' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -25,6 +25,9 @@ export async function onRequestPost(context) {
 
     // Verify payment completed on Pi blockchain
     const PI_API_KEY = env.PI_API_KEY;
+    if (!PI_API_KEY) {
+      throw new Error('PI_API_KEY not configured in environment');
+    }
     const verifyResponse = await fetch(
       `https://api.minepi.com/v2/payments/${payment_id}`,
       {
@@ -35,14 +38,15 @@ export async function onRequestPost(context) {
     );
 
     if (!verifyResponse.ok) {
-      throw new Error('Pi payment verification failed');
+      throw new Error(`Pi API verification failed: ${verifyResponse.status}`);
     }
 
     const paymentData = await verifyResponse.json();
 
-    // Check payment is completed
+    // Complete payment on Pi Network
     if (!paymentData.status.developer_completed) {
-      // Complete payment via Pi API
+      console.log('Completing payment on Pi Network...');
+
       const completeResponse = await fetch(
         `https://api.minepi.com/v2/payments/${payment_id}/complete`,
         {
@@ -56,10 +60,15 @@ export async function onRequestPost(context) {
       );
 
       if (!completeResponse.ok) {
-        throw new Error('Failed to complete payment on Pi Network');
+        const errorText = await completeResponse.text();
+        console.error('Pi complete API error:', errorText);
+        throw new Error(`Failed to complete on Pi: ${completeResponse.status}`);
       }
+      console.log('✅ Completed on Pi Network');
+    } else {
+      console.log('Already completed on Pi Network');
     }
-
+      
     // Update order in D1 - mark as Paid
     await env.DB.prepare(`
       UPDATE ceo_orders 
@@ -75,11 +84,12 @@ export async function onRequestPost(context) {
       success: true, 
       message: 'Payment completed successfully',
       order_id: order_id,
-      txid: txid
+      txid: txid,
+      payment_id: payment_id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
-
+    
   } catch (error) {
     console.error('Pi completion error:', error);
     return new Response(JSON.stringify({ 
