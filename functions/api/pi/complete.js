@@ -48,7 +48,7 @@ export async function onRequestPost(context) {
     // Complete payment on Pi Network
     if (!paymentData.status.developer_completed) {
       console.log('Completing payment on Pi Network...');
-
+      
       const completeResponse = await fetch(
         `https://api.minepi.com/v2/payments/${payment_id}/complete`,
         {
