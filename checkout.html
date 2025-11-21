@@ -549,11 +549,24 @@ async function confirmOrder() {
       try {
         // STEP 1: Authenticate and request payment scope
         console.log('🔐 Step 1: Requesting payment permissions...');
-        const scopes = await Pi.authenticate(['username', 'payments'], (payment) => {
-          console.log('Auth payment callback:', payment);
-        });
         
-        console.log('✅ Permissions granted:', scopes);
+        let hasPaymentScope = false;
+        
+        try {
+          const scopes = await Promise.race([
+            Pi.authenticate(['username', 'payments'], (payment) => {
+              console.log('Auth payment callback:', payment);
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('auth timeout')), 10000))
+          ]);
+          
+          console.log('✅ Permissions granted:', scopes);
+          hasPaymentScope = true;
+        } catch (authErr) {
+          console.log('⚠️ Authentication timeout/failed:', authErr.message);
+          console.log('Attempting payment without pre-authentication (sandbox test mode)');
+          hasPaymentScope = false; // Will try anyway
+        }
         
         // STEP 2: Create payment
         console.log('💰 Step 2: Creating payment for', piAmount, 'Pi');
@@ -568,36 +581,41 @@ async function confirmOrder() {
             customer: name
           }
         }, {
+          // Payment callbacks
           onReadyForServerApproval: (paymentId) => {
-            console.log('✅ Payment approved:', paymentId);
+            console.log('⏳ Payment created, waiting for user approval:', paymentId);
+            console.log('User has 60 seconds to approve in wallet...');
           },
           
           onReadyForServerCompletion: async (paymentId, txid) => {
-            console.log('✅ Payment confirmed on blockchain:', txid);
+            console.log('✅ Payment APPROVED by user!');
+            console.log('Payment ID:', paymentId);
+            console.log('Transaction ID:', txid);
             
-            // Update backend
-            if (BACKEND_URL) {
-              try {
-                await fetch(`${BACKEND_URL}/api/orders/${order_id}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    order_status: 'Paid',
-                    pi_payment_id: paymentId,
-                    pi_txid: txid,
-                    pymt_method: 'Pi Network'
-                  })
-                });
-                console.log('✅ Backend updated');
-              } catch (backendErr) {
-                console.error('⚠️ Backend update failed:', backendErr);
-              }
-            }
-            
-            // Complete payment
             try {
+              // IMPORTANT: Complete the payment immediately
+              console.log('Completing payment...');
               await Pi.completePayment(paymentId, txid);
               console.log('✅ Payment completed successfully!');
+              
+              // Update backend if available
+              if (BACKEND_URL) {
+                try {
+                  await fetch(`${BACKEND_URL}/api/orders/${order_id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      order_status: 'Paid',
+                      pi_payment_id: paymentId,
+                      pi_txid: txid,
+                      pymt_method: 'Pi Network'
+                    })
+                  });
+                  console.log('✅ Backend updated');
+                } catch (backendErr) {
+                  console.error('⚠️ Backend update failed (OK for testing):', backendErr);
+                }
+              }
               
               // Save order success
               localStorage.setItem('orderPlaced', hashCart(cart));
@@ -612,7 +630,9 @@ async function confirmOrder() {
               
             } catch (completeErr) {
               console.error('❌ Error completing payment:', completeErr);
-              alert('Payment processed but completion failed. Contact support with order ID: ' + order_id);
+              alert('Payment approved but completion failed. Order ID: ' + order_id);
+              btn.disabled = false;
+              btn.innerText = '🥧 Pay with Pi Network';
             }
           },
           
