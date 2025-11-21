@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
     if (!payment_id || !txid || !order_id) {
       return new Response(JSON.stringify({ 
         success: false, 
-       error: 'Missing required fields: payment_id, txid, or order_id' 
+      error: 'Missing required fields: payment_id, txid, or order_id' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -44,7 +44,7 @@ export async function onRequestPost(context) {
     
     const paymentData = await verifyResponse.json();
     console.log('Payment data from Pi:', paymentData);
-
+    
     // Complete payment on Pi Network
     if (!paymentData.status.developer_completed) {
       console.log('Completing payment on Pi Network...');
@@ -60,7 +60,7 @@ export async function onRequestPost(context) {
           body: JSON.stringify({ txid })
         }
       );
-
+      
       if (!completeResponse.ok) {
         const errorText = await completeResponse.text();
         console.error('Pi complete API error:', errorText);
@@ -70,7 +70,7 @@ export async function onRequestPost(context) {
     } else {
       console.log('Already completed on Pi Network');
     }
-      
+    
     // Update order in D1
     console.log('Updating order in database...');
     
@@ -84,8 +84,8 @@ export async function onRequestPost(context) {
     `).bind(payment_id, txid, order_id).run();
     
     console.log('Database update result:', updateResult);
-
-        // Verify update worked
+    
+    // Verify update worked
     const order = await env.DB.prepare(
       'SELECT * FROM ceo_orders WHERE order_id = ?'
     ).bind(order_id).first();
