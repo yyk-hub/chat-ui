@@ -71,17 +71,27 @@ export async function onRequestPost(context) {
       console.log('Already completed on Pi Network');
     }
       
-    // Update order in D1 - mark as Paid
-    await env.DB.prepare(`
+    // Update order in D1
+    console.log('Updating order in database...');
+    
+    const updateResult = await env.DB.prepare(`
       UPDATE ceo_orders 
       SET order_status = 'Paid',
           pi_payment_id = ?,
           pi_txid = ?,
-          pymt_method = 'Pi Network',
-          updated_at = CURRENT_TIMESTAMP
+          pymt_method = 'Pi Network'
       WHERE order_id = ?
     `).bind(payment_id, txid, order_id).run();
+    
+    console.log('Database update result:', updateResult);
 
+        // Verify update worked
+    const order = await env.DB.prepare(
+      'SELECT * FROM ceo_orders WHERE order_id = ?'
+    ).bind(order_id).first();
+    
+    console.log('Updated order:', order);
+    
     return new Response(JSON.stringify({ 
       success: true, 
       message: 'Payment completed successfully',
