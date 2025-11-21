@@ -343,7 +343,8 @@
 
 <script>
 /* ========================================
-   COMPLETE CHECKOUT SCRIPT WITH PI AUTHENTICATION
+   CHECKOUT SCRIPT WITH SESSION PERSISTENCE
+   Remembers Pi environment across navigation
    ======================================== */
 
 // Global constants
@@ -721,7 +722,7 @@ async function viewMyOrder() {
   }
 }
 
-// === PAGE INITIALIZATION ===
+// === PAGE INITIALIZATION WITH SESSION PERSISTENCE ===
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
   console.log('🚀 CHECKOUT INITIALIZING');
@@ -729,7 +730,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   const debugDiv = document.getElementById('debug');
   if (debugDiv) {
-    debugDiv.textContent = '🔍 Testing Pi SDK...';
+    debugDiv.textContent = '🔍 Detecting environment...';
     debugDiv.style.background = 'orange';
   }
   
@@ -738,86 +739,104 @@ document.addEventListener('DOMContentLoaded', async function() {
   const hasPiSDK = typeof window.Pi !== 'undefined';
   console.log('Pi SDK loaded:', hasPiSDK);
   
-  // Check if in Pi environment (iframe or Pi app)
+  // Check environment with session persistence
   const currentURL = window.location.href;
   const isInIframe = window.self !== window.top;
   const referrer = document.referrer || '';
   
+  // Check session storage for previous detection
+  const sessionPiEnv = sessionStorage.getItem('isPiEnvironment');
+  console.log('Session storage isPiEnvironment:', sessionPiEnv);
+  
   let isInPiEnvironment = false;
+  
+  // Method 1: Check parent frame
   try {
     if (isInIframe && window.top.location.href.includes('sandbox.minepi.com')) {
       isInPiEnvironment = true;
-      console.log('✅ In Pi sandbox iframe');
+      console.log('✅ Method 1: Parent is sandbox.minepi.com');
     }
   } catch (e) {
-    if (isInIframe && hasPiSDK) {
-      isInPiEnvironment = true;
-      console.log('✅ In iframe with Pi SDK');
-    }
+    // Cross-origin, can't access parent
   }
   
-  if (referrer.includes('minepi.com') || referrer.includes('pi://')) {
+  // Method 2: Referrer check
+  if (referrer.includes('sandbox.minepi.com') || referrer.includes('minepi.com')) {
     isInPiEnvironment = true;
-    console.log('✅ Opened from Pi app');
+    console.log('✅ Method 2: Referrer from Pi domain');
   }
   
-  console.log('Current URL:', currentURL);
-  console.log('Is in iframe:', isInIframe);
+  // Method 3: Session persistence (trusted if in iframe with SDK)
+  if (sessionPiEnv === 'true' && isInIframe && hasPiSDK) {
+    isInPiEnvironment = true;
+    console.log('✅ Method 3: Session says Pi environment');
+  }
+  
+  // Method 4: In iframe with SDK (potential Pi environment)
+  if (isInIframe && hasPiSDK && !isInPiEnvironment) {
+    // Might be Pi, need to verify
+    console.log('⚠️ In iframe with SDK - needs verification');
+  }
+  
+  console.log('URL:', currentURL);
+  console.log('In iframe:', isInIframe);
   console.log('Referrer:', referrer);
-  console.log('In Pi Environment:', isInPiEnvironment);
+  console.log('Initial detection - In Pi Environment:', isInPiEnvironment);
   
   let piSDKWorks = false;
   
-  if (hasPiSDK && isInPiEnvironment) {
+  if (hasPiSDK && (isInPiEnvironment || isInIframe)) {
     try {
-      console.log('Attempting Pi SDK init...');
+      console.log('Testing Pi SDK...');
       await Promise.race([
         window.Pi.init({ version: "2.0", sandbox: true }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
       ]);
       
-      console.log('Init call completed. Checking...');
       await new Promise(resolve => setTimeout(resolve, 500));
       
       if (window.Pi.initialized === true) {
-        console.log('SDK initialized flag is true');
+        console.log('SDK initialized=true, verifying...');
         
-        // EXTRA CHECK: Try to actually call a Pi function to verify it works
+        // Verify SDK actually works
         try {
-          console.log('Testing if SDK actually works by checking host app...');
-          const hostAppInfo = await Promise.race([
+          const hostInfo = await Promise.race([
             window.Pi.getPiHostAppInfo(),
             new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
           ]);
-          console.log('✅ Pi SDK fully functional! Host app:', hostAppInfo);
+          console.log('✅ VERIFIED: Pi SDK functional!', hostInfo);
           piSDKWorks = true;
-        } catch (testErr) {
-          console.log('❌ SDK initialized but cannot communicate:', testErr.message);
-          console.log('This means: Not actually in Pi environment');
+          sessionStorage.setItem('isPiEnvironment', 'true');
+        } catch (verifyErr) {
+          console.log('❌ SDK init but cannot verify:', verifyErr.message);
           piSDKWorks = false;
+          sessionStorage.removeItem('isPiEnvironment');
         }
       } else {
-        console.log('❌ SDK initialized flag is false');
+        console.log('SDK initialized=false');
         piSDKWorks = false;
+        sessionStorage.removeItem('isPiEnvironment');
       }
       
     } catch (err) {
-      console.log('❌ Pi SDK init failed:', err.message);
+      console.log('❌ SDK init failed:', err.message);
       piSDKWorks = false;
+      sessionStorage.removeItem('isPiEnvironment');
     }
   } else {
-    console.log('❌ Not in Pi environment (pre-check failed)');
+    console.log('Skipping SDK test - not in Pi environment');
     piSDKWorks = false;
+    sessionStorage.removeItem('isPiEnvironment');
   }
   
   console.log('========================================');
-  console.log('RESULT:', piSDKWorks ? 'PI INTERFACE' : 'FIAT INTERFACE');
+  console.log('FINAL RESULT:', piSDKWorks ? 'PI INTERFACE ✅' : 'FIAT INTERFACE ❌');
   console.log('========================================');
   
   if (debugDiv) {
     debugDiv.innerHTML = piSDKWorks ? 
-      '✅ PI MODE<br><small>SDK OK</small>' : 
-      '❌ FIAT MODE<br><small>No SDK</small>';
+      '✅ PI MODE<br><small>Sandbox/Pi Browser</small>' : 
+      '❌ FIAT MODE<br><small>Regular Browser</small>';
     debugDiv.style.background = piSDKWorks ? '#2e7d32' : '#d32f2f';
   }
   
@@ -831,7 +850,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     const btn = document.getElementById('confirmBtn');
     if (btn) btn.textContent = '🥧 Pay with Pi Network';
-    console.log('✅ Pi interface ready');
+    console.log('✅ Pi interface activated');
   } else {
     isPiBrowser = false;
     document.querySelector('.pi-badge')?.setAttribute('style', 'display:none !important; visibility:hidden !important');
@@ -842,12 +861,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     const btn = document.getElementById('confirmBtn');
     if (btn) btn.textContent = '✅ Confirm Order';
-    console.log('✅ Fiat interface ready');
+    console.log('✅ Fiat interface activated');
   }
   
   loadOrder();
   checkExistingOrder();
-  console.log('✅ Complete');
+  console.log('✅ Initialization complete');
 });
 
 </script>
