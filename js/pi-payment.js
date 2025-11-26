@@ -24,10 +24,10 @@ const PiPayment = {
         return false;
       }
 
-      // Initialize Pi SDK
+      // Initialize Pi SDK with payments scope
       await Pi.init({ 
         version: "2.0",
-        sandbox: true 
+        sandbox: true
       });
 
       console.log('✅ Pi SDK initialized');
