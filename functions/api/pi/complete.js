@@ -9,6 +9,7 @@ export async function onRequestPost(context) {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
+  
   try {
     const { payment_id, txid, order_id } = await request.json();
     console.log('Complete payment request:', { payment_id, txid, order_id });
@@ -16,19 +17,26 @@ export async function onRequestPost(context) {
     if (!payment_id || !txid || !order_id) {
       return new Response(JSON.stringify({ 
         success: false, 
-      error: 'Missing required fields: payment_id, txid, or order_id' 
+        error: 'Missing required fields: payment_id, txid, or order_id' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
     
-    // Verify payment with Pi API
+    // Get credentials from environment
     const PI_API_KEY = env.PI_API_KEY;
+    const APP_WALLET_SECRET = env.APP_WALLET_SECRET; // ADD THIS
     
     if (!PI_API_KEY) {
-      throw new Error('PI_API_KEY not configured in environment');
+      throw new Error('PI_API_KEY not configured');
     }
+    
+    if (!APP_WALLET_SECRET) { // ADD THIS CHECK
+      throw new Error('APP_WALLET_SECRET not configured');
+    }
+    
+    // Verify payment with Pi API
     const verifyResponse = await fetch(
       `https://api.minepi.com/v2/payments/${payment_id}`,
       {
@@ -45,7 +53,7 @@ export async function onRequestPost(context) {
     const paymentData = await verifyResponse.json();
     console.log('Payment data from Pi:', paymentData);
     
-    // Complete payment on Pi Network
+    // Complete payment on Pi Network WITH APP WALLET SECRET
     if (!paymentData.status.developer_completed) {
       console.log('Completing payment on Pi Network...');
       
@@ -57,7 +65,10 @@ export async function onRequestPost(context) {
             'Authorization': `Key ${PI_API_KEY}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ txid })
+          body: JSON.stringify({ 
+            txid: txid,
+            app_wallet_secret: APP_WALLET_SECRET // ADD THIS - Critical!
+          })
         }
       );
       
@@ -66,7 +77,9 @@ export async function onRequestPost(context) {
         console.error('Pi complete API error:', errorText);
         throw new Error(`Failed to complete on Pi: ${completeResponse.status}`);
       }
-      console.log('✅ Completed on Pi Network');
+      
+      const completeData = await completeResponse.json();
+      console.log('✅ Completed on Pi Network:', completeData);
     } else {
       console.log('Already completed on Pi Network');
     }
@@ -103,7 +116,7 @@ export async function onRequestPost(context) {
     });
     
   } catch (error) {
-    console.error('Pi completion error:', error);
+    console.error('❌ Pi completion error:', error);
     return new Response(JSON.stringify({ 
       success: false, 
       error: error.message 
