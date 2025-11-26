@@ -512,7 +512,8 @@ async function confirmOrder() {
   };
 
   try {
-    // Save order to database
+    // Save order to database FIRST
+    console.log('💾 Saving order to database...');
     const res = await fetch(`/api/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -527,11 +528,11 @@ async function confirmOrder() {
 
     // Process payment based on browser
     if (isPiBrowser && typeof PiPayment !== 'undefined') {
-      // Use your pi-payment.js
-      btn.innerText = "Authenticating...";
+      // === PI PAYMENT FLOW ===
+      btn.innerText = "Preparing Pi Payment...";
       
       try {
-        // Show Pi amount
+        // Show confirmation with Pi amount
         const piAmount = PiPayment.rmToPi(totalAmt);
         const confirmed = confirm(
           `Order Total: RM ${totalAmt.toFixed(2)}\n` +
@@ -540,31 +541,33 @@ async function confirmOrder() {
         );
 
         if (!confirmed) {
+          console.log('User cancelled Pi payment');
           btn.disabled = false;
           btn.innerText = "🥧 Pay with Pi Network";
           return;
         }
 
-        // Create Pi payment using your pi-payment.js
+        // Create Pi payment - this handles everything!
         btn.innerText = "Opening Pi Wallet...";
         await PiPayment.createPayment(orderData);
 
-        // Success handled by pi-payment.js callbacks
+        // Success is handled by PiPayment callbacks
+        // User will be redirected automatically
         
       } catch (piErr) {
-        console.error('Pi payment error:', piErr);
+        console.error('❌ Pi payment error:', piErr);
         alert('Payment failed: ' + piErr.message);
         btn.disabled = false;
         btn.innerText = "🥧 Pay with Pi Network";
       }
       
     } else {
-      // Fiat payment
+      // === FIAT PAYMENT FLOW ===
       localStorage.setItem('orderPlaced', hashCart(cart));
       localStorage.setItem('lastOrderPhone', phone);
       localStorage.removeItem("cartItems");
       
-      alert("✅ Order placed! Send bank receipt via WhatsApp.");
+      alert("✅ Order placed! Please send your bank receipt via WhatsApp.");
       
       btn.style.display = 'none';
       showOrderHistoryButton();
@@ -572,13 +575,12 @@ async function confirmOrder() {
     }
 
   } catch (err) {
-    console.error('Order error:', err);
-    alert("Failed: " + err.message);
+    console.error('❌ Order error:', err);
+    alert("Failed to create order: " + err.message);
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
   }
 }
-
 // === VIEW ORDER ===
 async function viewMyOrder() {
   const phone = document.getElementById("custPhone")?.value.trim();
