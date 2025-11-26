@@ -1,5 +1,5 @@
 // js/pi-payment.js
-// Pi Network Payment Handler
+// Pi Network Payment Handler - with authentication & pending payment handling
 
 const PiPayment = {
   PI_EXCHANGE_RATE: 2.0,
@@ -24,28 +24,22 @@ const PiPayment = {
         return false;
       }
 
-      // Initialize Pi SDK with payments scope
-await Pi.init(
-  { 
-    version: "2.0",
-    sandbox: true 
-  },
-  { 
-    appId: "ceo0513",
-    scopes: ["payments"]
-  }
-);
+      // Initialize Pi SDK
+      await Pi.init({
+        version: "2.0",
+        appId: "ceo0513",
+        scopes: ["payments"],
+        sandbox: true
+      });
+
       console.log('✅ Pi SDK initialized');
 
       // Check for incomplete payments
       try {
         const incomplete = await Pi.getIncompletePaymentData();
-        
         if (incomplete && incomplete.payment_id) {
           this.incompletePayment = incomplete;
           console.log('⚠️ Incomplete payment detected:', incomplete);
-          
-          // Prompt user about incomplete payment
           setTimeout(() => this.promptIncompletePayment(), 1000);
         } else {
           console.log('✅ No incomplete payments');
@@ -68,7 +62,6 @@ await Pi.init(
     if (!this.incompletePayment) return;
 
     const amount = this.incompletePayment.amount || 'unknown';
-    
     const userChoice = confirm(
       `You have an incomplete payment of ${amount} Pi.\n\n` +
       `Would you like to complete it now?\n\n` +
@@ -98,21 +91,14 @@ await Pi.init(
       const paymentId = this.incompletePayment.payment_id;
       const orderId = this.incompletePayment.metadata?.order_id || 'UNKNOWN';
 
-      // Re-open the payment dialog for incomplete payment
-      // FIXED: Correct spelling of openPaymentDialog
       const payment = await Pi.openPaymentDialog(paymentId);
-
       console.log('Payment dialog closed:', payment);
 
       if (payment && payment.txid) {
-        // Payment completed, process it
         await this.completePayment(payment.payment_id, payment.txid, orderId);
-        
         this.incompletePayment = null;
-        
         alert('✅ Payment completed successfully!');
         window.location.href = `/order-success.html?order_id=${orderId}`;
-        
       } else {
         console.log('Payment not completed');
         alert('Payment was not completed. Please try again.');
@@ -129,9 +115,22 @@ await Pi.init(
     try {
       console.log('🔄 Creating Pi payment for order:', orderData.order_id);
 
+      // 🔐 Authenticate first
+      if (!PiAuth.hasPaymentScope()) {
+        console.log('🔐 Need authentication...');
+        try {
+          await PiAuth.authenticate();
+          console.log('✅ Authenticated successfully');
+        } catch (authErr) {
+          console.error('❌ Authentication failed:', authErr);
+          throw new Error('Authentication cancelled or failed');
+        }
+      } else {
+        console.log('✅ Already authenticated');
+      }
+
       const piAmount = parseFloat(this.rmToPi(orderData.total_amt));
 
-      // Prepare payment data
       const paymentData = {
         amount: piAmount,
         memo: `Order ${orderData.order_id} - ${orderData.prod_name.substring(0, 50)}`,
@@ -144,65 +143,35 @@ await Pi.init(
 
       console.log('Payment data:', paymentData);
 
-      // Create payment with callbacks
       const payment = await Pi.createPayment(paymentData, {
-        
-        // Callback 1: Server needs to approve payment
         onReadyForServerApproval: async (paymentId) => {
           console.log('📝 Payment ready for approval:', paymentId);
-          
-          try {
-            await this.approvePayment(paymentId, orderData.order_id);
-            console.log('✅ Payment approved on server');
-          } catch (error) {
-            console.error('❌ Approval failed:', error);
-            throw error;
-          }
+          await this.approvePayment(paymentId, orderData.order_id);
         },
 
-        // Callback 2: Server needs to complete payment
         onReadyForServerCompletion: async (paymentId, txid) => {
           console.log('✅ Payment ready for completion:', { paymentId, txid });
-          
-          try {
-            await this.completePayment(paymentId, txid, orderData.order_id);
-            console.log('✅ Payment completed on server');
-            
-            // Clear cart and redirect
-            localStorage.removeItem('cartItems');
-            
-            alert('✅ Payment successful! Redirecting to order confirmation...');
-            
-            setTimeout(() => {
-              window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
-            }, 1000);
-            
-          } catch (error) {
-            console.error('❌ Completion failed:', error);
-            alert(`Payment completion failed: ${error.message}`);
-            throw error;
-          }
+          await this.completePayment(paymentId, txid, orderData.order_id);
+          localStorage.removeItem('cartItems');
+          alert('✅ Payment successful! Redirecting...');
+          setTimeout(() => {
+            window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
+          }, 1000);
         },
 
-        // Callback 3: User cancelled payment
         onCancel: (paymentId) => {
           console.log('❌ Payment cancelled by user:', paymentId);
           alert('Payment cancelled. You can try again when ready.');
         },
 
-        // Callback 4: Payment error
         onError: (error, payment) => {
           console.error('❌ Payment error:', error);
-          
           let errorMsg = error.message || 'Unknown error occurred';
-          
-          // Handle specific error cases
           if (errorMsg.includes('pending payment')) {
             errorMsg = 'You have a pending payment. Please complete it first or wait for it to expire.';
           } else if (errorMsg.includes('insufficient')) {
             errorMsg = 'Insufficient Pi balance. Please add more Pi to your wallet.';
           }
-          
           alert(`Payment failed: ${errorMsg}`);
         }
       });
@@ -224,18 +193,11 @@ await Pi.init(
       const response = await fetch(`${this.API_BASE_URL}/api/pi/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          payment_id: paymentId,
-          order_id: orderId
-        })
+        body: JSON.stringify({ payment_id: paymentId, order_id: orderId })
       });
 
       const result = await response.json();
-
-      if (!result.success) {
-        console.error('❌ Approval failed:', result);
-        throw new Error(result.error || 'Approval failed');
-      }
+      if (!result.success) throw new Error(result.error || 'Approval failed');
 
       console.log('✅ Payment approved on server:', result);
       return result;
@@ -254,19 +216,11 @@ await Pi.init(
       const response = await fetch(`${this.API_BASE_URL}/api/pi/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          payment_id: paymentId,
-          txid: txid,
-          order_id: orderId
-        })
+        body: JSON.stringify({ payment_id: paymentId, txid, order_id: orderId })
       });
 
       const result = await response.json();
-
-      if (!result.success) {
-        console.error('❌ Completion failed:', result);
-        throw new Error(result.error || 'Completion failed');
-      }
+      if (!result.success) throw new Error(result.error || 'Completion failed');
 
       console.log('✅ Payment completed on server:', result);
       return result;
@@ -278,17 +232,14 @@ await Pi.init(
   }
 };
 
-// Auto-initialize when Pi SDK is available
+// Auto-initialize Pi SDK
 if (typeof Pi !== 'undefined') {
-  // Wait for DOM to be ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      PiPayment.initialize();
-    });
+    document.addEventListener('DOMContentLoaded', () => { PiPayment.initialize(); });
   } else {
     PiPayment.initialize();
   }
 }
 
-// Export for use in checkout.html
+// Expose globally
 window.PiPayment = PiPayment;
