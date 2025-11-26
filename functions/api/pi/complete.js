@@ -84,26 +84,39 @@ export async function onRequestPost(context) {
       console.log('Already completed on Pi Network');
     }
     
-    // Update order in D1
-    console.log('Updating order in database...');
-    
-    const updateResult = await env.DB.prepare(`
-      UPDATE ceo_orders 
-      SET order_status = 'Paid',
-          pi_payment_id = ?,
-          pi_txid = ?,
-          pymt_method = 'Pi Network'
-      WHERE order_id = ?
-    `).bind(payment_id, txid, order_id).run();
-    
-    console.log('Database update result:', updateResult);
-    
-    // Verify update worked
-    const order = await env.DB.prepare(
-      'SELECT * FROM ceo_orders WHERE order_id = ?'
-    ).bind(order_id).first();
-    
-    console.log('Updated order:', order);
+  // Update order in D1
+console.log('Updating order in database...');
+console.log('Order ID type:', typeof order_id, 'Value:', order_id);
+
+// Check existing row before update
+const before = await env.DB.prepare(
+  'SELECT * FROM ceo_orders WHERE order_id = ?'
+).bind(order_id).first();
+
+console.log('Order before update:', before);
+
+// Run update
+const updateResult = await env.DB.prepare(`
+  UPDATE ceo_orders 
+  SET order_status = 'Paid',
+      pi_payment_id = ?,
+      pi_txid = ?,
+      pymt_method = 'Pi Network'
+  WHERE order_id = ?
+`).bind(payment_id, txid, order_id).run();
+
+console.log('Database update result:', updateResult);
+
+if (updateResult.changes === 0) {
+  console.error('❌ No rows updated. Order ID may not match.');
+}
+
+// Verify update worked
+const order = await env.DB.prepare(
+  'SELECT * FROM ceo_orders WHERE order_id = ?'
+).bind(order_id).first();
+
+console.log('Updated order:', order);
     
     return new Response(JSON.stringify({ 
       success: true, 
