@@ -10,20 +10,34 @@ export async function onRequestPost(context) {
     'Access-Control-Allow-Headers': 'Content-Type',
   };
   
+  // 🌟 FIX JSON PARSE ERROR
+  let body;
   try {
-    const { payment_id, txid, order_id } = await request.json();
-    console.log('Complete payment request:', { payment_id, txid, order_id });
-    
-    if (!payment_id || !txid || !order_id) {
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: 'Missing required fields: payment_id, txid, or order_id' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-    
+    body = await request.json();
+  } catch (err) {
+    console.error("Invalid JSON body:", err);
+    return new Response(JSON.stringify({
+      success: false,
+      error: "Invalid JSON sent to backend"
+    }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
+
+  const { payment_id, txid, order_id } = body;
+  console.log('Complete payment request:', { payment_id, txid, order_id });
+
+  if (!payment_id || !txid || !order_id) {
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: 'Missing required fields: payment_id, txid, or order_id' 
+    }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
     // Get credentials from environment
     const PI_API_KEY = env.PI_API_KEY;
     const APP_WALLET_SECRET = env.APP_WALLET_SECRET; // ADD THIS
