@@ -1,6 +1,16 @@
 // functions/api/pi/approve.js
 // Pi Payment Approval Handler
 
+// Safe JSON parser
+async function safeJson(request) {
+  try {
+    return await request.json();
+  } catch (err) {
+    console.error("Invalid JSON:", err);
+    return null;
+  }
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   
@@ -11,7 +21,20 @@ export async function onRequestPost(context) {
   };
 
   try {
-    const { payment_id, order_id } = await request.json();
+    // SAFER JSON
+    const body = await safeJson(request);
+
+    if (!body) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid JSON body',
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { payment_id, order_id } = body;
 
     if (!payment_id || !order_id) {
       return new Response(JSON.stringify({ 
@@ -24,14 +47,10 @@ export async function onRequestPost(context) {
     }
 
     // Verify payment with Pi API
-    const PI_API_KEY = env.PI_API_KEY; // Add this to env vars
+    const PI_API_KEY = env.PI_API_KEY;
     const verifyResponse = await fetch(
       `https://api.minepi.com/v2/payments/${payment_id}`,
-      {
-        headers: {
-          'Authorization': `Key ${PI_API_KEY}`
-        }
-      }
+      { headers: { 'Authorization': `Key ${PI_API_KEY}` } }
     );
 
     if (!verifyResponse.ok) {
@@ -40,7 +59,6 @@ export async function onRequestPost(context) {
 
     const paymentData = await verifyResponse.json();
 
-    // Check payment is valid
     if (paymentData.status.developer_approved) {
       return new Response(JSON.stringify({ 
         success: false, 
@@ -51,7 +69,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Verify order exists in D1
+    // Check order exists
     const order = await env.DB.prepare(
       'SELECT * FROM ceo_orders WHERE order_id = ?'
     ).bind(order_id).first();
@@ -66,7 +84,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Approve payment via Pi API
+    // Approve payment
     const approveResponse = await fetch(
       `https://api.minepi.com/v2/payments/${payment_id}/approve`,
       {
@@ -83,7 +101,7 @@ export async function onRequestPost(context) {
       throw new Error('Failed to approve payment on Pi Network');
     }
 
-    // Store payment ID in D1
+    // Save payment ID
     await env.DB.prepare(
       'UPDATE ceo_orders SET pi_payment_id = ? WHERE order_id = ?'
     ).bind(payment_id, order_id).run();
