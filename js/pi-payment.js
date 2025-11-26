@@ -1,198 +1,289 @@
-// pi-payment.js - Fixed version with authentication
+// js/pi-payment.js
+// Pi Network Payment Handler
 
 const PiPayment = {
-  exchangeRate: 2.0, // 1 Pi = RM 2.00
+  PI_EXCHANGE_RATE: 2.0,
+  API_BASE_URL: window.location.origin,
+  incompletePayment: null,
+  isInitialized: false,
 
   // Convert RM to Pi
   rmToPi(rmAmount) {
-    return (rmAmount / this.exchangeRate).toFixed(2);
+    return (rmAmount / this.PI_EXCHANGE_RATE).toFixed(2);
   },
 
-  // Create Pi payment with authentication
+  // Initialize Pi SDK and check for incomplete payments
+  async initialize() {
+    if (this.isInitialized) return;
+
+    try {
+      console.log('🔄 Initializing Pi Payment System...');
+
+      if (typeof Pi === 'undefined') {
+        console.error('❌ Pi SDK not loaded');
+        return false;
+      }
+
+      // Initialize Pi SDK
+      await Pi.init({ 
+        version: "2.0",
+        sandbox: true 
+      });
+
+      console.log('✅ Pi SDK initialized');
+
+      // Check for incomplete payments
+      try {
+        const incomplete = await Pi.getIncompletePaymentData();
+        
+        if (incomplete && incomplete.payment_id) {
+          this.incompletePayment = incomplete;
+          console.log('⚠️ Incomplete payment detected:', incomplete);
+          
+          // Prompt user about incomplete payment
+          setTimeout(() => this.promptIncompletePayment(), 1000);
+        } else {
+          console.log('✅ No incomplete payments');
+        }
+      } catch (err) {
+        console.log('No incomplete payment check available:', err.message);
+      }
+
+      this.isInitialized = true;
+      return true;
+
+    } catch (error) {
+      console.error('❌ Pi initialization error:', error);
+      return false;
+    }
+  },
+
+  // Prompt user about incomplete payment
+  async promptIncompletePayment() {
+    if (!this.incompletePayment) return;
+
+    const amount = this.incompletePayment.amount || 'unknown';
+    
+    const userChoice = confirm(
+      `You have an incomplete payment of ${amount} Pi.\n\n` +
+      `Would you like to complete it now?\n\n` +
+      `Click OK to complete, or Cancel to dismiss.`
+    );
+
+    if (userChoice) {
+      console.log('User chose to complete incomplete payment');
+      await this.resumeIncompletePayment();
+    } else {
+      console.log('User dismissed incomplete payment');
+      this.incompletePayment = null;
+      alert('Incomplete payment dismissed. You can proceed with a new order.');
+    }
+  },
+
+  // Resume incomplete payment
+  async resumeIncompletePayment() {
+    if (!this.incompletePayment) {
+      console.error('No incomplete payment to resume');
+      return;
+    }
+
+    console.log('🔄 Resuming incomplete payment:', this.incompletePayment);
+
+    try {
+      const paymentId = this.incompletePayment.payment_id;
+      const orderId = this.incompletePayment.metadata?.order_id || 'UNKNOWN';
+
+      // Re-open the payment dialog for incomplete payment
+      // FIXED: Correct spelling of openPaymentDialog
+      const payment = await Pi.openPaymentDialog(paymentId);
+
+      console.log('Payment dialog closed:', payment);
+
+      if (payment && payment.txid) {
+        // Payment completed, process it
+        await this.completePayment(payment.payment_id, payment.txid, orderId);
+        
+        this.incompletePayment = null;
+        
+        alert('✅ Payment completed successfully!');
+        window.location.href = `/order-success.html?order_id=${orderId}`;
+        
+      } else {
+        console.log('Payment not completed');
+        alert('Payment was not completed. Please try again.');
+      }
+
+    } catch (error) {
+      console.error('❌ Resume payment error:', error);
+      alert(`Failed to resume payment: ${error.message}`);
+    }
+  },
+
+  // Create new Pi payment
   async createPayment(orderData) {
     try {
-      console.log('💰 Creating Pi payment...');
-      
-      // STEP 1: Authenticate first (if not already)
-      if (!PiAuth.hasPaymentScope()) {
-        console.log('🔐 Need authentication...');
-        try {
-          await PiAuth.authenticate();
-          console.log('✅ Authenticated successfully');
-        } catch (authErr) {
-          console.error('❌ Authentication failed:', authErr);
-          throw new Error('Authentication cancelled or failed');
-        }
-      } else {
-        console.log('✅ Already authenticated');
-      }
-      
-      // STEP 2: Create payment
-      const piAmount = this.rmToPi(orderData.total_amt);
-      console.log(`Creating payment: ${piAmount} Pi (RM ${orderData.total_amt})`);
-      
+      console.log('🔄 Creating Pi payment for order:', orderData.order_id);
+
+      const piAmount = parseFloat(this.rmToPi(orderData.total_amt));
+
+      // Prepare payment data
       const paymentData = {
-        amount: parseFloat(piAmount),
-        memo: `CEO Products - Order ${orderData.order_id}`,
+        amount: piAmount,
+        memo: `Order ${orderData.order_id} - ${orderData.prod_name.substring(0, 50)}`,
         metadata: {
           order_id: orderData.order_id,
-          products: orderData.prod_name,
-          customer: orderData.cus_name,
-          phone: orderData.phone,
-          rm_amount: orderData.total_amt
+          customer_name: orderData.cus_name,
+          total_rm: orderData.total_amt
         }
       };
 
-      const payment = Pi.createPayment(paymentData, {
-        // Payment ready for backend approval
+      console.log('Payment data:', paymentData);
+
+      // Create payment with callbacks
+      const payment = await Pi.createPayment(paymentData, {
+        
+        // Callback 1: Server needs to approve payment
         onReadyForServerApproval: async (paymentId) => {
-          console.log('💳 Payment created:', paymentId);
-          console.log('Sending to backend for approval...');
+          console.log('📝 Payment ready for approval:', paymentId);
           
           try {
-            const result = await this.approvePaymentOnBackend(paymentId, orderData);
-            console.log('✅ Backend approval result:', result);
-            return result;
-          } catch (err) {
-            console.error('❌ Backend approval failed:', err);
-            throw err;
+            await this.approvePayment(paymentId, orderData.order_id);
+            console.log('✅ Payment approved on server');
+          } catch (error) {
+            console.error('❌ Approval failed:', error);
+            throw error;
           }
         },
-        
-        // Payment completed on blockchain
+
+        // Callback 2: Server needs to complete payment
         onReadyForServerCompletion: async (paymentId, txid) => {
-          console.log('🎉 Payment confirmed on blockchain!');
-          console.log('Payment ID:', paymentId);
-          console.log('Transaction ID:', txid);
+          console.log('✅ Payment ready for completion:', { paymentId, txid });
           
           try {
-            const result = await this.completePaymentOnBackend(paymentId, txid, orderData);
-            console.log('✅ Backend completion result:', result);
+            await this.completePayment(paymentId, txid, orderData.order_id);
+            console.log('✅ Payment completed on server');
             
-            if (result.success) {
-              // Clear cart
-              localStorage.removeItem("cartItems");
-              localStorage.setItem('orderPlaced', btoa(orderData.order_id));
-              
-              // Show success
-              alert(`✅ Payment successful!\n\nOrder ${orderData.order_id} confirmed.`);
-              
-              // Redirect to orders page
-              window.location.href = 'order.html';
-            }
+            // Clear cart and redirect
+            localStorage.removeItem('cartItems');
             
-            return result;
-          } catch (err) {
-            console.error('❌ Backend completion failed:', err);
-            alert('Payment processed but order update failed. Contact support with Order ID: ' + orderData.order_id);
-            throw err;
+            alert('✅ Payment successful! Redirecting to order confirmation...');
+            
+            setTimeout(() => {
+              window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
+            }, 1000);
+            
+          } catch (error) {
+            console.error('❌ Completion failed:', error);
+            alert(`Payment completion failed: ${error.message}`);
+            throw error;
           }
         },
-        
-        // Payment cancelled
+
+        // Callback 3: User cancelled payment
         onCancel: (paymentId) => {
-          console.log('❌ Payment cancelled by user');
-          alert('Payment was cancelled. Your order is saved, you can try again.');
-          
-          // Re-enable button
-          const btn = document.getElementById('confirmBtn');
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = '🥧 Pay with Pi Network';
-          }
+          console.log('❌ Payment cancelled by user:', paymentId);
+          alert('Payment cancelled. You can try again when ready.');
         },
-        
-        // Payment error
+
+        // Callback 4: Payment error
         onError: (error, payment) => {
           console.error('❌ Payment error:', error);
-          alert('Payment failed: ' + (error.message || 'Unknown error'));
           
-          // Re-enable button
-          const btn = document.getElementById('confirmBtn');
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = '🥧 Pay with Pi Network';
+          let errorMsg = error.message || 'Unknown error occurred';
+          
+          // Handle specific error cases
+          if (errorMsg.includes('pending payment')) {
+            errorMsg = 'You have a pending payment. Please complete it first or wait for it to expire.';
+          } else if (errorMsg.includes('insufficient')) {
+            errorMsg = 'Insufficient Pi balance. Please add more Pi to your wallet.';
           }
+          
+          alert(`Payment failed: ${errorMsg}`);
         }
       });
 
-      console.log('✅ Payment dialog opened');
+      console.log('Payment flow completed:', payment);
       return payment;
 
     } catch (error) {
-      console.error('❌ Create payment failed:', error);
+      console.error('❌ Create payment error:', error);
       throw error;
     }
   },
 
-  // Backend approval
-  async approvePaymentOnBackend(paymentId, orderData) {
+  // Approve payment on backend
+  async approvePayment(paymentId, orderId) {
+    console.log('🔄 Approving payment on server...', { paymentId, orderId });
+
     try {
-      console.log('Calling /api/pi/approve...');
-      
-      const response = await fetch('/api/pi/approve', {
+      const response = await fetch(`${this.API_BASE_URL}/api/pi/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           payment_id: paymentId,
-          order_id: orderData.order_id
+          order_id: orderId
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`Approval failed: HTTP ${response.status}`);
-      }
-
       const result = await response.json();
-      console.log('Backend approval response:', result);
-      
+
       if (!result.success) {
+        console.error('❌ Approval failed:', result);
         throw new Error(result.error || 'Approval failed');
       }
-      
+
+      console.log('✅ Payment approved on server:', result);
       return result;
 
     } catch (error) {
-      console.error('Backend approval error:', error);
+      console.error('❌ Approve payment error:', error);
       throw error;
     }
   },
 
   // Complete payment on backend
-  async completePaymentOnBackend(paymentId, txid, orderData) {
+  async completePayment(paymentId, txid, orderId) {
+    console.log('🔄 Completing payment on server...', { paymentId, txid, orderId });
+
     try {
-      console.log('Calling /api/pi/complete...');
-      
-      const response = await fetch('/api/pi/complete', {
+      const response = await fetch(`${this.API_BASE_URL}/api/pi/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           payment_id: paymentId,
           txid: txid,
-          order_id: orderData.order_id
+          order_id: orderId
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`Completion failed: HTTP ${response.status}`);
-      }
-
       const result = await response.json();
-      console.log('Backend completion response:', result);
-      
+
       if (!result.success) {
+        console.error('❌ Completion failed:', result);
         throw new Error(result.error || 'Completion failed');
       }
-      
+
+      console.log('✅ Payment completed on server:', result);
       return result;
 
     } catch (error) {
-      console.error('Backend completion error:', error);
+      console.error('❌ Complete payment error:', error);
       throw error;
     }
   }
 };
 
-// Expose globally
+// Auto-initialize when Pi SDK is available
+if (typeof Pi !== 'undefined') {
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      PiPayment.initialize();
+    });
+  } else {
+    PiPayment.initialize();
+  }
+}
+
+// Export for use in checkout.html
 window.PiPayment = PiPayment;
-console.log('✅ PiPayment loaded');
