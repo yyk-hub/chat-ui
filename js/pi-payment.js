@@ -25,10 +25,12 @@ const PiPayment = {
       }
 
       // Initialize Pi SDK with payments scope
-      await Pi.init({ 
-        version: "2.0",
-        sandbox: true
-      });
+      await Pi.init({
+  version: "2.0",
+  appId: "ceo0513",
+  scopes: ["payments"],
+  sandbox: true
+  });
 
       console.log('✅ Pi SDK initialized');
 
