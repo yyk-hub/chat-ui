@@ -1,6 +1,5 @@
-// ============================================================================
-// FILE 2: functions/api/pi/cancel.js - NEW FILE
-// ============================================================================
+// functions/api/pi/cancel.js
+// Cancel pending payment in D1 database
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -19,38 +18,74 @@ export async function onRequestPost(context) {
     if (!payment_id) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Missing payment_id' 
+        error: 'Missing payment_id (identifier)' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Find order by payment_id or order_id
+    // Find order by payment_id
+    // Note: payment_id from frontend is actually the 'identifier' from PaymentDTO
     let order;
+    
     if (order_id) {
+      // Try to find by both order_id and payment_id
       order = await env.DB.prepare(
         'SELECT * FROM ceo_orders WHERE order_id = ? AND pi_payment_id = ?'
       ).bind(order_id, payment_id).first();
-    } else {
+    }
+    
+    if (!order) {
+      // Try to find by payment_id only
       order = await env.DB.prepare(
         'SELECT * FROM ceo_orders WHERE pi_payment_id = ?'
       ).bind(payment_id).first();
     }
 
     if (!order) {
-      console.log('⚠️ No order found with this payment_id');
-      // Still return success - payment might be orphaned
+      console.log('⚠️ No order found with this payment_id:', payment_id);
+      
+      // Still return success - payment might not be in our system yet
+      // This can happen if user cancelled before we saved the order
       return new Response(JSON.stringify({ 
         success: true, 
         message: 'Payment cancelled (no associated order found)',
+        payment_id,
+        note: 'Order may not exist yet or payment was already cancelled'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('✅ Order found:', {
+      order_id: order.order_id,
+      status: order.order_status,
+      payment_id: order.pi_payment_id
+    });
+
+    // Check if already cancelled or paid
+    if (order.order_status === 'Cancelled') {
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'Payment already cancelled',
+        order_id: order.order_id,
         payment_id
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('✅ Order found:', order);
+    if (order.order_status === 'Paid') {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Cannot cancel: Payment already completed',
+        order_id: order.order_id
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Update order status to Cancelled
     const updateResult = await env.DB.prepare(`
@@ -61,7 +96,14 @@ export async function onRequestPost(context) {
       WHERE order_id = ?
     `).bind(order.order_id).run();
 
-    console.log('✅ Order cancelled:', updateResult);
+    console.log('✅ Order cancelled:', {
+      order_id: order.order_id,
+      changes: updateResult.meta?.changes
+    });
+
+    if (updateResult.meta?.changes === 0) {
+      throw new Error('Failed to update order - no rows changed');
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 
