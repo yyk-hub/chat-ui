@@ -88,56 +88,126 @@ const PiPayment = {
   async promptIncompletePayment() {
     if (!this.incompletePayment) return;
 
-    // Log the full payment object to debug
     console.log('Full incomplete payment object:', this.incompletePayment);
 
-    // Extract payment details - OFFICIAL: field is 'identifier'
-    const paymentId = this.incompletePayment.identifier; // Official PaymentDTO field
+    const paymentId = this.incompletePayment.identifier;
     const amount = this.incompletePayment.amount || 'unknown';
     const orderId = this.incompletePayment.metadata?.order_id || 'Unknown';
+    const hasTxid = this.incompletePayment.transaction?.txid;
+    const isDeveloperCompleted = this.incompletePayment.status?.developer_completed;
     
-    console.log('Extracted values:', { paymentId, amount, orderId });
+    console.log('Payment details:', { 
+      paymentId, 
+      amount, 
+      orderId, 
+      hasTxid,
+      isDeveloperCompleted,
+      status: this.incompletePayment.status 
+    });
 
-    // Check if we have a valid payment ID
+    // Check if we have a payment ID
     if (!paymentId) {
-      console.error('❌ No payment_id found in incomplete payment object');
-      alert(
-        '⚠️ PENDING PAYMENT DETECTED\n\n' +
-        `Amount: ${amount} Pi\n\n` +
-        'However, we cannot identify this payment.\n\n' +
-        'Please complete or reject it in Pi Mobile App:\n' +
-        '1. Open Pi Mobile App\n' +
-        '2. Go to Wallet → Payments\n' +
-        '3. Complete or reject the pending payment'
-      );
+      alert('⚠️ Cannot process incomplete payment.\n\nPlease complete it in Pi Mobile App.');
+      return;
+    }
+
+    // If already completed on Pi side but not in our system
+    if (isDeveloperCompleted) {
+      alert('This payment is already completed on Pi Network.\n\nSyncing with our system...');
+      
+      if (hasTxid) {
+        await this.completePayment(paymentId, hasTxid, orderId);
+      }
+      
+      this.incompletePayment = null;
       return;
     }
     
-    const message = 
-      `⚠️ PENDING PAYMENT DETECTED\n\n` +
-      `Order: ${orderId}\n` +
-      `Amount: ${amount} Pi\n` +
-      `Payment ID: ${paymentId}\n\n` +
-      `This payment is locked in Pi Network.\n\n` +
-      `Options:\n` +
-      `• Cancel it here (place new order)\n` +
-      `• Complete it in Pi Mobile App\n` +
-      `• Wait ~24 hours for expiry\n\n` +
-      `Click OK to CANCEL this payment.`;
+    // Build message based on transaction status
+    let message;
     
-    const userWantsToCancel = confirm(message);
-
-    if (userWantsToCancel) {
-      console.log('User chose to cancel pending payment');
-      await this.cancelPendingPayment(paymentId, orderId);
+    if (hasTxid) {
+      // User submitted blockchain transaction but developer didn't complete
+      message = 
+        `⚠️ INCOMPLETE PAYMENT\n\n` +
+        `Order: ${orderId}\n` +
+        `Amount: ${amount} Pi\n` +
+        `Status: Transaction submitted ✅\n\n` +
+        `You made the blockchain transaction,\n` +
+        `but it wasn't completed on our end.\n\n` +
+        `Click OK to complete it now.`;
     } else {
-      console.log('User kept the pending payment');
+      // Payment created but no blockchain transaction yet
+      message = 
+        `⚠️ PENDING PAYMENT\n\n` +
+        `Order: ${orderId}\n` +
+        `Amount: ${amount} Pi\n` +
+        `Status: No blockchain transaction\n\n` +
+        `This payment is blocking new orders.\n\n` +
+        `Options:\n` +
+        `OK = Cancel it (place new order)\n` +
+        `Cancel = Keep it (complete in Pi App)`;
+    }
+    
+    const userConfirmed = confirm(message);
+
+    if (userConfirmed) {
+      if (hasTxid) {
+        // Complete the payment with existing txid
+        console.log('Completing incomplete payment with txid:', hasTxid);
+        await this.completeIncompletePayment(paymentId, hasTxid, orderId);
+      } else {
+        // Cancel in our system
+        console.log('Cancelling payment without txid');
+        await this.cancelPendingPayment(paymentId, orderId);
+      }
+    } else {
+      console.log('User chose to keep the pending payment');
       alert(
-        '📱 TO COMPLETE PENDING PAYMENT:\n\n' +
+        '📱 TO COMPLETE THIS PAYMENT:\n\n' +
         '1. Open Pi Mobile App\n' +
         '2. Go to Wallet → Payments\n' +
-        '3. Complete the pending payment\n\n' +
+        '3. Find and complete this payment\n\n' +
+        'Until completed, you cannot place new orders.\n' +
         'Payment expires in ~24 hours.'
+      );
+    }
+  },
+
+  // Complete an incomplete payment that has a txid
+  async completeIncompletePayment(paymentId, txid, orderId) {
+    console.log('🔄 Completing incomplete payment...', { paymentId, txid, orderId });
+
+    try {
+      // First, approve it (might already be approved, but just in case)
+      try {
+        await this.approvePayment(paymentId, orderId);
+      } catch (approveErr) {
+        console.log('Approval note:', approveErr.message);
+        // Continue anyway - might already be approved
+      }
+
+      // Now complete it with the existing txid
+      await this.completePayment(paymentId, txid, orderId);
+      
+      this.incompletePayment = null;
+      
+      alert(
+        '✅ PAYMENT COMPLETED\n\n' +
+        'Your incomplete payment has been processed.\n' +
+        'You can now place new orders.'
+      );
+      
+      // Optionally redirect to order page
+      setTimeout(() => {
+        window.location.href = `/order-success.html?order_id=${orderId}`;
+      }, 2000);
+
+    } catch (error) {
+      console.error('❌ Complete incomplete payment error:', error);
+      alert(
+        `Failed to complete payment: ${error.message}\n\n` +
+        'Please contact support or try again later.'
       );
     }
   },
