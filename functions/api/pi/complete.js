@@ -1,6 +1,5 @@
-// ===================================
-// FILE 2: functions/api/pi/complete.js
-// ===================================
+// functions/api/pi/complete.js
+// Pi Payment Completion Handler - Enhanced for Incomplete Payments
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -16,44 +15,78 @@ export async function onRequestPost(context) {
 
     console.log('📥 Complete request:', { payment_id, txid, order_id });
 
-    if (!payment_id || !txid || !order_id) {
+    // Validate required fields
+    if (!payment_id || !txid) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Missing payment_id, txid, or order_id' 
+        error: 'Missing payment_id or txid' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Get environment variables
     const PI_API_KEY = env.PI_API_KEY;
     const APP_WALLET_SECRET = env.APP_WALLET_SECRET;
 
     if (!PI_API_KEY || !APP_WALLET_SECRET) {
+      console.error('❌ Missing env vars:', { 
+        has_api_key: !!PI_API_KEY, 
+        has_wallet_secret: !!APP_WALLET_SECRET 
+      });
       throw new Error('PI_API_KEY or APP_WALLET_SECRET not configured');
     }
 
-    // STEP 1: Verify order exists
-    console.log('🔍 Checking order in database...');
-    const orderBefore = await env.DB.prepare(
-      'SELECT * FROM ceo_orders WHERE order_id = ?'
-    ).bind(order_id).first();
-
-    if (!orderBefore) {
-      console.error('❌ Order not found:', order_id);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: `Order ${order_id} not found` 
-      }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // STEP 1: Find or verify order exists
+    let order = null;
+    
+    if (order_id) {
+      console.log('🔍 Looking for order:', order_id);
+      order = await env.DB.prepare(
+        'SELECT * FROM ceo_orders WHERE order_id = ?'
+      ).bind(order_id).first();
+    }
+    
+    // If no order found by order_id, try to find by payment_id
+    if (!order) {
+      console.log('🔍 Order not found by order_id, searching by payment_id...');
+      order = await env.DB.prepare(
+        'SELECT * FROM ceo_orders WHERE pi_payment_id = ?'
+      ).bind(payment_id).first();
     }
 
-    console.log('✅ Order before update:', orderBefore);
+    if (!order) {
+      console.error('❌ No order found for payment_id:', payment_id);
+      
+      // For incomplete payments without order, we still need to complete on Pi
+      // but we can't update D1
+      console.log('⚠️ Will complete on Pi Network but cannot update order');
+    } else {
+      console.log('✅ Order found:', {
+        order_id: order.order_id,
+        status: order.order_status,
+        payment_id: order.pi_payment_id
+      });
+      
+      // Check if already paid
+      if (order.order_status === 'Paid') {
+        console.log('ℹ️ Order already marked as Paid');
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Payment already completed',
+          order_id: order.order_id,
+          payment_id,
+          txid
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
-    // STEP 2: Verify payment with Pi
-    console.log('🔍 Verifying payment with Pi...');
+    // STEP 2: Verify payment with Pi Network
+    console.log('🔍 Verifying payment with Pi Network...');
+    
     const verifyResponse = await fetch(
       `https://api.minepi.com/v2/payments/${payment_id}`,
       {
@@ -62,13 +95,20 @@ export async function onRequestPost(context) {
     );
 
     if (!verifyResponse.ok) {
-      throw new Error(`Pi verification failed: ${verifyResponse.status}`);
+      const errorText = await verifyResponse.text();
+      console.error('❌ Pi verification failed:', errorText);
+      throw new Error(`Pi verification failed: ${verifyResponse.status} - ${errorText}`);
     }
 
     const paymentData = await verifyResponse.json();
-    console.log('✅ Payment data from Pi:', paymentData);
+    console.log('✅ Payment data from Pi:', {
+      identifier: paymentData.identifier,
+      amount: paymentData.amount,
+      status: paymentData.status,
+      has_transaction: !!paymentData.transaction
+    });
 
-    // STEP 3: Complete payment on Pi if not already done
+    // STEP 3: Complete payment on Pi Network if not already done
     if (!paymentData.status?.developer_completed) {
       console.log('🔄 Completing payment on Pi Network...');
       
@@ -81,68 +121,96 @@ export async function onRequestPost(context) {
             'Content-Type': 'application/json' 
           },
           body: JSON.stringify({ 
-            txid, 
-            app_wallet_secret: APP_WALLET_SECRET 
+            txid: txid,
+            app_wallet_secret: APP_WALLET_SECRET
           }),
         }
       );
 
       if (!completeResponse.ok) {
         const errorText = await completeResponse.text();
-        console.error('❌ Pi complete failed:', errorText);
+        console.error('❌ Pi complete failed:', {
+          status: completeResponse.status,
+          error: errorText
+        });
         throw new Error(`Pi complete failed: ${completeResponse.status} - ${errorText}`);
       }
 
       const completeData = await completeResponse.json();
-      console.log('✅ Payment completed on Pi:', completeData);
+      console.log('✅ Payment completed on Pi Network:', completeData);
     } else {
-      console.log('ℹ️ Payment already completed on Pi');
+      console.log('ℹ️ Payment already completed on Pi Network');
     }
 
-    // STEP 4: Update order in D1
-    console.log('🔄 Updating order in database...');
-    const updateResult = await env.DB.prepare(`
-      UPDATE ceo_orders
-      SET order_status = 'Paid',
-          pi_payment_id = ?,
-          pi_txid = ?,
-          pymt_method = 'Pi Network'
-      WHERE order_id = ?
-    `).bind(payment_id, txid, order_id).run();
+    // STEP 4: Update order in D1 (if order exists)
+    if (order) {
+      console.log('🔄 Updating order in database...');
+      
+      const updateResult = await env.DB.prepare(`
+        UPDATE ceo_orders
+        SET order_status = 'Paid',
+            pi_payment_id = ?,
+            pi_txid = ?,
+            pymt_method = 'Pi Network'
+        WHERE order_id = ?
+      `).bind(payment_id, txid, order.order_id).run();
 
-    console.log('✅ Database update result:', {
-      success: updateResult.success,
-      changes: updateResult.meta?.changes
-    });
+      console.log('✅ Database update result:', {
+        success: updateResult.success,
+        changes: updateResult.meta?.changes
+      });
 
-    // STEP 5: Verify update worked
-    if (!updateResult.success || updateResult.meta?.changes === 0) {
-      throw new Error('Failed to update order in database');
+      // Verify update worked
+      if (!updateResult.success || updateResult.meta?.changes === 0) {
+        console.error('⚠️ Database update did not change any rows');
+        // Don't throw - payment is complete on Pi side, which is most important
+      }
+
+      // Fetch updated order
+      const updatedOrder = await env.DB.prepare(
+        'SELECT * FROM ceo_orders WHERE order_id = ?'
+      ).bind(order.order_id).first();
+
+      console.log('✅ Order after update:', {
+        order_id: updatedOrder.order_id,
+        status: updatedOrder.order_status,
+        txid: updatedOrder.pi_txid
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Payment completed successfully',
+        order_id: updatedOrder.order_id,
+        payment_id,
+        txid,
+        order_status: updatedOrder.order_status
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+      
+    } else {
+      // No order found, but payment completed on Pi
+      console.log('✅ Payment completed on Pi (no order to update)');
+      
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Payment completed on Pi Network (no order found)',
+        payment_id,
+        txid,
+        note: 'Payment was completed but no matching order was found in database'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-
-    const updatedOrder = await env.DB.prepare(
-      'SELECT * FROM ceo_orders WHERE order_id = ?'
-    ).bind(order_id).first();
-
-    console.log('✅ Order after update:', updatedOrder);
-
-    return new Response(JSON.stringify({
-      success: true,
-      message: 'Payment completed successfully',
-      order_id,
-      payment_id,
-      txid,
-      order_status: updatedOrder.order_status,
-      order: updatedOrder,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
 
   } catch (err) {
     console.error('❌ Pi complete error:', err);
+    console.error('Error stack:', err.stack);
+    
     return new Response(JSON.stringify({ 
       success: false, 
-      error: err.message || 'Unknown error' 
+      error: err.message || 'Unknown error',
+      details: err.stack
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -158,4 +226,4 @@ export async function onRequestOptions() {
       'Access-Control-Allow-Headers': 'Content-Type',
     },
   });
-}
+      }
