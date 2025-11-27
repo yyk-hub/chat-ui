@@ -1,5 +1,7 @@
 // functions/api/pi/cancel.js
 // Cancel pending payment in D1 database
+// Note: This only cancels in our system, not on Pi Network
+// Payments with txid should be completed, not cancelled
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -134,4 +136,4 @@ export async function onRequestOptions() {
       'Access-Control-Allow-Headers': 'Content-Type',
     },
   });
-}
+  }
