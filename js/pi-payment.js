@@ -1,5 +1,6 @@
 // js/pi-payment.js
-// Pi Network Payment Handler - FINAL VERSION
+// Pi Network Payment Handler - COMPLETE FINAL VERSION
+// ⚠️ IMPORTANT: This version does NOT use Pi.openPaymentDialog (it doesn't exist!)
 
 const PiPayment = {
   PI_EXCHANGE_RATE: 2.0,
@@ -24,11 +25,10 @@ const PiPayment = {
         return false;
       }
 
-      // Initialize Pi SDK (appId is optional - Pi detects from URL)
+      // Initialize Pi SDK
       await Pi.init({
         version: "2.0",
         sandbox: true
-        // appId: "ceo0513" // Optional - uncomment if needed
       });
 
       console.log('✅ Pi SDK initialized');
@@ -39,12 +39,14 @@ const PiPayment = {
         if (incomplete && incomplete.payment_id) {
           this.incompletePayment = incomplete;
           console.log('⚠️ Incomplete payment detected:', incomplete);
+          
+          // Show prompt after a delay
           setTimeout(() => this.promptIncompletePayment(), 1500);
         } else {
           console.log('✅ No incomplete payments');
         }
       } catch (err) {
-        console.log('No incomplete payment check available:', err.message);
+        console.log('No incomplete payment check:', err.message);
       }
 
       this.isInitialized = true;
@@ -57,6 +59,7 @@ const PiPayment = {
   },
 
   // Prompt user about incomplete payment
+  // ⚠️ NOTE: We CANNOT reopen the payment dialog from here!
   async promptIncompletePayment() {
     if (!this.incompletePayment) return;
 
@@ -67,13 +70,11 @@ const PiPayment = {
       `⚠️ PENDING PAYMENT DETECTED\n\n` +
       `Order: ${orderId}\n` +
       `Amount: ${amount} Pi\n\n` +
-      `This payment is locked in Pi Network and cannot be reopened here.\n\n` +
-      `Your options:\n` +
-      `1. Complete it in Pi Mobile App (Go to Payments)\n` +
-      `2. Cancel it in our system to place a new order\n` +
-      `3. Wait for it to expire (~24 hours)\n\n` +
-      `Click OK to CANCEL this payment in our system.\n` +
-      `Click Cancel to keep it (you must complete in Pi App).`;
+      `This payment is locked in Pi Network.\n` +
+      `You cannot reopen it from this page.\n\n` +
+      `What would you like to do?\n\n` +
+      `OK = Cancel it (you can place a new order)\n` +
+      `Cancel = Keep it (complete in Pi Mobile App)`;
     
     const userWantsToCancel = confirm(message);
 
@@ -83,20 +84,21 @@ const PiPayment = {
     } else {
       console.log('User kept the pending payment');
       alert(
-        '📱 To complete this payment:\n\n' +
+        '📱 TO COMPLETE YOUR PENDING PAYMENT:\n\n' +
         '1. Open Pi Mobile App\n' +
-        '2. Tap "Wallet" → "Payments"\n' +
-        '3. Find and complete the pending payment\n\n' +
-        'Or wait ~24 hours for it to expire automatically.'
+        '2. Tap "Wallet" or "Browser"\n' +
+        '3. Look for pending payments\n' +
+        '4. Complete or reject it there\n\n' +
+        'The payment will expire in ~24 hours if not completed.'
       );
     }
   },
 
-  // Cancel pending payment in YOUR system (not in Pi Network)
+  // Cancel pending payment in our system (NOT in Pi Network!)
   async cancelPendingPayment() {
     if (!this.incompletePayment) return;
 
-    console.log('🔄 Canceling pending payment in our system...');
+    console.log('🔄 Canceling payment in our system...');
 
     try {
       const response = await fetch(`${this.API_BASE_URL}/api/pi/cancel`, {
@@ -113,17 +115,22 @@ const PiPayment = {
       if (result.success) {
         this.incompletePayment = null;
         alert(
-          '✅ Pending payment cancelled in our system.\n\n' +
+          '✅ PAYMENT CANCELLED\n\n' +
+          'The pending payment has been cancelled in our system.\n\n' +
           'You can now place a new order.\n\n' +
-          'Note: The payment may still show in Pi App until it expires.'
+          '⚠️ Note: It may still appear in your Pi App until it expires.'
         );
+        
+        // Optionally reload page to clear state
+        // window.location.reload();
+        
       } else {
         throw new Error(result.error || 'Cancel failed');
       }
 
     } catch (error) {
       console.error('❌ Cancel error:', error);
-      alert(`Failed to cancel: ${error.message}`);
+      alert(`Failed to cancel payment: ${error.message}`);
     }
   },
 
@@ -132,9 +139,9 @@ const PiPayment = {
     try {
       console.log('🔄 Creating Pi payment for order:', orderData.order_id);
 
-      // 🔐 Authenticate first (critical for payment scope)
-      if (typeof PiAuth !== 'undefined' && PiAuth.hasPaymentScope) {
-        if (!PiAuth.hasPaymentScope()) {
+      // Authenticate first (critical for payment scope)
+      if (typeof PiAuth !== 'undefined') {
+        if (PiAuth.hasPaymentScope && !PiAuth.hasPaymentScope()) {
           console.log('🔐 Authenticating for payment scope...');
           try {
             await PiAuth.authenticate();
@@ -144,7 +151,7 @@ const PiPayment = {
             throw new Error('Authentication required for payments');
           }
         } else {
-          console.log('✅ Already authenticated with payment scope');
+          console.log('✅ Already authenticated');
         }
       }
 
@@ -184,9 +191,9 @@ const PiPayment = {
             await this.completePayment(paymentId, txid, orderData.order_id);
             console.log('✅ Completed on server');
             
-            // Success - clear cart and redirect
+            // Success!
             localStorage.removeItem('cartItems');
-            alert('✅ Payment successful! Redirecting to order confirmation...');
+            alert('✅ Payment successful!\n\nRedirecting to order confirmation...');
             
             setTimeout(() => {
               window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
@@ -194,7 +201,11 @@ const PiPayment = {
             
           } catch (error) {
             console.error('❌ Completion failed:', error);
-            alert(`Payment completion failed: ${error.message}\n\nPlease contact support with Order ID: ${orderData.order_id}`);
+            alert(
+              `Payment completion failed: ${error.message}\n\n` +
+              `Please contact support.\n` +
+              `Order ID: ${orderData.order_id}`
+            );
             throw error;
           }
         },
@@ -202,7 +213,7 @@ const PiPayment = {
         // Callback 3: User cancelled
         onCancel: (paymentId) => {
           console.log('❌ Payment cancelled by user:', paymentId);
-          alert('Payment cancelled. You can try again when ready.');
+          alert('Payment cancelled.\n\nYou can try again when ready.');
         },
 
         // Callback 4: Error handling
@@ -211,23 +222,27 @@ const PiPayment = {
           
           let errorMsg = error.message || 'Unknown error occurred';
           
-          // Handle specific errors
+          // Handle specific error types
           if (errorMsg.includes('pending payment') || errorMsg.includes('incomplete payment')) {
             errorMsg = 
-              '⚠️ You have a pending payment in Pi Network.\n\n' +
-              'Options:\n' +
-              '• Complete it in Pi Mobile App\n' +
-              '• Refresh this page to cancel it\n' +
+              '⚠️ PENDING PAYMENT EXISTS\n\n' +
+              'You already have a pending payment in Pi Network.\n\n' +
+              'What to do:\n' +
+              '• Refresh this page to cancel it, OR\n' +
+              '• Complete it in Pi Mobile App, OR\n' +
               '• Wait ~24 hours for it to expire';
+              
           } else if (errorMsg.includes('insufficient')) {
-            errorMsg = '💰 Insufficient Pi balance.\n\nPlease add more Pi to your wallet.';
+            errorMsg = '💰 INSUFFICIENT BALANCE\n\nYou don\'t have enough Pi.\nPlease add more Pi to your wallet.';
+            
           } else if (errorMsg.includes('payment scope') || errorMsg.includes('no payment scope')) {
-            errorMsg = '🔐 Authentication required.\n\nPlease refresh the page and try again.';
+            errorMsg = '🔐 AUTHENTICATION REQUIRED\n\nPlease refresh the page and try again.';
+            
           } else if (errorMsg.toLowerCase().includes('undefined')) {
-            errorMsg = '⚠️ Connection error.\n\nPlease check your internet and try again.';
+            errorMsg = '⚠️ CONNECTION ERROR\n\nPlease check your internet connection.';
           }
           
-          alert(`Payment failed:\n\n${errorMsg}`);
+          alert(`Payment Failed\n\n${errorMsg}`);
         }
       });
 
@@ -237,10 +252,10 @@ const PiPayment = {
     } catch (error) {
       console.error('❌ Create payment error:', error);
       
-      // Better error message for user
+      // Better user-facing error
       let userMsg = error.message;
       if (userMsg.includes('undefined')) {
-        userMsg = 'Connection error. Please check your internet and try again.';
+        userMsg = 'Connection error. Please try again.';
       }
       
       throw new Error(userMsg);
@@ -249,7 +264,7 @@ const PiPayment = {
 
   // Approve payment on backend
   async approvePayment(paymentId, orderId) {
-    console.log('🔄 Approving payment on server...', { paymentId, orderId });
+    console.log('🔄 Approving on server...', { paymentId, orderId });
 
     try {
       const response = await fetch(`${this.API_BASE_URL}/api/pi/approve`, {
@@ -267,18 +282,18 @@ const PiPayment = {
         throw new Error(result.error || 'Approval failed');
       }
 
-      console.log('✅ Payment approved on server:', result);
+      console.log('✅ Approved:', result);
       return result;
 
     } catch (error) {
-      console.error('❌ Approve payment error:', error);
+      console.error('❌ Approve error:', error);
       throw error;
     }
   },
 
   // Complete payment on backend
   async completePayment(paymentId, txid, orderId) {
-    console.log('🔄 Completing payment on server...', { paymentId, txid, orderId });
+    console.log('🔄 Completing on server...', { paymentId, txid, orderId });
 
     try {
       const response = await fetch(`${this.API_BASE_URL}/api/pi/complete`, {
@@ -296,17 +311,17 @@ const PiPayment = {
         throw new Error(result.error || 'Completion failed');
       }
 
-      console.log('✅ Payment completed on server:', result);
+      console.log('✅ Completed:', result);
       return result;
 
     } catch (error) {
-      console.error('❌ Complete payment error:', error);
+      console.error('❌ Complete error:', error);
       throw error;
     }
   }
 };
 
-// Auto-initialize when Pi SDK is available
+// Auto-initialize when Pi SDK loads
 if (typeof Pi !== 'undefined') {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { 
@@ -318,4 +333,4 @@ if (typeof Pi !== 'undefined') {
 }
 
 // Export globally
-window.PiPayment
+window.PiPayment = PiPayment;
