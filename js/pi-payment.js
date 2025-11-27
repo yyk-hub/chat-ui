@@ -91,15 +91,10 @@ const PiPayment = {
     // Log the full payment object to debug
     console.log('Full incomplete payment object:', this.incompletePayment);
 
-    // Extract payment details - handle different possible structures
-    const paymentId = this.incompletePayment.identifier || 
-                      this.incompletePayment.payment_id || 
-                      this.incompletePayment.id;
-    
+    // Extract payment details - OFFICIAL: field is 'identifier'
+    const paymentId = this.incompletePayment.identifier; // Official PaymentDTO field
     const amount = this.incompletePayment.amount || 'unknown';
-    const orderId = this.incompletePayment.metadata?.order_id || 
-                    this.incompletePayment.memo?.match(/Order (\w+)/)?.[1] || 
-                    'Unknown';
+    const orderId = this.incompletePayment.metadata?.order_id || 'Unknown';
     
     console.log('Extracted values:', { paymentId, amount, orderId });
 
