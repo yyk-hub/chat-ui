@@ -179,35 +179,68 @@ const PiPayment = {
     console.log('🔄 Completing incomplete payment...', { paymentId, txid, orderId });
 
     try {
-      // First, approve it (might already be approved, but just in case)
+      // First, try to approve it (might already be approved)
       try {
+        console.log('Attempting to approve payment...');
         await this.approvePayment(paymentId, orderId);
+        console.log('✅ Payment approved');
       } catch (approveErr) {
-        console.log('Approval note:', approveErr.message);
-        // Continue anyway - might already be approved
+        console.log('⚠️ Approval note:', approveErr.message);
+        // Continue anyway - might already be approved or approval not needed
       }
 
       // Now complete it with the existing txid
-      await this.completePayment(paymentId, txid, orderId);
+      console.log('Completing payment with txid:', txid);
+      const result = await this.completePayment(paymentId, txid, orderId);
+      console.log('✅ Complete result:', result);
       
       this.incompletePayment = null;
       
       alert(
-        '✅ PAYMENT COMPLETED\n\n' +
+        '✅ PAYMENT COMPLETED!\n\n' +
         'Your incomplete payment has been processed.\n' +
-        'You can now place new orders.'
+        'You can now place new orders.\n\n' +
+        `Order ID: ${orderId}`
       );
       
-      // Optionally redirect to order page
+      // Redirect to order page
       setTimeout(() => {
-        window.location.href = `/order-success.html?order_id=${orderId}`;
+        if (orderId && orderId !== 'Unknown') {
+          window.location.href = `/order-success.html?order_id=${orderId}`;
+        } else {
+          window.location.reload();
+        }
       }, 2000);
 
     } catch (error) {
       console.error('❌ Complete incomplete payment error:', error);
+      
+      // Show detailed error to help debug
+      let errorMsg = error.message || 'Unknown error';
+      
+      // Check for specific error types
+      if (errorMsg.includes('Server error: 500')) {
+        errorMsg = 
+          'Server error while completing payment.\n\n' +
+          'Possible causes:\n' +
+          '• Missing environment variables\n' +
+          '• Pi API key invalid\n' +
+          '• Wallet secret incorrect\n\n' +
+          'Check server logs for details.';
+      } else if (errorMsg.includes('Pi complete failed')) {
+        errorMsg = 
+          'Pi Network rejected the completion.\n\n' +
+          'This usually means:\n' +
+          '• Transaction ID (txid) is invalid\n' +
+          '• Payment already completed\n' +
+          '• App wallet secret incorrect';
+      }
+      
       alert(
-        `Failed to complete payment: ${error.message}\n\n` +
-        'Please contact support or try again later.'
+        `❌ Failed to complete payment\n\n${errorMsg}\n\n` +
+        `Payment ID: ${paymentId}\n` +
+        `Transaction ID: ${txid}\n\n` +
+        'Please contact support with this information.'
       );
     }
   },
