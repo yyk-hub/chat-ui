@@ -1,6 +1,5 @@
 // js/pi-payment.js
-// Pi Network Payment Handler - Using Official Pi SDK Authentication Method
-// Based on Pi Network official documentation
+// Pi Network Payment Handler - Official Implementation with Fixed Cancel
 
 const PiPayment = {
   PI_EXCHANGE_RATE: 2.0,
@@ -34,8 +33,7 @@ const PiPayment = {
 
       console.log('✅ Pi SDK initialized');
 
-      // Authenticate with payments scope - OFFICIAL METHOD
-      // This will automatically detect incomplete payments
+      // Authenticate with payments scope
       await this.authenticateWithPayments();
 
       this.isInitialized = true;
@@ -47,7 +45,7 @@ const PiPayment = {
     }
   },
 
-  // Authenticate with payments scope - OFFICIAL PI SDK METHOD
+  // Authenticate with payments scope - OFFICIAL PATTERN
   async authenticateWithPayments() {
     if (this.isAuthenticated) {
       console.log('✅ Already authenticated');
@@ -57,37 +55,28 @@ const PiPayment = {
     try {
       console.log('🔐 Authenticating with payment scope...');
 
-      // Official Pi SDK authentication pattern
+      // Authenticate the user, and get permission to request payments from them:
       const scopes = ['payments'];
 
       // Read more about this callback in the SDK reference:
-      const onIncompletePaymentFound = (payment) => {
-        console.log('⚠️ Incomplete payment found by Pi SDK:', payment);
-        this.incompletePayment = payment;
+      function onIncompletePaymentFound(payment) {
+        console.log('⚠️ Incomplete payment found:', payment);
+        console.log('Payment structure:', JSON.stringify(payment, null, 2));
         
-        // Prompt user after authentication completes
-        setTimeout(() => this.promptIncompletePayment(), 1000);
-      };
-
-      // Authenticate the user, and get permission to request payments from them
-      const auth = await Pi.authenticate(scopes, onIncompletePaymentFound)
-        .then(function(auth) {
-          console.log(`✅ Hi there! You're ready to make payments!`);
-          return auth;
-        })
-        .catch(function(error) {
-          console.error('❌ Authentication error:', error);
-          throw error;
-        });
-      
-      this.isAuthenticated = true;
-
-      // If no incomplete payment was found during auth
-      if (!this.incompletePayment) {
-        console.log('✅ No incomplete payments');
+        PiPayment.incompletePayment = payment;
+        
+        // Prompt user about incomplete payment
+        setTimeout(() => PiPayment.promptIncompletePayment(), 1000);
       }
 
-      return auth;
+      await Pi.authenticate(scopes, onIncompletePaymentFound).then(function(auth) {
+        console.log(`✅ Hi there! You're ready to make payments!`);
+        PiPayment.isAuthenticated = true;
+        return auth;
+      }).catch(function(error) {
+        console.error('❌ Authentication error:', error);
+        throw error;
+      });
 
     } catch (error) {
       console.error('❌ Authentication failed:', error);
@@ -99,13 +88,41 @@ const PiPayment = {
   async promptIncompletePayment() {
     if (!this.incompletePayment) return;
 
+    // Log the full payment object to debug
+    console.log('Full incomplete payment object:', this.incompletePayment);
+
+    // Extract payment details - handle different possible structures
+    const paymentId = this.incompletePayment.identifier || 
+                      this.incompletePayment.payment_id || 
+                      this.incompletePayment.id;
+    
     const amount = this.incompletePayment.amount || 'unknown';
-    const orderId = this.incompletePayment.metadata?.order_id || 'Unknown';
+    const orderId = this.incompletePayment.metadata?.order_id || 
+                    this.incompletePayment.memo?.match(/Order (\w+)/)?.[1] || 
+                    'Unknown';
+    
+    console.log('Extracted values:', { paymentId, amount, orderId });
+
+    // Check if we have a valid payment ID
+    if (!paymentId) {
+      console.error('❌ No payment_id found in incomplete payment object');
+      alert(
+        '⚠️ PENDING PAYMENT DETECTED\n\n' +
+        `Amount: ${amount} Pi\n\n` +
+        'However, we cannot identify this payment.\n\n' +
+        'Please complete or reject it in Pi Mobile App:\n' +
+        '1. Open Pi Mobile App\n' +
+        '2. Go to Wallet → Payments\n' +
+        '3. Complete or reject the pending payment'
+      );
+      return;
+    }
     
     const message = 
       `⚠️ PENDING PAYMENT DETECTED\n\n` +
       `Order: ${orderId}\n` +
-      `Amount: ${amount} Pi\n\n` +
+      `Amount: ${amount} Pi\n` +
+      `Payment ID: ${paymentId}\n\n` +
       `This payment is locked in Pi Network.\n\n` +
       `Options:\n` +
       `• Cancel it here (place new order)\n` +
@@ -117,7 +134,7 @@ const PiPayment = {
 
     if (userWantsToCancel) {
       console.log('User chose to cancel pending payment');
-      await this.cancelPendingPayment();
+      await this.cancelPendingPayment(paymentId, orderId);
     } else {
       console.log('User kept the pending payment');
       alert(
@@ -131,18 +148,21 @@ const PiPayment = {
   },
 
   // Cancel pending payment in our system
-  async cancelPendingPayment() {
-    if (!this.incompletePayment) return;
+  async cancelPendingPayment(paymentId, orderId) {
+    console.log('🔄 Canceling payment...', { paymentId, orderId });
 
-    console.log('🔄 Canceling payment in our system...');
+    if (!paymentId) {
+      alert('❌ Cannot cancel: Payment ID is missing.');
+      return;
+    }
 
     try {
       const response = await fetch(`${this.API_BASE_URL}/api/pi/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          payment_id: this.incompletePayment.payment_id,
-          order_id: this.incompletePayment.metadata?.order_id
+          payment_id: paymentId,
+          order_id: orderId || null
         })
       });
 
@@ -166,7 +186,7 @@ const PiPayment = {
     }
   },
 
-  // Create new Pi payment
+  // Create new Pi payment - OFFICIAL PATTERN
   async createPayment(orderData) {
     try {
       console.log('🔄 Creating Pi payment for order:', orderData.order_id);
@@ -179,67 +199,65 @@ const PiPayment = {
 
       const piAmount = parseFloat(this.rmToPi(orderData.total_amt));
 
-      const paymentData = {
+      // Official Pi SDK createPayment pattern
+      Pi.createPayment({
+        // Amount of π to be paid:
         amount: piAmount,
+        
+        // An explanation of the payment - will be shown to the user:
         memo: `Order ${orderData.order_id} - ${orderData.prod_name.substring(0, 50)}`,
+        
+        // An arbitrary developer-provided metadata object - for your own usage:
         metadata: {
           order_id: orderData.order_id,
           customer_name: orderData.cus_name,
           total_rm: orderData.total_amt
         }
-      };
-
-      console.log('💳 Creating payment:', paymentData);
-
-      // Create payment with callbacks
-      const payment = await Pi.createPayment(paymentData, {
+      }, {
+        // Callbacks you need to implement - read more about those in the detailed docs:
         
-        // Callback 1: Server approval
-        onReadyForServerApproval: async (paymentId) => {
+        onReadyForServerApproval: (paymentId) => {
           console.log('📝 Payment ready for approval:', paymentId);
-          try {
-            await this.approvePayment(paymentId, orderData.order_id);
-            console.log('✅ Approved on server');
-          } catch (error) {
-            console.error('❌ Approval failed:', error);
-            throw error;
-          }
+          this.approvePayment(paymentId, orderData.order_id)
+            .then(() => console.log('✅ Approved'))
+            .catch(error => {
+              console.error('❌ Approval failed:', error);
+              throw error;
+            });
         },
 
-        // Callback 2: Server completion
-        onReadyForServerCompletion: async (paymentId, txid) => {
+        onReadyForServerCompletion: (paymentId, txid) => {
           console.log('✅ Payment ready for completion:', { paymentId, txid });
-          try {
-            await this.completePayment(paymentId, txid, orderData.order_id);
-            console.log('✅ Completed on server');
-            
-            // Success!
-            localStorage.removeItem('cartItems');
-            alert('✅ Payment successful!\n\nRedirecting...');
-            
-            setTimeout(() => {
-              window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
-            }, 1000);
-            
-          } catch (error) {
-            console.error('❌ Completion failed:', error);
-            alert(
-              `Payment completion failed: ${error.message}\n\n` +
-              `Contact support with Order ID: ${orderData.order_id}`
-            );
-            throw error;
-          }
+          this.completePayment(paymentId, txid, orderData.order_id)
+            .then(() => {
+              console.log('✅ Completed on server');
+              
+              // Success!
+              localStorage.removeItem('cartItems');
+              alert('✅ Payment successful!\n\nRedirecting...');
+              
+              setTimeout(() => {
+                window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
+              }, 1000);
+            })
+            .catch(error => {
+              console.error('❌ Completion failed:', error);
+              alert(
+                `Payment completion failed: ${error.message}\n\n` +
+                `Contact support with Order ID: ${orderData.order_id}`
+              );
+              throw error;
+            });
         },
 
-        // Callback 3: User cancelled
         onCancel: (paymentId) => {
           console.log('❌ Payment cancelled by user:', paymentId);
           alert('Payment cancelled.\n\nYou can try again when ready.');
         },
 
-        // Callback 4: Error handling
         onError: (error, payment) => {
           console.error('❌ Payment error:', error);
+          console.log('Payment object:', payment);
           
           let errorMsg = error.message || 'Unknown error occurred';
           
@@ -266,8 +284,7 @@ const PiPayment = {
         }
       });
 
-      console.log('✅ Payment flow completed:', payment);
-      return payment;
+      console.log('✅ Payment creation initiated');
 
     } catch (error) {
       console.error('❌ Create payment error:', error);
