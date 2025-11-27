@@ -1,5 +1,5 @@
 // js/pi-payment.js
-// Pi Network Payment Handler - with authentication & pending payment handling
+// Pi Network Payment Handler - FINAL VERSION
 
 const PiPayment = {
   PI_EXCHANGE_RATE: 2.0,
@@ -24,12 +24,11 @@ const PiPayment = {
         return false;
       }
 
-      // Initialize Pi SDK
+      // Initialize Pi SDK (appId is optional - Pi detects from URL)
       await Pi.init({
         version: "2.0",
-        appId: "ceo0513",
-        scopes: ["payments"],
         sandbox: true
+        // appId: "ceo0513" // Optional - uncomment if needed
       });
 
       console.log('✅ Pi SDK initialized');
@@ -40,7 +39,7 @@ const PiPayment = {
         if (incomplete && incomplete.payment_id) {
           this.incompletePayment = incomplete;
           console.log('⚠️ Incomplete payment detected:', incomplete);
-          setTimeout(() => this.promptIncompletePayment(), 1000);
+          setTimeout(() => this.promptIncompletePayment(), 1500);
         } else {
           console.log('✅ No incomplete payments');
         }
@@ -62,51 +61,69 @@ const PiPayment = {
     if (!this.incompletePayment) return;
 
     const amount = this.incompletePayment.amount || 'unknown';
-    const userChoice = confirm(
-      `You have an incomplete payment of ${amount} Pi.\n\n` +
-      `Would you like to complete it now?\n\n` +
-      `Click OK to complete, or Cancel to dismiss.`
-    );
+    const orderId = this.incompletePayment.metadata?.order_id || 'Unknown';
+    
+    const message = 
+      `⚠️ PENDING PAYMENT DETECTED\n\n` +
+      `Order: ${orderId}\n` +
+      `Amount: ${amount} Pi\n\n` +
+      `This payment is locked in Pi Network and cannot be reopened here.\n\n` +
+      `Your options:\n` +
+      `1. Complete it in Pi Mobile App (Go to Payments)\n` +
+      `2. Cancel it in our system to place a new order\n` +
+      `3. Wait for it to expire (~24 hours)\n\n` +
+      `Click OK to CANCEL this payment in our system.\n` +
+      `Click Cancel to keep it (you must complete in Pi App).`;
+    
+    const userWantsToCancel = confirm(message);
 
-    if (userChoice) {
-      console.log('User chose to complete incomplete payment');
-      await this.resumeIncompletePayment();
+    if (userWantsToCancel) {
+      console.log('User chose to cancel pending payment');
+      await this.cancelPendingPayment();
     } else {
-      console.log('User dismissed incomplete payment');
-      this.incompletePayment = null;
-      alert('Incomplete payment dismissed. You can proceed with a new order.');
+      console.log('User kept the pending payment');
+      alert(
+        '📱 To complete this payment:\n\n' +
+        '1. Open Pi Mobile App\n' +
+        '2. Tap "Wallet" → "Payments"\n' +
+        '3. Find and complete the pending payment\n\n' +
+        'Or wait ~24 hours for it to expire automatically.'
+      );
     }
   },
 
-  // Resume incomplete payment
-  async resumeIncompletePayment() {
-    if (!this.incompletePayment) {
-      console.error('No incomplete payment to resume');
-      return;
-    }
+  // Cancel pending payment in YOUR system (not in Pi Network)
+  async cancelPendingPayment() {
+    if (!this.incompletePayment) return;
 
-    console.log('🔄 Resuming incomplete payment:', this.incompletePayment);
+    console.log('🔄 Canceling pending payment in our system...');
 
     try {
-      const paymentId = this.incompletePayment.payment_id;
-      const orderId = this.incompletePayment.metadata?.order_id || 'UNKNOWN';
+      const response = await fetch(`${this.API_BASE_URL}/api/pi/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          payment_id: this.incompletePayment.payment_id,
+          order_id: this.incompletePayment.metadata?.order_id
+        })
+      });
 
-      const payment = await Pi.openPaymentDialog(paymentId);
-      console.log('Payment dialog closed:', payment);
+      const result = await response.json();
 
-      if (payment && payment.txid) {
-        await this.completePayment(payment.payment_id, payment.txid, orderId);
+      if (result.success) {
         this.incompletePayment = null;
-        alert('✅ Payment completed successfully!');
-        window.location.href = `/order-success.html?order_id=${orderId}`;
+        alert(
+          '✅ Pending payment cancelled in our system.\n\n' +
+          'You can now place a new order.\n\n' +
+          'Note: The payment may still show in Pi App until it expires.'
+        );
       } else {
-        console.log('Payment not completed');
-        alert('Payment was not completed. Please try again.');
+        throw new Error(result.error || 'Cancel failed');
       }
 
     } catch (error) {
-      console.error('❌ Resume payment error:', error);
-      alert(`Failed to resume payment: ${error.message}`);
+      console.error('❌ Cancel error:', error);
+      alert(`Failed to cancel: ${error.message}`);
     }
   },
 
@@ -115,18 +132,20 @@ const PiPayment = {
     try {
       console.log('🔄 Creating Pi payment for order:', orderData.order_id);
 
-      // 🔐 Authenticate first
-      if (!PiAuth.hasPaymentScope()) {
-        console.log('🔐 Need authentication...');
-        try {
-          await PiAuth.authenticate();
-          console.log('✅ Authenticated successfully');
-        } catch (authErr) {
-          console.error('❌ Authentication failed:', authErr);
-          throw new Error('Authentication cancelled or failed');
+      // 🔐 Authenticate first (critical for payment scope)
+      if (typeof PiAuth !== 'undefined' && PiAuth.hasPaymentScope) {
+        if (!PiAuth.hasPaymentScope()) {
+          console.log('🔐 Authenticating for payment scope...');
+          try {
+            await PiAuth.authenticate();
+            console.log('✅ Authenticated successfully');
+          } catch (authErr) {
+            console.error('❌ Authentication failed:', authErr);
+            throw new Error('Authentication required for payments');
+          }
+        } else {
+          console.log('✅ Already authenticated with payment scope');
         }
-      } else {
-        console.log('✅ Already authenticated');
       }
 
       const piAmount = parseFloat(this.rmToPi(orderData.total_amt));
@@ -141,47 +160,90 @@ const PiPayment = {
         }
       };
 
-      console.log('Payment data:', paymentData);
+      console.log('💳 Creating payment:', paymentData);
 
+      // Create payment with callbacks
       const payment = await Pi.createPayment(paymentData, {
+        
+        // Callback 1: Server approval
         onReadyForServerApproval: async (paymentId) => {
           console.log('📝 Payment ready for approval:', paymentId);
-          await this.approvePayment(paymentId, orderData.order_id);
+          try {
+            await this.approvePayment(paymentId, orderData.order_id);
+            console.log('✅ Approved on server');
+          } catch (error) {
+            console.error('❌ Approval failed:', error);
+            throw error;
+          }
         },
 
+        // Callback 2: Server completion
         onReadyForServerCompletion: async (paymentId, txid) => {
           console.log('✅ Payment ready for completion:', { paymentId, txid });
-          await this.completePayment(paymentId, txid, orderData.order_id);
-          localStorage.removeItem('cartItems');
-          alert('✅ Payment successful! Redirecting...');
-          setTimeout(() => {
-            window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
-          }, 1000);
+          try {
+            await this.completePayment(paymentId, txid, orderData.order_id);
+            console.log('✅ Completed on server');
+            
+            // Success - clear cart and redirect
+            localStorage.removeItem('cartItems');
+            alert('✅ Payment successful! Redirecting to order confirmation...');
+            
+            setTimeout(() => {
+              window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
+            }, 1000);
+            
+          } catch (error) {
+            console.error('❌ Completion failed:', error);
+            alert(`Payment completion failed: ${error.message}\n\nPlease contact support with Order ID: ${orderData.order_id}`);
+            throw error;
+          }
         },
 
+        // Callback 3: User cancelled
         onCancel: (paymentId) => {
           console.log('❌ Payment cancelled by user:', paymentId);
           alert('Payment cancelled. You can try again when ready.');
         },
 
+        // Callback 4: Error handling
         onError: (error, payment) => {
           console.error('❌ Payment error:', error);
+          
           let errorMsg = error.message || 'Unknown error occurred';
-          if (errorMsg.includes('pending payment')) {
-            errorMsg = 'You have a pending payment. Please complete it first or wait for it to expire.';
+          
+          // Handle specific errors
+          if (errorMsg.includes('pending payment') || errorMsg.includes('incomplete payment')) {
+            errorMsg = 
+              '⚠️ You have a pending payment in Pi Network.\n\n' +
+              'Options:\n' +
+              '• Complete it in Pi Mobile App\n' +
+              '• Refresh this page to cancel it\n' +
+              '• Wait ~24 hours for it to expire';
           } else if (errorMsg.includes('insufficient')) {
-            errorMsg = 'Insufficient Pi balance. Please add more Pi to your wallet.';
+            errorMsg = '💰 Insufficient Pi balance.\n\nPlease add more Pi to your wallet.';
+          } else if (errorMsg.includes('payment scope') || errorMsg.includes('no payment scope')) {
+            errorMsg = '🔐 Authentication required.\n\nPlease refresh the page and try again.';
+          } else if (errorMsg.toLowerCase().includes('undefined')) {
+            errorMsg = '⚠️ Connection error.\n\nPlease check your internet and try again.';
           }
-          alert(`Payment failed: ${errorMsg}`);
+          
+          alert(`Payment failed:\n\n${errorMsg}`);
         }
       });
 
-      console.log('Payment flow completed:', payment);
+      console.log('✅ Payment flow completed:', payment);
       return payment;
 
     } catch (error) {
       console.error('❌ Create payment error:', error);
-      throw error;
+      
+      // Better error message for user
+      let userMsg = error.message;
+      if (userMsg.includes('undefined')) {
+        userMsg = 'Connection error. Please check your internet and try again.';
+      }
+      
+      throw new Error(userMsg);
     }
   },
 
@@ -196,8 +258,14 @@ const PiPayment = {
         body: JSON.stringify({ payment_id: paymentId, order_id: orderId })
       });
 
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
       const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Approval failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Approval failed');
+      }
 
       console.log('✅ Payment approved on server:', result);
       return result;
@@ -219,8 +287,14 @@ const PiPayment = {
         body: JSON.stringify({ payment_id: paymentId, txid, order_id: orderId })
       });
 
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
       const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Completion failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Completion failed');
+      }
 
       console.log('✅ Payment completed on server:', result);
       return result;
@@ -232,14 +306,16 @@ const PiPayment = {
   }
 };
 
-// Auto-initialize Pi SDK
+// Auto-initialize when Pi SDK is available
 if (typeof Pi !== 'undefined') {
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { PiPayment.initialize(); });
+    document.addEventListener('DOMContentLoaded', () => { 
+      PiPayment.initialize(); 
+    });
   } else {
     PiPayment.initialize();
   }
 }
 
-// Expose globally
-window.PiPayment = PiPayment;
+// Export globally
+window.PiPayment
