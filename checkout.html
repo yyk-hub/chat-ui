@@ -633,7 +633,7 @@ async function viewMyOrder() {
   }
 }
 
-// === PAGE INITIALIZATION - FIXED DETECTION ===
+// === PAGE INITIALIZATION - FIXED ===
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
   console.log('🚀 CHECKOUT INITIALIZING');
@@ -645,52 +645,29 @@ document.addEventListener('DOMContentLoaded', async function() {
     debugDiv.style.background = 'orange';
   }
   
-  await new Promise(r => setTimeout(r, 1000));
+  await new Promise(r => setTimeout(r, 500));
   
   const hasPiSDK = typeof window.Pi !== 'undefined';
   const isInIframe = window.self !== window.top;
   const sessionPi = sessionStorage.getItem('isPiEnvironment') === 'true';
   
-  console.log('Pi SDK loaded:', hasPiSDK);
-  console.log('In iframe:', isInIframe);
-  console.log('Session Pi:', sessionPi);
+  console.log('Environment check:', {
+    hasPiSDK,
+    isInIframe,
+    sessionPi,
+    hostname: window.location.hostname
+  });
   
   let piWorks = false;
   
+  // JUST DETECT - DON'T INITIALIZE!
+  // Let pi-payment.js handle initialization with correct sandbox setting
   if (hasPiSDK && (isInIframe || sessionPi)) {
-    try {
-      console.log('Initializing Pi SDK...');
-      await window.Pi.init({ version: "2.0", sandbox: true });
-      await new Promise(r => setTimeout(r, 500));
-      
-      if (window.Pi.initialized === true) {
-        console.log('SDK initialized, verifying...');
-        
-        try {
-          await Promise.race([
-            window.Pi.getPiHostAppInfo(),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
-          ]);
-          console.log('✅ Pi SDK verified!');
-          piWorks = true;
-        } catch (verifyErr) {
-          console.log('Verify timeout, using fallback...');
-          if (isInIframe) {
-            console.log('✅ In iframe + SDK init = Pi environment');
-            piWorks = true;
-          }
-        }
-        
-        if (piWorks) {
-          sessionStorage.setItem('isPiEnvironment', 'true');
-        }
-      }
-    } catch (err) {
-      console.log('SDK init failed:', err.message);
-      sessionStorage.removeItem('isPiEnvironment');
-    }
+    console.log('✅ Pi SDK detected');
+    piWorks = true;
+    sessionStorage.setItem('isPiEnvironment', 'true');
   } else {
-    console.log('No Pi environment detected');
+    console.log('❌ No Pi environment detected');
     sessionStorage.removeItem('isPiEnvironment');
   }
   
@@ -699,7 +676,11 @@ document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
   
   if (debugDiv) {
-    debugDiv.innerHTML = piWorks ? '✅ PI MODE<br><small>Sandbox/Pi Browser</small>' : '❌ FIAT MODE<br><small>Regular Browser</small>';
+    const isSandbox = window.location.hostname.includes('sandbox');
+    const mode = isSandbox ? 'Sandbox' : 'Production';
+    debugDiv.innerHTML = piWorks ? 
+      `✅ PI MODE<br><small>${mode}</small>` : 
+      '❌ FIAT MODE<br><small>Regular Browser</small>';
     debugDiv.style.background = piWorks ? '#2e7d32' : '#d32f2f';
   }
   
@@ -711,6 +692,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'none');
     document.getElementById('confirmBtn').textContent = '🥧 Pay with Pi Network';
     console.log('✅ Pi interface activated');
+    console.log('⏳ Pi SDK will be initialized by pi-payment.js with correct mode');
   } else {
     document.querySelector('.pi-badge').style.cssText = 'display:none !important';
     document.querySelector('.pi-row').style.cssText = 'display:none !important';
