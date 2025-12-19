@@ -8,9 +8,9 @@ const PiPayment = {
   isInitialized: false,
   isAuthenticated: false,
 
-  // Convert RM to Pi
+  // Convert RM to Pi (8 decimal places for precision)
   rmToPi(rmAmount) {
-    return (rmAmount / this.PI_EXCHANGE_RATE).toFixed(2);
+    return (rmAmount / this.PI_EXCHANGE_RATE).toFixed(8);
   },
 
   // Initialize Pi SDK
@@ -21,7 +21,7 @@ const PiPayment = {
       console.log('🔄 Initializing Pi Payment System...');
       
       // Detect if we're in sandbox or production
-      const isSandbox = window.location.hostname.includes('sandbox') || 
+      const isSandbox = window.location.href.includes('sandbox') || 
                         window.location.search.includes('sandbox=true') ||
                         window.location.hostname === 'localhost';
       
