@@ -19,19 +19,32 @@ const PiPayment = {
 
     try {
       console.log('🔄 Initializing Pi Payment System...');
+      
+      // Detect if we're in sandbox or production
+      const isSandbox = window.location.hostname.includes('sandbox') || 
+                        window.location.search.includes('sandbox=true') ||
+                        window.location.hostname === 'localhost';
+      
+      console.log('Environment:', {
+        hasPiSDK: typeof Pi !== 'undefined',
+        inIframe: window.self !== window.top,
+        location: window.location.href,
+        isSandbox: isSandbox
+      });
 
       if (typeof Pi === 'undefined') {
         console.error('❌ Pi SDK not loaded');
         return false;
       }
 
-      // Initialize Pi SDK
+      // Initialize Pi SDK with correct mode
+      console.log(`Calling Pi.init with sandbox=${isSandbox}...`);
       await Pi.init({
         version: "2.0",
-        sandbox: true
+        sandbox: isSandbox  // Dynamic based on environment
       });
 
-      console.log('✅ Pi SDK initialized');
+      console.log('✅ Pi SDK initialized in', isSandbox ? 'SANDBOX' : 'PRODUCTION', 'mode');
 
       // Authenticate with payments scope
       await this.authenticateWithPayments();
@@ -41,6 +54,23 @@ const PiPayment = {
 
     } catch (error) {
       console.error('❌ Pi initialization error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Show user-friendly error
+      if (error.message?.includes('timed out')) {
+        alert(
+          '⚠️ CONNECTION TIMEOUT\n\n' +
+          'Cannot connect to Pi Network.\n\n' +
+          'Please ensure:\n' +
+          '1. You opened this app through Pi Browser\n' +
+          '2. You have a stable internet connection\n' +
+          '3. Pi Browser is updated to latest version'
+        );
+      }
+      
       return false;
     }
   },
@@ -332,10 +362,25 @@ const PiPayment = {
               
               // Success!
               localStorage.removeItem('cartItems');
-              alert('✅ Payment successful!\n\nRedirecting...');
               
+              // Show success message
+              alert('✅ Payment successful!\n\nYour order has been placed.');
+              
+              // Try to redirect, with fallback
               setTimeout(() => {
-                window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
+                try {
+                  // Try normal redirect first
+                  window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
+                } catch (e) {
+                  // If redirect fails in iframe, try parent window
+                  try {
+                    window.top.location.href = `/order-success.html?order_id=${orderData.order_id}`;
+                  } catch (e2) {
+                    // If both fail, just reload to clear state
+                    console.log('Redirect blocked, reloading page');
+                    window.location.reload();
+                  }
+                }
               }, 1000);
             })
             .catch(error => {
