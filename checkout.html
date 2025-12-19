@@ -397,14 +397,18 @@ function updateSummary() {
   const method = document.getElementById("shippingMethod")?.value || "courier";
   const { cost, note, eta } = calculateShippingCost(subTotal, state, totalWeight, method);
   const totalRM = subTotal + cost;
-  const totalPi = (totalRM / PI_EXCHANGE_RATE).toFixed(2);
+  
+  // ✅ UPDATED: Use 8 decimal places for Pi display
+  const totalPi = (totalRM / PI_EXCHANGE_RATE).toFixed(8);
 
   document.getElementById("total-weight").textContent = `${totalWeight.toFixed(2)} kg`;
   document.getElementById("sub-total").textContent = `RM ${subTotal.toFixed(2)}`;
   document.getElementById("shipping-cost").textContent = `RM ${cost.toFixed(2)}`;
   document.getElementById("shipping-note").textContent = `${note} • ${eta}`;
   document.getElementById("grand-total").textContent = `RM ${totalRM.toFixed(2)}`;
-  document.getElementById("pi-total").textContent = `π ${totalPi}`;
+  
+  // ✅ Show full precision, remove trailing zeros for display
+  document.getElementById("pi-total").textContent = `π ${parseFloat(totalPi).toString()}`;
 
   if (subTotal >= 500 && method !== "pickup") {
     document.getElementById("shippingMethod").value = "express";
@@ -532,13 +536,15 @@ async function confirmOrder() {
       btn.innerText = "Preparing Pi Payment...";
       
       try {
-        // Show confirmation with Pi amount
-        const piAmount = PiPayment.rmToPi(totalAmt);
-        const confirmed = confirm(
-          `Order Total: RM ${totalAmt.toFixed(2)}\n` +
-          `Pi Amount: π ${piAmount}\n\n` +
-          `Proceed with Pi payment?`
-        );
+// Show confirmation with Pi amount (UPDATED)
+const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(8);
+const piDisplay = parseFloat(piAmount).toString(); // Remove trailing zeros
+
+const confirmed = confirm(
+  `Order Total: RM ${totalAmt.toFixed(2)}\n` +
+  `Pi Amount: π ${piDisplay}\n\n` +
+  `Proceed with Pi payment?`
+);
 
         if (!confirmed) {
           console.log('User cancelled Pi payment');
