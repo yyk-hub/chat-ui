@@ -21,7 +21,7 @@ const PiPayment = {
       console.log('🔄 Initializing Pi Payment System...');
       
       // Detect if we're in sandbox or production
-      const isSandbox = window.location.href.includes('sandbox') || 
+      const isSandbox = window.location.hostname.includes('sandbox') || 
                         window.location.search.includes('sandbox=true') ||
                         window.location.hostname === 'localhost';
       
@@ -85,6 +85,9 @@ const PiPayment = {
     try {
       console.log('🔐 Authenticating with payment scope...');
 
+      // NOTE: Pi.init() should already be called in initialize()
+      // Do NOT call Pi.init() here again!
+
       // Authenticate the user, and get permission to request payments from them:
       const scopes = ['payments'];
 
@@ -99,14 +102,10 @@ const PiPayment = {
         setTimeout(() => PiPayment.promptIncompletePayment(), 1000);
       }
 
-      await Pi.authenticate(scopes, onIncompletePaymentFound).then(function(auth) {
-        console.log(`✅ Hi there! You're ready to make payments!`);
-        PiPayment.isAuthenticated = true;
-        return auth;
-      }).catch(function(error) {
-        console.error('❌ Authentication error:', error);
-        throw error;
-      });
+      const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
+      console.log(`✅ Hi there! You're ready to make payments!`);
+      PiPayment.isAuthenticated = true;
+      return auth;
 
     } catch (error) {
       console.error('❌ Authentication failed:', error);
@@ -500,14 +499,16 @@ const PiPayment = {
   }
 };
 
-// Auto-initialize when Pi SDK loads
+// Auto-initialize when Pi SDK loads - with proper timing
 if (typeof Pi !== 'undefined') {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { 
-      PiPayment.initialize(); 
+      // Wait a bit for checkout.html detection to complete first
+      setTimeout(() => PiPayment.initialize(), 1500);
     });
   } else {
-    PiPayment.initialize();
+    // Document already loaded
+    setTimeout(() => PiPayment.initialize(), 1500);
   }
 }
 
