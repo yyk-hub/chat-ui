@@ -274,7 +274,7 @@
                     <h4>${escapeHtml(p.prod_name)}</h4>
                     <p>${escapeHtml(p.description || '')}</p>
                     <div class="product-meta">
-                      <span><strong>Price:</strong> RM ${Number(p.price).toFixed(2)}</span>
+                      <span><strong>Price:</strong> RM ${Number(p.price).toFixed(8)}</span>
                       <span><strong>Stock:</strong> ${p.stock}</span>
                       </div>
                       <button class="btn" ${p.stock<=0?'disabled':''} 
