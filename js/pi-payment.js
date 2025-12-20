@@ -28,35 +28,49 @@ const PiPayment = {
       // When in iframe, check parent URL for 'sandbox'
       let isSandbox = false;
       
-      try {
-        // Try to access parent URL (works in Pi Browser)
-        const parentUrl = window.self !== window.top ? 
-          (document.referrer || window.parent.location.href) : 
-          window.location.href;
-        
-        isSandbox = parentUrl.includes('sandbox') ||
-                    window.location.href.includes('sandbox') ||
-                    window.location.search.includes('sandbox=true') ||
-                    window.location.hostname === 'localhost' ||
-                    window.location.hostname.includes('127.0.0.1');
-        
-        console.log('🔍 Sandbox detection:', {
-          parentUrl: parentUrl,
-          currentUrl: window.location.href,
-          referrer: document.referrer,
-          isSandbox: isSandbox
-        });
-      } catch (e) {
-        // Fallback if can't access parent
-        isSandbox = window.location.href.includes('sandbox') ||
-                    window.location.search.includes('sandbox=true') ||
-                    window.location.hostname === 'localhost';
-        
-        console.log('🔍 Sandbox detection (fallback):', {
-          currentUrl: window.location.href,
-          referrer: document.referrer,
-          isSandbox: isSandbox
-        });
+      // First, check if we already detected sandbox mode in this session
+      const sessionSandbox = sessionStorage.getItem('piSandboxMode');
+      if (sessionSandbox !== null) {
+        isSandbox = sessionSandbox === 'true';
+        console.log('🔍 Using cached sandbox mode:', isSandbox);
+      } else {
+        // Fresh detection
+        try {
+          // Try to access parent URL (works in Pi Browser)
+          const parentUrl = window.self !== window.top ? 
+            (document.referrer || window.parent.location.href) : 
+            window.location.href;
+          
+          isSandbox = parentUrl.includes('sandbox') ||
+                      window.location.href.includes('sandbox') ||
+                      window.location.search.includes('sandbox=true') ||
+                      window.location.hostname === 'localhost' ||
+                      window.location.hostname.includes('127.0.0.1');
+          
+          console.log('🔍 Sandbox detection:', {
+            parentUrl: parentUrl,
+            currentUrl: window.location.href,
+            referrer: document.referrer,
+            isSandbox: isSandbox
+          });
+          
+          // Save to session storage for future page navigations
+          sessionStorage.setItem('piSandboxMode', isSandbox.toString());
+          
+        } catch (e) {
+          // Fallback if can't access parent
+          isSandbox = window.location.href.includes('sandbox') ||
+                      window.location.search.includes('sandbox=true') ||
+                      window.location.hostname === 'localhost';
+          
+          console.log('🔍 Sandbox detection (fallback):', {
+            currentUrl: window.location.href,
+            referrer: document.referrer,
+            isSandbox: isSandbox
+          });
+          
+          sessionStorage.setItem('piSandboxMode', isSandbox.toString());
+        }
       }
       
       console.log('🔍 Environment detection:', {
