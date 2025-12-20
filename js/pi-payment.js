@@ -25,16 +25,46 @@ const PiPayment = {
       console.log('🔄 Initializing Pi Payment System...');
       
       // Detect sandbox vs production dynamically
-      const isSandbox = window.location.href.includes('sandbox') || 
-                        window.location.search.includes('sandbox=true') ||
-                        window.location.hostname === 'localhost' ||
-                        window.location.hostname.includes('127.0.0.1');
+      // When in iframe, check parent URL for 'sandbox'
+      let isSandbox = false;
+      
+      try {
+        // Try to access parent URL (works in Pi Browser)
+        const parentUrl = window.self !== window.top ? 
+          (document.referrer || window.parent.location.href) : 
+          window.location.href;
+        
+        isSandbox = parentUrl.includes('sandbox') ||
+                    window.location.href.includes('sandbox') ||
+                    window.location.search.includes('sandbox=true') ||
+                    window.location.hostname === 'localhost' ||
+                    window.location.hostname.includes('127.0.0.1');
+        
+        console.log('🔍 Sandbox detection:', {
+          parentUrl: parentUrl,
+          currentUrl: window.location.href,
+          referrer: document.referrer,
+          isSandbox: isSandbox
+        });
+      } catch (e) {
+        // Fallback if can't access parent
+        isSandbox = window.location.href.includes('sandbox') ||
+                    window.location.search.includes('sandbox=true') ||
+                    window.location.hostname === 'localhost';
+        
+        console.log('🔍 Sandbox detection (fallback):', {
+          currentUrl: window.location.href,
+          referrer: document.referrer,
+          isSandbox: isSandbox
+        });
+      }
       
       console.log('🔍 Environment detection:', {
         hasPiSDK: typeof Pi !== 'undefined',
         inIframe: window.self !== window.top,
         hostname: window.location.hostname,
         href: window.location.href,
+        referrer: document.referrer,
         isSandbox: isSandbox
       });
 
