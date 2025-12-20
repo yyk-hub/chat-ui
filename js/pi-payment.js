@@ -1,7 +1,6 @@
 // js/pi-payment.js
-// Pi Network Payment Handler - Version 13 Improved
+// Pi Network Payment Handler - Version 13 - Final Fixed
 // Last Updated: 2024-12-21
-// Keeping sandbox detection - it's required!
 
 const PiPayment = {
   PI_EXCHANGE_RATE: 2.0,
@@ -15,7 +14,7 @@ const PiPayment = {
     return (rmAmount / this.PI_EXCHANGE_RATE).toFixed(8);
   },
 
-  // Initialize Pi SDK - Sandbox detection is REQUIRED
+  // Initialize Pi SDK - NO AUTHENTICATION HERE
   async initialize() {
     if (this.isInitialized) {
       console.log('⏭️ Already initialized');
@@ -33,8 +32,9 @@ const PiPayment = {
                         window.location.hostname.includes('127.0.0.1') ||
                         window.location.search.includes('sandbox=true');
       
-      console.log('🔍 Environment:', {
+      console.log('🔍 Environment detection:', {
         hostname: window.location.hostname,
+        isSandbox: isSandbox,
         mode: isSandbox ? 'SANDBOX' : 'PRODUCTION'
       });
 
@@ -43,13 +43,18 @@ const PiPayment = {
         return false;
       }
 
-      // Initialize Pi SDK with explicit sandbox mode
+      // Initialize Pi SDK with correct mode
+      console.log(`⚙️ Calling Pi.init with sandbox=${isSandbox}...`);
+      
       await Pi.init({
         version: "2.0",
         sandbox: isSandbox
       });
 
       console.log(`✅ Pi SDK initialized in ${isSandbox ? 'SANDBOX' : 'PRODUCTION'} mode`);
+      
+      // IMPORTANT: Don't authenticate here - wait until payment is needed
+      // This prevents double authentication issues
       console.log('⏳ Authentication will happen when user initiates payment');
 
       this.isInitialized = true;
@@ -57,6 +62,7 @@ const PiPayment = {
 
     } catch (error) {
       console.error('❌ Pi initialization error:', error);
+      console.error('Error stack:', error.stack);
       
       if (error.message?.includes('timed out')) {
         alert(
