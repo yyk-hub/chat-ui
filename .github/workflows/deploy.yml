@@ -21,15 +21,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: true  # ✅ ensure token persists
+          persist-credentials: true
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # 🔹 Upload only the web files, exclude README.md and workflow files
       - name: Upload site files
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: |
+            index.html
+            js/
+            css/
+            img/
+            favicon.ico
+            .nojekyll   # optional
 
       - name: Deploy to GitHub Pages
         id: deployment
