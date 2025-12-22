@@ -1,5 +1,7 @@
 # CEO Shop (Pi Network E-Commerce App)
 
+This project is proprietary and not open-source. Unauthorized use or redistribution is prohibited.
+
 A web-based **e-commerce application** integrated with **Pi Network payments**, deployed on **Cloudflare Pages** with a backend running on **Render**.
 
 The app supports both **Sandbox (development)** and **Production** environments for Pi Network User-to-App payments.
@@ -74,3 +76,4 @@ The app supports both **Sandbox (development)** and **Production** environments 
 ✅ Sandbox payments working  
 ✅ Production payments working  
 ✅ Pi App checklist nearly complete
+
