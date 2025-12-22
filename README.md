@@ -14,7 +14,7 @@ The app supports both **Sandbox (development)** and **Production** environments 
 - 💰 Pi Network User-to-App payments
 - 🔐 Pi SDK v2 authentication with payment scope
 - 🔄 Payment approval & completion handled server-side
-- 🧪 Sandbox testing environment (Test Pi)
+- 🧪 Sandbox testing environment (Test-Pi)
 - 🚀 Production-ready deployment
 - 🌐 Multilingual-ready frontend
 
@@ -25,7 +25,7 @@ The app supports both **Sandbox (development)** and **Production** environments 
 ### Production
 - **URL:** https://ceo-9xi.pages.dev
 - **Mode:** Pi Production
-- **Currency:** Test Pi (current phase)
+- **Currency:** Test-Pi (current phase)
 - **Used for:** Pi App checklist & live testing
 
 ### Sandbox (Development)
@@ -73,7 +73,9 @@ The app supports both **Sandbox (development)** and **Production** environments 
 
 ## Status
 
-✅ Sandbox payments working  
-✅ Production payments working  
-✅ Pi App checklist nearly complete
+✅ Sandbox payments working
+
+✅ Production payments working
+
+✅ Pi App's developer checklist completed.
 
