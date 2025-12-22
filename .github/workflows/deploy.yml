@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  contents: write        # ✅ allow push
+  contents: read
   pages: write
   id-token: write
 
@@ -18,26 +18,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v4   # ✅ FIXED VERSION
 
-      # 🔹 Upload only the web files, exclude README.md and workflow files
-      - name: Upload site files
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: |
-            index.html
-            js/
-            css/
-            img/
-            favicon.ico
-            .nojekyll   # optional
+          path: .
 
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - name: Deploy
         uses: actions/deploy-pages@v4
