@@ -1,0 +1,10 @@
+export async function onRequestGet({ env }) {
+  const { results } = await env.DB.prepare(
+    "SELECT rate FROM exchange_rate WHERE currency = 'PI' ORDER BY updated_at DESC LIMIT 1"
+  ).all();
+
+  return new Response(
+    JSON.stringify({ rate: results[0].rate }),
+    { headers: { "Content-Type": "application/json" } }
+  );
+}
