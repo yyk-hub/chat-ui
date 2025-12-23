@@ -319,9 +319,10 @@
           <td id="pi-total" style="text-align:right;">π 0.00</td>
         </tr>
       </table>
-      <p class="pi-only" style="font-size:12px; color:#666; text-align:center; margin-top:8px;">
-        Exchange Rate: 1 Pi ≈ RM 2.00
-      </p>
+     <!-- Add id="pi-rate-label" -->
+<p id="pi-rate-label" class="pi-only" style="font-size:12px; color:#666; text-align:center; margin-top:8px;">
+  Exchange Rate: 1 Pi ≈ RM 1.00 (loading...)
+</p>
     </div>
 
     <button class="confirm-btn" id="confirmBtn" onclick="confirmOrder()">✅ Confirm Order</button>
@@ -335,7 +336,7 @@
 
 <script>
 // === CONFIGURATION ===
-const PI_EXCHANGE_RATE = 2.0;
+let PI_EXCHANGE_RATE = 1.0; // Fallback - loaded from D1 via loadExchangeRate()
 let isPiBrowser = false;
 let cart = [], subTotal = 0, totalWeight = 0;
 
@@ -457,7 +458,55 @@ function showOrderHistoryButton() {
     confirmBtn.parentNode.insertBefore(historyBtn, confirmBtn.nextSibling);
   }
 }
+// ============================================
+// Update checkout.html
+// Add this function before confirmOrder()
+// ============================================
 
+async function loadExchangeRate() {
+  try {
+    console.log('💱 Loading exchange rate from D1...');
+    const res = await fetch('/api/exchange-rate');
+    
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    
+    const data = await res.json();
+    
+    if (data.fallback) {
+      console.warn('⚠️ Using fallback exchange rate:', data.rate);
+    } else {
+      console.log('✅ Exchange rate loaded:', data.rate);
+    }
+    
+    PI_EXCHANGE_RATE = data.rate;
+    
+    // Update PiPayment.js
+    if (window.PiPayment) {
+      PiPayment.setExchangeRate(PI_EXCHANGE_RATE);
+    }
+    
+    // Update UI display
+    const rateLabel = document.getElementById('pi-rate-label');
+    if (rateLabel) {
+      rateLabel.textContent = `Exchange Rate: 1 Pi ≈ RM ${PI_EXCHANGE_RATE.toFixed(2)}`;
+    }
+    
+    // Recalculate totals
+    updateSummary();
+    
+  } catch (error) {
+    console.error('❌ Failed to load exchange rate:', error);
+    console.warn('⚠️ Using fallback exchange rate: 1.0');
+    
+    // Still update UI with fallback
+    const rateLabel = document.getElementById('pi-rate-label');
+    if (rateLabel) {
+      rateLabel.textContent = `Exchange Rate: 1 Pi ≈ RM ${PI_EXCHANGE_RATE.toFixed(2)} (fallback)`;
+    }
+  }
+}
 // === CONFIRM ORDER - INTEGRATED WITH PI-PAYMENT.JS ===
 async function confirmOrder() {
   const btn = document.getElementById("confirmBtn");
@@ -821,6 +870,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('confirmBtn').textContent = '✅ Confirm Order';
     console.log('✅ Fiat interface activated');
   }
+   // ✅ LOAD EXCHANGE RATE FROM D1
+  await loadExchangeRate();
   
   loadOrder();
   checkExistingOrder();
