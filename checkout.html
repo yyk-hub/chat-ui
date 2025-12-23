@@ -702,7 +702,7 @@ https://ceo-9xi.pages.dev
       btnContainer.appendChild(shareBtn);
     }
 
-    // === 3. PRINT BUTTON (Desktop only) ===
+    // === 3. PRINT BUTTON (Always available) ===
     const printBtn = document.createElement("button");
     printBtn.textContent = "🖨️ Print";
     printBtn.className = "confirm-btn";
@@ -712,8 +712,21 @@ https://ceo-9xi.pages.dev
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
       if (isMobile) {
-        alert("💡 On mobile:\n1. Use 'Copy Details' to copy order\n2. Paste in notes app\n3. Or use 'Share' to send via WhatsApp");
+        // Ask user if they want to try printing on mobile
+        const tryPrint = confirm(
+          "📱 Mobile Print Notice\n\n" +
+          "Printing may not work well on mobile phones.\n\n" +
+          "✅ Click OK to try printing\n" +
+          "❌ Click Cancel to use 'Copy Details' instead"
+        );
+        
+        if (tryPrint) {
+          window.print();
+        } else {
+          alert("💡 Tip: Use the '📋 Copy Details' button to save your order information.");
+        }
       } else {
+        // Desktop: print normally
         window.print();
       }
     };
@@ -741,7 +754,6 @@ function createWhatsAppShareButton(orderData) {
   whatsappBtn.innerHTML = "💬 WhatsApp Us";
   return whatsappBtn;
 }
-
 // === PAGE INITIALIZATION - FIXED ===
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
