@@ -1,20 +1,28 @@
-// js/pi-payment.js
+// Update js/pi-payment.js
 // Pi Network Payment Handler - Version 13 - Final Fixed
 // Last Updated: 2024-12-21
 
 const PiPayment = {
-  PI_EXCHANGE_RATE: 2.0,
+  PI_EXCHANGE_RATE: 1.0, // Fallback default
   API_BASE_URL: window.location.origin,
   incompletePayment: null,
   isInitialized: false,
   isAuthenticated: false,
+
+  // NEW: Method to set exchange rate
+  setExchangeRate(rate) {
+    if (rate && rate > 0) {
+      this.PI_EXCHANGE_RATE = rate;
+      console.log('💱 Exchange rate updated:', rate);
+    }
+  },
 
   // Convert RM to Pi (8 decimal places for precision)
   rmToPi(rmAmount) {
     return (rmAmount / this.PI_EXCHANGE_RATE).toFixed(8);
   },
 
-  // Initialize Pi SDK - NO AUTHENTICATION HERE
+  // Initialize Pi SDK - Sandbox detection is REQUIRED
   async initialize() {
     if (this.isInitialized) {
       console.log('⏭️ Already initialized');
@@ -32,9 +40,8 @@ const PiPayment = {
                         window.location.hostname.includes('127.0.0.1') ||
                         window.location.search.includes('sandbox=true');
       
-      console.log('🔍 Environment detection:', {
+      console.log('🔍 Environment:', {
         hostname: window.location.hostname,
-        isSandbox: isSandbox,
         mode: isSandbox ? 'SANDBOX' : 'PRODUCTION'
       });
 
@@ -43,18 +50,13 @@ const PiPayment = {
         return false;
       }
 
-      // Initialize Pi SDK with correct mode
-      console.log(`⚙️ Calling Pi.init with sandbox=${isSandbox}...`);
-      
+      // Initialize Pi SDK with explicit sandbox mode
       await Pi.init({
         version: "2.0",
         sandbox: isSandbox
       });
 
       console.log(`✅ Pi SDK initialized in ${isSandbox ? 'SANDBOX' : 'PRODUCTION'} mode`);
-      
-      // IMPORTANT: Don't authenticate here - wait until payment is needed
-      // This prevents double authentication issues
       console.log('⏳ Authentication will happen when user initiates payment');
 
       this.isInitialized = true;
@@ -62,7 +64,6 @@ const PiPayment = {
 
     } catch (error) {
       console.error('❌ Pi initialization error:', error);
-      console.error('Error stack:', error.stack);
       
       if (error.message?.includes('timed out')) {
         alert(
