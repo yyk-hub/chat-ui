@@ -75,9 +75,112 @@ export async function onRequest(context) {
       });
     }
 
-    // === POST: update product ===
+    // === POST: multiple actions ===
     if (request.method === 'POST') {
       const body = await request.json().catch(() => ({}));
+      
+      // ============================================
+      // ✅ NEW: Update Exchange Rate
+      // ============================================
+      if (body.action === 'update_exchange_rate') {
+        const newRate = parseFloat(body.rate);
+        
+        if (!newRate || newRate <= 0) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: 'Invalid rate. Must be a positive number.' 
+          }), {
+            status: 400, 
+            headers: { ...cors, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Get current rate for logging
+        let oldRate = null;
+        try {
+          const { results } = await env.DB.prepare(
+            "SELECT rate FROM exchange_rate WHERE currency = 'PI' ORDER BY updated_at DESC LIMIT 1"
+          ).all();
+          oldRate = results[0]?.rate;
+        } catch (e) {
+          console.warn('Could not fetch old rate:', e);
+        }
+
+        // Insert new rate (keeps history)
+        await env.DB.prepare(
+          "INSERT INTO exchange_rate (currency, rate) VALUES ('PI', ?)"
+        ).bind(newRate).run();
+
+        console.log(`💱 Exchange rate updated: ${oldRate} → ${newRate}`);
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          old_rate: oldRate,
+          new_rate: newRate,
+          message: `Exchange rate updated to ${newRate} MYR per Pi`
+        }), {
+          headers: { ...cors, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ============================================
+      // ✅ NEW: Get Exchange Rate History
+      // ============================================
+      if (body.action === 'get_rate_history') {
+        const limit = parseInt(body.limit || '10', 10);
+        
+        const { results } = await env.DB.prepare(`
+          SELECT 
+            id,
+            currency,
+            rate,
+            updated_at,
+            ROUND(1.0 / rate, 8) as pi_per_myr
+          FROM exchange_rate 
+          WHERE currency = 'PI'
+          ORDER BY updated_at DESC 
+          LIMIT ?
+        `).bind(limit).all();
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          history: results 
+        }), {
+          headers: { ...cors, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ============================================
+      // ✅ NEW: Get Current Exchange Rate
+      // ============================================
+      if (body.action === 'get_current_rate') {
+        const { results } = await env.DB.prepare(
+          "SELECT rate, updated_at FROM exchange_rate WHERE currency = 'PI' ORDER BY updated_at DESC LIMIT 1"
+        ).all();
+
+        if (!results || results.length === 0) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: 'No exchange rate found' 
+          }), {
+            status: 404,
+            headers: { ...cors, 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          rate: results[0].rate,
+          updated_at: results[0].updated_at,
+          pi_per_myr: (1.0 / results[0].rate).toFixed(8)
+        }), {
+          headers: { ...cors, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ============================================
+      // Existing: Update Product
+      // ============================================
       if (body.action === 'update_product' && body.prod_id) {
         const updates = [], vals = [];
         if (body.price !== undefined) { updates.push('price = ?'); vals.push(body.price); }
@@ -107,4 +210,4 @@ export async function onRequest(context) {
       status: 500, headers: { ...cors, 'Content-Type': 'application/json' }
     });
   }
-          }
+}
