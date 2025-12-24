@@ -24,14 +24,42 @@ export async function onRequestPost(context) {
       );
     }
 
+    // ============================================
+    // ✅ NEW: Calculate Pi amount if Pi payment
+    // ============================================
+    let piAmount = null;
+    let piRate = null;
+    
+    if (order.pymt_method === 'Pi Network') {
+      try {
+        // Get current exchange rate from D1
+        const { results } = await env.DB.prepare(
+          "SELECT rate FROM exchange_rate WHERE currency = 'PI' ORDER BY updated_at DESC LIMIT 1"
+        ).all();
+        
+        piRate = results[0]?.rate || 1.0; // Fallback to 1.0 if no rate found
+        piAmount = parseFloat((order.total_amt / piRate).toFixed(8));
+        
+        console.log(`💱 Order ${order.order_id}: RM ${order.total_amt} → π ${piAmount} (rate: ${piRate})`);
+      } catch (rateError) {
+        console.error('⚠️ Failed to fetch exchange rate, using fallback 1.0:', rateError);
+        piRate = 1.0;
+        piAmount = parseFloat((order.total_amt / 1.0).toFixed(8));
+      }
+    }
+
+    // ============================================
+    // ✅ UPDATED: Insert with pi_amount and pi_exchange_rate
+    // ============================================
     await env.DB.prepare(`
       INSERT INTO ceo_orders (
         order_id, cus_name, cus_address, postcode, state_to, country, phone,
         prod_name, quantity, total_amt, shipping_wt,
         state_from, shipping_method, shipping_cost, delivery_eta,
-        pymt_method, order_status, courier_name, tracking_link
+        pymt_method, order_status, courier_name, tracking_link,
+        pi_amount, pi_exchange_rate, pi_txid
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       order.order_id,
       order.cus_name,
@@ -51,11 +79,19 @@ export async function onRequestPost(context) {
       order.pymt_method || 'FPX',
       order.order_status || 'Pending Payment',
       order.courier_name || 'City-Link',
-      order.tracking_link || ''
+      order.tracking_link || '',
+      piAmount,      // ✅ Pi amount calculated
+      piRate,        // ✅ Exchange rate locked
+      null           // pi_txid (will be set by complete.js)
     ).run();
 
     return new Response(
-      JSON.stringify({ success: true, order_id: order.order_id }),
+      JSON.stringify({ 
+        success: true, 
+        order_id: order.order_id,
+        pi_amount: piAmount,
+        pi_exchange_rate: piRate
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
