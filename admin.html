@@ -44,17 +44,49 @@
     .btn-back:hover { opacity: 0.8; }
     .table-wrapper { width: 100%; overflow-x: auto; }
     .table-wrapper table { width: 100%; min-width: 700px; }
-    @media (max-width: 720px) {
-      table th, table td { font-size: 13px; padding: 6px; }
-      h3 { font-size: 15px; }
-      .btn-back { font-size: 15px; }
-      input, select, button { font-size: 13px; padding: 6px; }
-    }
     .form-grid {
       display: grid;
       grid-template-columns: 160px 1fr;
       align-items: center;
       gap: 8px 10px;
+    }
+    .current-rate {
+      font-size: 24px;
+      color: #996600;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .rate-history {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .rate-item {
+      padding: 10px;
+      background: #f9f9f9;
+      margin: 5px 0;
+      border-radius: 6px;
+      border-left: 3px solid #14b47e;
+    }
+    .success-msg {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .error-msg {
+      background: #ffebee;
+      color: #c62828;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    @media (max-width: 720px) {
+      table th, table td { font-size: 13px; padding: 6px; }
+      h3 { font-size: 15px; }
+      .btn-back { font-size: 15px; }
+      input, select, button { font-size: 13px; padding: 6px; }
     }
     @media (max-width: 600px) {
       .form-grid { grid-template-columns: 1fr; }
@@ -67,51 +99,78 @@
     <h2>Admin Panel</h2>
   </div>
 
-  <div class="card">
-    <h3>Admin Login</h3>
-    <p>Enter your admin token (keeps in session only):</p>
-    <div class="row">
-      <input id="admToken" placeholder="admin token" style="flex:1" />
-      <button id="btnLogin" class="btn">Login</button>
-      <button id="btnLogout" style="display:none" class="btn">Logout</button>
+  <div class="wrap">
+    <div class="card">
+      <h3>Admin Login</h3>
+      <p>Enter your admin token (keeps in session only):</p>
+      <div class="row">
+        <input id="admToken" placeholder="admin token" style="flex:1" />
+        <button id="btnLogin" class="btn">Login</button>
+        <button id="btnLogout" style="display:none" class="btn">Logout</button>
+      </div>
+      <p id="loginMsg" style="color:#a00"></p>
     </div>
-    <p id="loginMsg" style="color:#a00"></p>
-  </div>
 
-  <div class="card" id="adminPanel" style="display:none">
-    <h3>Orders (Latest)</h3>
-    <div class="row" style="margin-bottom:8px">
-      <input id="filterPhone" placeholder="Filter by phone (optional)"/>
-      <button id="btnLoad" class="btn">Load</button>
-    </div>
-    <div class="table-wrapper"><div id="ordersHolder"></div></div>
-    <div style="text-align:center;margin:10px;">
-      <button id="loadMoreBtn" class="btn" style="display:none;" onclick="loadOrders()">Load More</button>
-    </div>
-  </div>
+    <!-- ✅ NEW: Exchange Rate Section -->
+    <div class="card" id="exchangeRateSection" style="display:none">
+      <h3>💱 Pi Exchange Rate Management</h3>
+      
+      <div style="margin-bottom: 20px;">
+        <strong>Current Rate:</strong>
+        <div id="currentRate" class="current-rate">Loading...</div>
+        <button onclick="loadExchangeRate()" class="btn" style="background:#2196F3;">🔄 Refresh</button>
+      </div>
 
-  <div class="card" id="updateProductSection" style="display:none">
-    <h3>Update Product</h3>
-    <div class="form-grid">
-      <label>Product:</label>
-      <select id="prodSelect"><option value="">-- Select Product --</option></select>
-      <label>Current Price:</label>
-      <input type="number" id="currPrice" step="0.01" readonly />
-      <label>Current Stock:</label>
-      <input type="number" id="currStock" readonly />
-      <label>New Price (optional):</label>
-      <input type="number" id="newPrice" step="0.01" placeholder="Enter new price" />
-      <label>New Stock (optional):</label>
-      <input type="number" id="newStock" placeholder="Enter new stock" />
-      <button id="btnUpdateProduct" class="btn">Update Product</button>
+      <div class="form-grid" style="max-width: 500px;">
+        <label>New Rate (1 Pi = X MYR):</label>
+        <input type="number" id="newExchangeRate" placeholder="0.85" step="0.01" min="0.01" />
+        <div></div>
+        <button id="btnUpdateRate" class="btn">💾 Update Rate</button>
+      </div>
+      <div id="rateUpdateMsg"></div>
+
+      <details style="margin-top: 20px;">
+        <summary style="cursor: pointer; font-weight: 600; margin-bottom: 10px;">📜 View Rate History</summary>
+        <div id="rateHistory" class="rate-history">Loading...</div>
+      </details>
     </div>
-    <div id="updateResult" style="margin-top:8px;font-size:13px"></div>
+
+    <div class="card" id="adminPanel" style="display:none">
+      <h3>Orders (Latest)</h3>
+      <div class="row" style="margin-bottom:8px">
+        <input id="filterPhone" placeholder="Filter by phone (optional)"/>
+        <button id="btnLoad" class="btn">Load</button>
+      </div>
+      <div class="table-wrapper"><div id="ordersHolder"></div></div>
+      <div style="text-align:center;margin:10px;">
+        <button id="loadMoreBtn" class="btn" style="display:none;" onclick="loadOrders()">Load More</button>
+      </div>
+    </div>
+
+    <div class="card" id="updateProductSection" style="display:none">
+      <h3>Update Product</h3>
+      <div class="form-grid">
+        <label>Product:</label>
+        <select id="prodSelect"><option value="">-- Select Product --</option></select>
+        <label>Current Price:</label>
+        <input type="number" id="currPrice" step="0.01" readonly />
+        <label>Current Stock:</label>
+        <input type="number" id="currStock" readonly />
+        <label>New Price (optional):</label>
+        <input type="number" id="newPrice" step="0.01" placeholder="Enter new price" />
+        <label>New Stock (optional):</label>
+        <input type="number" id="newStock" placeholder="Enter new stock" />
+        <button id="btnUpdateProduct" class="btn">Update Product</button>
+      </div>
+      <div id="updateResult" style="margin-top:8px;font-size:13px"></div>
+    </div>
   </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const ORDERS_API = '/api/admin/orders';
   const PRODUCTS_API = '/api/admin/products';
+  const EXCHANGE_RATE_API = '/api/admin/exchange-rate'; // ✅ NEW
 
   // util token helpers
   function token(){ return sessionStorage.getItem('ADMIN_TOKEN') || ''; }
@@ -126,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const adminPanel = document.getElementById('adminPanel');
   const updateProductSection = document.getElementById('updateProductSection');
+  const exchangeRateSection = document.getElementById('exchangeRateSection'); // ✅ NEW
   const btnLoad = document.getElementById('btnLoad');
   const ordersHolder = document.getElementById('ordersHolder');
   const filterPhone = document.getElementById('filterPhone');
@@ -138,6 +198,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const newStock = document.getElementById('newStock');
   const btnUpdateProduct = document.getElementById('btnUpdateProduct');
   const updateResult = document.getElementById('updateResult');
+
+  // ✅ NEW: Exchange rate elements
+  const currentRate = document.getElementById('currentRate');
+  const newExchangeRate = document.getElementById('newExchangeRate');
+  const btnUpdateRate = document.getElementById('btnUpdateRate');
+  const rateUpdateMsg = document.getElementById('rateUpdateMsg');
+  const rateHistory = document.getElementById('rateHistory');
 
   let orderOffset = 0;
   const ORDERS_LIMIT = 10;
@@ -161,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function showPanel(){
     adminPanel.style.display = 'block';
     updateProductSection.style.display = 'block';
+    exchangeRateSection.style.display = 'block'; // ✅ NEW
     btnLogout.style.display = 'inline-block';
     btnLogin.style.display = 'none';
     admTokenInput.style.display = 'none';
@@ -169,6 +237,8 @@ document.addEventListener('DOMContentLoaded', () => {
     orderOffset = 0;
     loadOrders(true);
     loadProducts();
+    loadExchangeRate(); // ✅ NEW
+    loadRateHistory(); // ✅ NEW
   }
 
   // login / logout
@@ -182,19 +252,150 @@ document.addEventListener('DOMContentLoaded', () => {
     clearToken();
     location.reload();
   });
-
-  // FIXED: Add click handler for Load button
+ // FIXED: Add click handler for Load button
   btnLoad.addEventListener('click', () => {
     orderOffset = 0;
     loadOrders(true); // Reset and load with filter
   });
 
-  // FIXED: Load More button handler
   loadMoreBtn.addEventListener('click', () => {
     loadOrders(false); // Append more orders
   });
 
-  // FIXED: Load orders function
+  // ============================================
+  // ✅ NEW: Exchange Rate Functions
+  // ============================================
+  
+  window.loadExchangeRate = async function() {
+    currentRate.innerHTML = 'Loading...';
+    try {
+      const res = await fetch(EXCHANGE_RATE_API, {
+        headers: { 'x-admin-token': token() }
+      });
+      
+      if (res.status === 403) {
+        currentRate.innerHTML = '<span style="color:#c62828">Unauthorized</span>';
+        return;
+      }
+
+      const data = await res.json();
+      
+      if (data.success) {
+        currentRate.innerHTML = `
+          1 Pi = RM ${data.rate}<br>
+          <small style="color:#666;font-weight:normal;">
+            (1 MYR = π ${data.pi_per_myr})<br>
+            Updated: ${new Date(data.updated_at).toLocaleString()}
+          </small>
+        `;
+      } else {
+        currentRate.innerHTML = `<span style="color:#c62828">${data.error}</span>`;
+      }
+    } catch (err) {
+      console.error('Load rate error:', err);
+      currentRate.innerHTML = '<span style="color:#c62828">Failed to load</span>';
+    }
+  };
+
+  async function loadRateHistory() {
+    try {
+      const res = await fetch(EXCHANGE_RATE_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token()
+        },
+        body: JSON.stringify({ action: 'history', limit: 20 })
+      });
+
+      if (res.status === 403) {
+        rateHistory.innerHTML = 'Unauthorized';
+        return;
+      }
+
+      const data = await res.json();
+      
+      if (data.success && data.history && data.history.length > 0) {
+        rateHistory.innerHTML = data.history.map(r => `
+          <div class="rate-item">
+            <strong>1 Pi = RM ${r.rate}</strong>
+            <span style="color:#666;"> (1 MYR = π ${r.pi_per_myr})</span><br>
+            <small style="color:#999;">${new Date(r.updated_at).toLocaleString()}</small>
+          </div>
+        `).join('');
+      } else {
+        rateHistory.innerHTML = 'No history available';
+      }
+    } catch (err) {
+      console.error('Load history error:', err);
+      rateHistory.innerHTML = 'Failed to load history';
+    }
+  }
+
+  btnUpdateRate && btnUpdateRate.addEventListener('click', async () => {
+    const rate = parseFloat(newExchangeRate.value);
+    
+    if (!rate || rate <= 0) {
+      rateUpdateMsg.innerHTML = '<div class="error-msg">Please enter a valid rate</div>';
+      return;
+    }
+
+    const confirmed = confirm(
+      `Update exchange rate to:\n\n` +
+      `1 Pi = RM ${rate}\n` +
+      `1 MYR = π ${(1/rate).toFixed(8)}\n\n` +
+      `This will affect all new orders. Continue?`
+    );
+    
+    if (!confirmed) return;
+
+    btnUpdateRate.disabled = true;
+    btnUpdateRate.textContent = 'Updating...';
+
+    try {
+      const res = await fetch(EXCHANGE_RATE_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token()
+        },
+        body: JSON.stringify({ action: 'update', rate: rate })
+      });
+
+      if (res.status === 403) {
+        rateUpdateMsg.innerHTML = '<div class="error-msg">Unauthorized</div>';
+        return;
+      }
+
+      const data = await res.json();
+      
+      if (data.success) {
+        rateUpdateMsg.innerHTML = `
+          <div class="success-msg">
+            ✅ ${data.message}<br>
+            Old: ${data.old_rate || 'N/A'} → New: ${data.new_rate}
+          </div>
+        `;
+        newExchangeRate.value = '';
+        loadExchangeRate();
+        loadRateHistory();
+        setTimeout(() => rateUpdateMsg.innerHTML = '', 5000);
+      } else {
+        rateUpdateMsg.innerHTML = `<div class="error-msg">Error: ${data.error}</div>`;
+      }
+    } catch (err) {
+      console.error('Update rate error:', err);
+      rateUpdateMsg.innerHTML = '<div class="error-msg">Failed to update rate</div>';
+    } finally {
+      btnUpdateRate.disabled = false;
+      btnUpdateRate.textContent = '💾 Update Rate';
+    }
+  });
+
+  // ============================================
+  // Existing Functions (Orders, Products)
+  // ============================================
+
   async function loadOrders(reset = false){
     const phone = filterPhone.value.trim();
     const hdrs = { 'x-admin-token': token() };
@@ -220,8 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         renderOrders(orders, false); // Append to table
       }
-
-      // Show/hide Load More button
+     // Show/hide Load More button
       if (orders.length >= ORDERS_LIMIT) {
         loadMoreBtn.style.display = 'inline-block';
       } else {
@@ -234,8 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ordersHolder.innerHTML = '<p style="color:#a00">Failed to load orders</p>';
     }
   }
-
-  // FIXED: Render orders (append or replace)
+ // FIXED: Render orders (append or replace)
   function renderOrders(orders, replace = true){
     if(!orders || orders.length === 0) { 
       if (replace) {
@@ -245,7 +444,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let html = '';
-    
     // If replacing, create new table
     if (replace) {
       html = '<table id="ordersTable"><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
@@ -280,14 +478,12 @@ document.addEventListener('DOMContentLoaded', () => {
       html += '</tbody></table>';
       ordersHolder.innerHTML = html;
     } else {
-      // Append to existing tbody
       const tbody = document.querySelector('#ordersTable tbody');
       if (tbody) {
         tbody.insertAdjacentHTML('beforeend', html);
       }
     }
-
-    // Set selects and attach handlers
+   // Set selects and attach handlers
     orders.forEach(o=>{
       const sel = document.getElementById('s-'+o.order_id);
       if(sel && (o.order_status || o.pymt_status)) {
@@ -297,8 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(btn) btn.addEventListener('click', () => updateOrder(o.order_id));
     });
   }
-
-  // update order (PUT)
+ // update order (PUT)
   async function updateOrder(order_id){
     const status = document.getElementById('s-'+order_id).value;
     const courier = document.getElementById('courier-'+order_id).value;
@@ -323,8 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Failed to update order (see console)');
     }
   }
-
-  // Load products
+ // Load products
   async function loadProducts() {
     try {
       const res = await fetch(PRODUCTS_API, { headers: { 'x-admin-token': token() }});
@@ -343,8 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error loading products:', err);
     }
   }
-
-  // Product selection handler
+ // Product selection handler
   prodSelect && prodSelect.addEventListener('change', async () => {
     const id = prodSelect.value;
     if (!id) {
@@ -372,8 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching product detail:', err);
     }
   });
-
-  // Update product handler
+ // Update product handler
   btnUpdateProduct && btnUpdateProduct.addEventListener('click', async () => {
     const prodId = prodSelect.value;
     if (!prodId) { alert('Select a product first'); return; }
@@ -416,4 +608,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 </body>
-  </html>
+</html>
