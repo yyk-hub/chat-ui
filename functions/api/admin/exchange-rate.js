@@ -26,6 +26,20 @@ export async function onRequest(context) {
     const url = new URL(request.url);
 
     // ============================================
+    // Debug: Check if DB is available
+    // ============================================
+    if (!env.DB) {
+      console.error('❌ env.DB is not defined - D1 binding missing in wrangler.toml');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Database not configured. Please add D1 binding in wrangler.toml' 
+        }), 
+        { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ============================================
     // GET: Get current exchange rate
     // ============================================
     if (request.method === 'GET') {
@@ -144,8 +158,21 @@ export async function onRequest(context) {
 
   } catch (err) {
     console.error('Exchange rate API error:', err);
+    console.error('Error stack:', err.stack);
+    console.error('Error details:', {
+      message: err.message,
+      name: err.name,
+      hasDB: !!env.DB,
+      hasAdminToken: !!env.ADMIN_TOKEN
+    });
+    
     return new Response(
-      JSON.stringify({ success: false, error: err.message }), 
+      JSON.stringify({ 
+        success: false, 
+        error: err.message,
+        details: err.name,
+        hint: !env.DB ? 'D1 binding missing' : 'Check if exchange_rate table exists'
+      }), 
       { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
     );
   }
