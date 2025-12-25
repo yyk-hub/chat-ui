@@ -138,7 +138,28 @@
       color:var(--accent);
       font-size:15px;
     }
+    
+  #toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #323232;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 9999;
+}
 
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
     .product p{
       margin:6px 0;
       color:var(--muted);
@@ -219,13 +240,24 @@
   <h2 class="header-title">☕ CEO Shop</h2>
   <a href="cart.html" class="cart-btn" aria-label="Cart">🛒Cart (<span id="cart-count">0</span>)</a>
   </div>
-
+  
+  <div id="toast" aria-live="polite" aria-atomic="true"></div>
+  
   <main class="container" id="main">
     <!-- product-list is a scrollable region; header stays frozen while products scroll -->
     <div id="product-list" aria-live="polite"></div>
   </main>
 
   <script>
+  function showToast(message, duration = 2200) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+  }
     function updateCartCount(){
       const cart = JSON.parse(localStorage.getItem('cartItems')||'[]');
       const qty = cart.reduce((s,i)=> s + (i.qty||0), 0);
@@ -240,8 +272,7 @@
       else cart.push({ id, name, price, weight, qty: 1 });
       localStorage.setItem('cartItems', JSON.stringify(cart));
       updateCartCount();
-      setTimeout(()=> alert(`✅ Added "${name}" to cart`), 10);
-    }
+      showToast(`✅ Added "${name}" to cart`);
 
     async function loadProducts(){
       try{
