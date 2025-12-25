@@ -459,30 +459,73 @@ document.addEventListener('DOMContentLoaded', () => {
       html = '<table id="ordersTable"><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
     }
 
-    orders.forEach(o => {
-      const safeProd = (o.prod_name||'').replace(/,/g,'<br/>');
-      html += `<tr>
-        <td><strong>${o.order_id}</strong><br/><small>${o.created_at || ''}</small></td>
-        <td style="max-width:300px">${safeProd}</td>
-        <td>RM ${parseFloat(o.total_amt||0).toFixed(2)}</td>
-        <td>${o.phone||''}</td>
-        <td id="status-${o.order_id}">${o.order_status||o.pymt_status||'—'}</td>
-        <td>
-          <select id="s-${o.order_id}">
-            <option>Pending Payment</option>
-            <option>Paid</option>
-            <option>Shipped</option>
-            <option>Completed</option>
-            <option>Cancelled</option>
-          </select>
-          <br/>
-          <input id="courier-${o.order_id}" placeholder="courier" style="width:140px;margin-top:6px" value="${o.courier_name||''}"/>
-          <input id="track-${o.order_id}" placeholder="tracking link" style="width:220px;margin-top:6px" value="${o.tracking_link||''}"/>
-          <br/>
-          <button class="btn" data-order="${o.order_id}">Save</button>
-        </td>
-      </tr>`;
-    });
+orders.forEach(o => {
+  const safeProd = (o.prod_name || '').replace(/,/g, '<br/>');
+  const oid = o.order_id;
+
+  html += `
+    <tr>
+      <td>
+        <strong>${oid}</strong><br/>
+        <small>${o.created_at || ''}</small>
+      </td>
+
+      <td style="max-width:300px">${safeProd}</td>
+
+      <td>RM ${parseFloat(o.total_amt || 0).toFixed(2)}</td>
+
+      <td>${o.phone || ''}</td>
+
+      <td id="status-${oid}">
+        ${o.order_status || o.pymt_status || '—'}
+      </td>
+
+      <td>
+        <!-- Order Status -->
+        <label for="s-${oid}" class="sr-only">Order Status</label>
+        <select id="s-${oid}" name="status">
+          <option value="Pending Payment">Pending Payment</option>
+          <option value="Paid">Paid</option>
+          <option value="Shipped">Shipped</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+
+        <br/>
+
+        <!-- Courier -->
+        <label for="courier-${oid}" class="sr-only">Courier Name</label>
+        <input
+          id="courier-${oid}"
+          name="courier_name"
+          placeholder="Courier"
+          style="width:140px;margin-top:6px"
+          value="${o.courier_name || ''}"
+        />
+
+        <!-- Tracking -->
+        <label for="track-${oid}" class="sr-only">Tracking Link</label>
+        <input
+          id="track-${oid}"
+          name="tracking_link"
+          placeholder="Tracking link"
+          style="width:220px;margin-top:6px"
+          value="${o.tracking_link || ''}"
+        />
+
+        <br/>
+
+        <button
+          type="button"
+          class="btn"
+          data-order="${oid}">
+          Save
+        </button>
+      </td>
+    </tr>
+  `;
+});
+
 
     if (replace) {
       html += '</tbody></table>';
