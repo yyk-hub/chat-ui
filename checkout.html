@@ -238,39 +238,47 @@
       🥧 Pay with Pi Network • Secure & Instant
     </div>
 
-    <div class="section">
-      <h3>🚚 Delivery Details</h3>
-      <label>Name</label>
-      <input type="text" id="custName" placeholder="Enter your name">
-      <label>Phone</label>
-      <input type="text" id="custPhone" placeholder="Enter phone number">
-      <label>Address</label>
-      <textarea id="custAddress" rows="3" placeholder="Delivery address"></textarea>
-      <label>Postcode</label>
-      <input type="text" id="custPostcode" placeholder="e.g. 81300">
-      <label>State</label>
-      <select id="custState">
-        <option value="">Select State or Federal Territory</option>
-        <option value="Kuala Lumpur">Kuala Lumpur</option>
-        <option value="Sabah">Sabah</option>
-        <option value="Sarawak">Sarawak</option>
-        <option value="Penang">Penang</option>
-        <option value="Johor">Johor</option>
-        <option value="West Malaysia">West Malaysia (Other)</option>
-      </select>
-      <label>Country</label>
-      <input type="text" id="custCountry" value="Malaysia" readonly>
+<div class="section">
+  <h3>🚚 Delivery Details</h3>
 
-      <label>Shipping Option</label>
-      <select id="shippingMethod">
-        <option value="courier">Standard Courier</option>
-        <option value="express">Express Free Shipping (≥ RM500)</option>
-        <option value="pickup">Self Pickup (Dist Centre)</option>
-      </select>
-      <p id="pickupWarning" class="pickup-warning">
-        Only available in Kuala Lumpur, Kota Kinabalu, Kuching, Penang and Johor Bahru. Please contact us via WhatsApp.
-      </p>
-    </div>
+  <label for="custName">Name</label>
+  <input type="text" id="custName" name="custName" placeholder="Enter your name">
+
+  <label for="custPhone">Phone</label>
+  <input type="text" id="custPhone" name="custPhone" placeholder="Enter phone number">
+
+  <label for="custAddress">Address</label>
+  <textarea id="custAddress" name="custAddress" rows="3" placeholder="Delivery address"></textarea>
+
+  <label for="custPostcode">Postcode</label>
+  <input type="text" id="custPostcode" name="custPostcode" placeholder="e.g. 81300">
+
+  <label for="custState">State</label>
+  <select id="custState" name="custState">
+    <option value="">Select State or Federal Territory</option>
+    <option value="Kuala Lumpur">Kuala Lumpur</option>
+    <option value="Sabah">Sabah</option>
+    <option value="Sarawak">Sarawak</option>
+    <option value="Penang">Penang</option>
+    <option value="Johor">Johor</option>
+    <option value="West Malaysia">West Malaysia (Other)</option>
+  </select>
+
+  <label for="custCountry">Country</label>
+  <input type="text" id="custCountry" name="custCountry" value="Malaysia" readonly>
+
+  <label for="shippingMethod">Shipping Option</label>
+  <select id="shippingMethod" name="shippingMethod">
+    <option value="courier">Standard Courier</option>
+    <option value="express">Express Free Shipping (≥ RM500)</option>
+    <option value="pickup">Self Pickup (Dist Centre)</option>
+  </select>
+
+  <p id="pickupWarning" class="pickup-warning">
+    Only available in Kuala Lumpur, Kota Kinabalu, Kuching, Penang and Johor Bahru. Please contact us via WhatsApp at the Homepage.
+  </p>
+</div>
+
 
     <div class="section fiat-only">
       <h3>💳 Payment</h3>
