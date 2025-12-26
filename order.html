@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <title>CEO - My Orders</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  
+  <meta property="pi:app" content='{"name":"CEO Shop","description":"Premium health and wellness products","image":"https://ceo-9xi.pages.dev/img/logo.jpg"}'>
+
   <style>
     body {
       background: #f4ecd6;
@@ -162,7 +163,7 @@
   </div>
   <div class="container">
     <div class="section">
-      <label>Phone Number <span style="color:#d32f2f;">*</span></label>
+      <label for="custPhone">Phone Number <span style="color:#d32f2f;">*</span></label>
       <input type="text" id="custPhone" placeholder="e.g. 0123456789">
       <button id="loadBtn" onclick="loadOrders()">View My Orders</button>
     </div>
@@ -450,10 +451,10 @@
             editRow.innerHTML = `
               <td colspan="8" class="edit-cell">
                 <div class="edit-grid">
-                  <div><label>Name</label><input id="name-${order.order_id}" value="${order.cus_name}"></div>
-                  <div><label>Postcode</label><input id="postcode-${order.order_id}" value="${order.postcode}"></div>
-                  <div class="edit-full"><label>Address</label><textarea id="address-${order.order_id}" rows="2">${order.cus_address}</textarea></div>
-                  <div><label>State</label>
+                  <div><label for="name-${order.order_id}">Name</label><input id="name-${order.order_id}" value="${order.cus_name}"></div>
+                  <div><label for="postcode-${order.order_id}">Postcode</label><input id="postcode-${order.order_id}" value="${order.postcode}"></div>
+                  <div class="edit-full"><label for="address-${order.order_id}">Address</label><textarea id="address-${order.order_id}" rows="2">${order.cus_address}</textarea></div>
+                  <div><label for="state-${order.order_id}">State</label>
                     <select id="state-${order.order_id}">
                       <option value="Kuala Lumpur" ${order.state_to === "Kuala Lumpur" ? "selected" : ""}>Kuala Lumpur</option>
                       <option value="Sabah" ${order.state_to === "Sabah" ? "selected" : ""}>Sabah</option>
@@ -463,7 +464,7 @@
                       <option value="West Malaysia" ${order.state_to === "West Malaysia" ? "selected" : ""}>West Malaysia</option>
                     </select>
                   </div>
-                  <div><label>Shipping</label>
+                  <div><label for="shipping-${order.order_id}">Shipping</label>
                     <select id="shipping-${order.order_id}">
                       <option value="courier" ${order.shipping_method.includes("Courier") ? "selected" : ""}>Standard</option>
                       <option value="express" ${order.shipping_method.includes("Express") ? "selected" : ""}>Express Free</option>
