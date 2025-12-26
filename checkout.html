@@ -201,6 +201,28 @@
       color: #7b2cbf !important;
       font-weight: 700;
     }
+  .toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #14b47e;
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 9999;
+ }
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-8px);
+ }
 
     @media print {
       body * { visibility: hidden; }
@@ -335,6 +357,8 @@
     <button class="confirm-btn" id="confirmBtn" onclick="confirmOrder()">✅ Confirm Order</button>
 
     <div id="OrderDisplay" style="margin-top:20px; font-size:14px; min-height:30px;"></div>
+    
+  <div id="toast" class="toast"></div>
 
   </div>
 
@@ -465,6 +489,20 @@ function showOrderHistoryButton() {
     confirmBtn.parentNode.insertBefore(historyBtn, confirmBtn.nextSibling);
   }
 }
+  
+  function showToast(message, duration = 3500) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.classList.add('show');
+
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+}
+
 // ============================================
 // Update checkout.html
 // Add this function before confirmOrder()
@@ -530,7 +568,7 @@ async function confirmOrder() {
   const method = document.getElementById("shippingMethod")?.value || 'courier';
 
   if (!name || !phone || !address || !postcode || !state_to) {
-    alert("Please fill in all delivery details.");
+    showToast("Please fill in all delivery details.");
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
     return;
@@ -538,14 +576,14 @@ async function confirmOrder() {
 
   const validPickupStates = ["Kuala Lumpur", "Sabah", "Sarawak", "Penang", "Johor"];
   if (method === "pickup" && !validPickupStates.includes(state_to)) {
-    alert("Self Pickup is only available in Kuala Lumpur, Sabah, Sarawak, Penang, and Johor.");
+    showToast("Self Pickup is only available in Kuala Lumpur, Sabah, Sarawak, Penang, and Johor.");
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
     return;
   }
 
   if (!cart.length) {
-    alert("Cart is empty!");
+    showToast("Cart is empty!");
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
     return;
@@ -617,7 +655,7 @@ const confirmed = confirm(
         
       } catch (piErr) {
         console.error('❌ Pi payment error:', piErr);
-        alert('Payment failed: ' + piErr.message);
+        showToast('Payment failed: ' + piErr.message);
         btn.disabled = false;
         btn.innerText = "🥧 Pay with Pi Network";
       }
@@ -628,7 +666,7 @@ const confirmed = confirm(
       localStorage.setItem('lastOrderPhone', phone);
       localStorage.removeItem("cartItems");
       
-      alert("✅ Order placed! Please send your bank receipt via WhatsApp.");
+      showToast("✅ Order placed! Please send your bank receipt via WhatsApp.");
       
       btn.style.display = 'none';
       showOrderHistoryButton();
@@ -637,7 +675,7 @@ const confirmed = confirm(
 
   } catch (err) {
     console.error('❌ Order error:', err);
-    alert("Failed to create order: " + err.message);
+    showToast("Failed to create order: " + err.message);
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
   }
@@ -733,7 +771,7 @@ https://ceo-9xi.pages.dev
           copyBtn.style.background = "#2196F3";
         }, 2000);
       } catch (err) {
-        alert("Failed to copy. Please select and copy manually.");
+        showToast("Failed to copy. Please select and copy manually.");
       }
     };
 
@@ -779,7 +817,7 @@ https://ceo-9xi.pages.dev
         if (tryPrint) {
           window.print();
         } else {
-          alert("💡 Tip: Use the '📋 Copy Details' button to save your order information.");
+          showToast("💡 Tip: Use the '📋 Copy Details' button to save your order information.");
         }
       } else {
         // Desktop: print normally
