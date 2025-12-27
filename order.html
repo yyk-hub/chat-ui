@@ -154,6 +154,28 @@
       .action-cell button { font-size: 10px; padding: 4px 6px; margin: 1px; }
       .header-title { font-size: 18px; }
     }
+      .toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #1f1f1f;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 9999;
+ }
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-8px);
+ }
   </style>
 </head>
 <body>
@@ -161,6 +183,8 @@
     <a href="index.html" class="home-btn">Home</a>
     <h2 class="header-title">My Orders</h2>
   </div>
+  <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
+
   <div class="container">
     <div class="section">
       <label for="custPhone">Phone Number <span style="color:#d32f2f;">*</span></label>
@@ -233,6 +257,15 @@
       const row = document.getElementById(`edit-${id}`);
       if (row) row.classList.remove("show");
     }
+    
+  function showToast(message, duration = 3500) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toast.classList.remove('show'), duration);
+}
 
     async function saveEdit(id) {
       const payload = {
@@ -255,17 +288,17 @@
         try { data = await res.json(); } catch { data = { error: "Invalid JSON" }; }
 
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        alert("Updated!");
+        showToast("Updated!");
         hideEdit(id);
         loadOrders();
       } catch (err) {
-        alert("Error: " + err.message);
+        showToast("Error: " + err.message);
       }
     }
 
    function printOrder(id, phone) {
   const area = document.getElementById(`print-${id}`);
-  if (!area) return alert("Print content not ready");
+  if (!area) return showToast("Print content not ready");
 
   let html = area.innerHTML.replace(/\{PHONE\}/g, phone);
 
@@ -344,7 +377,7 @@
 }
     async function loadOrders() {
       const phone = document.getElementById('custPhone').value.trim();
-      if (!phone) return alert('Enter phone number');
+      if (!phone) return showToast('Enter phone number');
 
       const btn = document.getElementById('loadBtn');
       const list = document.getElementById('ordersList');
