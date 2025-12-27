@@ -568,8 +568,10 @@ async function confirmOrder() {
   const state_to = document.getElementById("custState")?.value || '';
   const method = document.getElementById("shippingMethod")?.value || 'courier';
 
+  // Validation
   if (!name || !phone || !address || !postcode || !state_to) {
-    showToast("Please fill in all delivery details.");
+    showToast('⚠️ Please fill in all delivery details', 'error', 3000);
+    alert("Please fill in all delivery details.");
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
     return;
@@ -577,14 +579,16 @@ async function confirmOrder() {
 
   const validPickupStates = ["Kuala Lumpur", "Sabah", "Sarawak", "Penang", "Johor"];
   if (method === "pickup" && !validPickupStates.includes(state_to)) {
-    showToast("Self Pickup is only available in Kuala Lumpur, Sabah, Sarawak, Penang, and Johor.");
+    showToast('⚠️ Self Pickup not available in your state', 'error', 3000);
+    alert("Self Pickup is only available in Kuala Lumpur, Sabah, Sarawak, Penang, and Johor.");
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
     return;
   }
 
   if (!cart.length) {
-    showToast("Cart is empty!");
+    showToast('🛒 Your cart is empty', 'error', 3000);
+    alert("Cart is empty!");
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
     return;
@@ -612,6 +616,8 @@ async function confirmOrder() {
   try {
     // Save order to database FIRST
     console.log('💾 Saving order to database...');
+    showToast('📦 Creating order...', 'info', 2000);
+    
     const res = await fetch(`/api/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -627,40 +633,18 @@ async function confirmOrder() {
     // Process payment based on browser
     if (isPiBrowser && typeof PiPayment !== 'undefined') {
       // === PI PAYMENT FLOW ===
-      btn.innerText = "Preparing Pi Payment...";
+      const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(8);
+      const piDisplay = parseFloat(piAmount).toString();
+
+      // ✅ No confirmation dialog - show toast and open wallet immediately
+      showToast(`💳 Pi Payment: π ${piDisplay}. Opening wallet...`, 'info', 3000);
+      btn.innerText = "Opening Pi Wallet...";
       
-      try {
-// Show confirmation with Pi amount (UPDATED)
-const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(8);
-const piDisplay = parseFloat(piAmount).toString(); // Remove trailing zeros
-
-const confirmed = confirm(
-  `Order Total: RM ${totalAmt.toFixed(2)}\n` +
-  `Pi Amount: π ${piDisplay}\n\n` +
-  `Proceed with Pi payment?`
-);
-
-        if (!confirmed) {
-          console.log('User cancelled Pi payment');
-          btn.disabled = false;
-          btn.innerText = "🥧 Pay with Pi Network";
-          return;
-        }
-
-// ✅ User confirmed - show toast (FIXED)
-showToast(`💳 Opening Pi Wallet for π ${piDisplay}...`, 'info', 2000);
-btn.innerText = "Opening Pi Wallet...";
-await PiPayment.createPayment(orderData);
-
-        // Success is handled by PiPayment callbacks
-        // User will be redirected automatically
-        
-      } catch (piErr) {
-        console.error('❌ Pi payment error:', piErr);
-        showToast('Payment failed: ' + piErr.message);
-        btn.disabled = false;
-        btn.innerText = "🥧 Pay with Pi Network";
-      }
+      // Pi SDK handles all user confirmations
+      await PiPayment.createPayment(orderData);
+      
+      // Success is handled by PiPayment callbacks
+      // User will be redirected automatically after blockchain confirmation
       
     } else {
       // === FIAT PAYMENT FLOW ===
@@ -668,7 +652,8 @@ await PiPayment.createPayment(orderData);
       localStorage.setItem('lastOrderPhone', phone);
       localStorage.removeItem("cartItems");
       
-      showToast("✅ Order placed! Please send your bank receipt via WhatsApp.");
+      showToast('✅ Order placed! Send bank receipt via WhatsApp', 'success', 4000);
+      alert("✅ Order placed! Please send your bank receipt via WhatsApp.");
       
       btn.style.display = 'none';
       showOrderHistoryButton();
@@ -677,7 +662,8 @@ await PiPayment.createPayment(orderData);
 
   } catch (err) {
     console.error('❌ Order error:', err);
-    showToast("Failed to create order: " + err.message);
+    showToast(`❌ Failed: ${err.message}`, 'error', 4000);
+    alert("Failed to create order: " + err.message);
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
   }
