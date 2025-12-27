@@ -647,9 +647,10 @@ const confirmed = confirm(
           return;
         }
 
-        // Create Pi payment - this handles everything!
-        btn.innerText = "Opening Pi Wallet...";
-        await PiPayment.createPayment(orderData);
+// ✅ User confirmed - show toast (FIXED)
+showToast(`💳 Opening Pi Wallet for π ${piDisplay}...`, 'info', 2000);
+btn.innerText = "Opening Pi Wallet...";
+await PiPayment.createPayment(orderData);
 
         // Success is handled by PiPayment callbacks
         // User will be redirected automatically
