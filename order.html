@@ -362,18 +362,20 @@
   document.body.appendChild(iframe);
   iframe.src = url;
 
-  iframe.onload = () => {
+iframe.onload = () => {
+  const win = iframe.contentWindow;
+
+  requestAnimationFrame(() => {
+    win.focus();
+    win.print();
+
     setTimeout(() => {
-      const win = iframe.contentWindow;
-      win.focus();
-      win.print();
-      
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-        URL.revokeObjectURL(url);
-      }, 2000);
-    }, 600); // Increased render time
-  };
+      document.body.removeChild(iframe);
+      URL.revokeObjectURL(url);
+    }, 3000);
+  });
+};
+
 }
     async function loadOrders() {
       const phone = document.getElementById('custPhone').value.trim();
