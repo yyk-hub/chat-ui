@@ -202,12 +202,12 @@
       color: #7b2cbf !important;
       font-weight: 700;
     }
-  .toast {
+.toast {
   position: fixed;
   top: 24px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.90);
   color: #1f1f1f;
   padding: 14px 18px;
   border-radius: 10px;
@@ -218,13 +218,27 @@
   pointer-events: none;
   transition: opacity .25s ease, transform .25s ease;
   z-index: 9999;
- }
+}
 
 .toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(-8px);
- }
+}
 
+.toast.success {
+  background: linear-gradient(135deg, #14b47e 0%, #0f9d6b 100%);
+  color: white;
+}
+
+.toast.info {
+  background: linear-gradient(135deg, #7b2cbf 0%, #5a189a 100%);
+  color: white;
+}
+
+.toast.error {
+  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+  color: white;
+}
     @media print {
       body * { visibility: hidden; }
       #OrderDisplay, #OrderDisplay * { visibility: visible; }
@@ -491,13 +505,22 @@ function showOrderHistoryButton() {
   }
 }
   
-  function showToast(message, duration = 3500) {
+function showToast(message, type = 'info', duration = 3500) {
   const toast = document.getElementById('toast');
   if (!toast) return;
-
+  
   toast.textContent = message;
+  
+  // Remove old type classes
+  toast.classList.remove('success', 'info', 'error');
+  
+  // Add new type class
+  if (type) {
+    toast.classList.add(type);
+  }
+  
   toast.classList.add('show');
-
+  
   clearTimeout(toast._t);
   toast._t = setTimeout(() => {
     toast.classList.remove('show');
