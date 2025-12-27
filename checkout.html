@@ -866,6 +866,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
   
   const debugDiv = document.getElementById('debug');
+  
+  // ✅ Hide debug in production immediately
+  const isProduction = window.location.hostname === 'ceo-9xi.pages.dev';
+  if (isProduction && debugDiv) {
+    debugDiv.remove();
+  }
+  
   if (debugDiv) {
     debugDiv.textContent = '🔍 Detecting...';
     debugDiv.style.background = 'orange';
@@ -886,8 +893,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   let piWorks = false;
   
-  // JUST DETECT - DON'T INITIALIZE!
-  // Let pi-payment.js handle initialization with correct sandbox setting
   if (hasPiSDK && (isInIframe || sessionPi)) {
     console.log('✅ Pi SDK detected');
     piWorks = true;
@@ -901,13 +906,20 @@ document.addEventListener('DOMContentLoaded', async function() {
   console.log('RESULT:', piWorks ? 'PI INTERFACE ✅' : 'FIAT INTERFACE ❌');
   console.log('========================================');
   
-  if (debugDiv) {
+  if (debugDiv && !isProduction) {
     const isSandbox = window.location.hostname.includes('sandbox');
     const mode = isSandbox ? 'Sandbox' : 'Production';
     debugDiv.innerHTML = piWorks ? 
       `✅ PI MODE<br><small>${mode}</small>` : 
       '❌ FIAT MODE<br><small>Regular Browser</small>';
     debugDiv.style.background = piWorks ? '#2e7d32' : '#d32f2f';
+    
+    // ✅ Auto-hide after 3 seconds with fade effect
+    setTimeout(() => {
+      debugDiv.style.transition = 'opacity 0.5s ease';
+      debugDiv.style.opacity = '0';
+      setTimeout(() => debugDiv.remove(), 500);
+    }, 3000);
   }
   
   isPiBrowser = piWorks;
