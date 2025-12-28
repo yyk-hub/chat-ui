@@ -116,22 +116,72 @@
     margin-top: 0;
   }
 
-  p {
-    font-size: 15px;
-    line-height: 1.2;
-    color: #333;
-  }
+/* =========================
+   Base Styles (keep for all text)
+   ========================= */
+p {
+  font-size: 15px;
+  line-height: 1.4;
+  color: #333;
+}
 
-    li {
-    font-size: 0.95em;
-    line-height: 1.2em;
-    text-align: left;
-    margin-left: 0;
-    padding-left: 0em; /* optional: adjust bullet spacing */
-    list-style-position: inside; /* makes bullets align with text */
-      }
-  
-  ul { padding-left: 20px; }
+ul {
+  padding-left: 20px; /* normal bulleted lists */
+}
+
+li {
+  font-size: 0.95em;
+  line-height: 1.4em;
+  text-align: left;
+  margin-left: 0;
+  padding-left: 0;
+  list-style-position: outside;
+}
+
+/* =========================
+   Aligned Lists (Grid Layout)
+   ========================= */
+.aligned-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.aligned-list li {
+  display: grid;
+  grid-template-columns: 120px 1fr; /* label column fixed, text flexible */
+  column-gap: 10px;
+  margin-bottom: 8px;
+}
+
+.aligned-list .label {
+  font-weight: bold;
+}
+
+/* =========================
+   Aligned Lists (Flex Layout)
+   ========================= */
+.aligned-flex {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.aligned-flex li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.aligned-flex .label {
+  width: 120px;       /* fixed width for labels */
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.aligned-flex .text {
+  flex: 1;            /* description takes remaining space */
+}
 
   .testimonial {
     background: #fff9f0;
@@ -407,41 +457,11 @@
     </div>
   </section>
 
-  <section>
-    <h3>How to Join Membership</h3>
-    <p>Our members enjoy exclusive prices, promotions, and rewards. 
-       Members can purchase directly, share products, and earn income.</p>
-    <ul>
-      <li>Step 1: Contact us via WhatsApp.</li>
-      <li>Step 2: Fill out a simple registration form and pay a small application fee.</li>
-      <li>Step 3: Start enjoying member benefits immediately and buy at member's price etc.</li>
-    </ul>
-  </section>
+<!-- Membership Steps --> <section> <h3>How to Join Membership</h3> <p>Our members enjoy exclusive prices, promotions, and rewards. Members can purchase directly, share products, and earn income.</p> <ul class="aligned-list"> <li><span class="label">Step 1:</span><span class="text">Contact us via WhatsApp.</span></li> <li><span class="label">Step 2:</span><span class="text">Fill out a simple registration form and pay a small application fee.</span></li> <li><span class="label">Step 3:</span><span class="text">Start enjoying member benefits immediately and buy at member's price etc.</span></li> </ul> </section>
 
-  <section>
-    <h3>User Menu & Guide</h3>
-    <ul>
-      <li>Chat : Start messaging via Chatbot Assistant OR WhatsApp.</li>
-      <li>Menu : Read introduction, featured products, user menu, payment methods and testimonials.</li>
-      <li>Shop : Explore and view products.</li>
-      <li>Cart : Buy now - add products to Cart.</li>
-      <li>Checkout : Enter name, delivery address and confirm order.</li>
-      <li>Payment : <p>(1) Pay with RM: Scan QR and send receipt.</p>or <p>(2) Pay with Pi: Notify us Order Details after payment via WhatsApp.</p></li>
-      <li>Menu - Order History : Edit, print order details, and track order status.</li>
-      <li>Delivery : Three working days.</li><p>(1) Parcel send via normal courier services.</p><p>(2) Self-pickup at Distrbution Centres - Kuala Lumpur, Kota KInabalu, Kuching, Penamg and Johor Baru.</p><p>(3) Free Shipping for order - RM500 and above.</p>
-    </ul>
-  </section>
+<!-- User Menu --> <section> <h3>User Menu & Guide</h3> <ul class="aligned-list"> <li><span class="label">Chat :</span><span class="text">Start messaging via Chatbot Assistant OR WhatsApp.</span></li> <li><span class="label">Menu :</span><span class="text">Read introduction, featured products, user menu, payment methods and testimonials.</span></li> <li><span class="label">Shop :</span><span class="text">Explore and view products.</span></li> <li><span class="label">Cart :</span><span class="text">Buy now - add products to Cart.</span></li> <li><span class="label">Checkout :</span><span class="text">Enter name, delivery address and confirm order.</span></li> <li><span class="label">Payment :</span><span class="text">(1) Pay with RM: Scan QR and send receipt.</span></li> </ul> </section>
 
-  <section>
-    <h3>Payment Methods</h3>
-    <p>Make payment conveniently via:</p>
-    <ul>
-      <li><strong>Pi Wallet:</strong> Pay with Pi via Pi Browser - Instant and Secure.</li><br>
-      <li><strong>Bank QR:</strong> Scan our official bank QR to complete payment securely.</li><br>
-      <li><strong>Touch ’n Go (TNG):</strong> Pay using your TNG eWallet with instant confirmation.</li>
-    </ul>
-    <p>Payment details will be displayed during checkout.</p>
-  </section>
+<!-- Payment Methods --> <section> <h3>Payment Methods</h3> <p>Make payment conveniently via:</p> <ul class="aligned-list"> <li><span class="label">Pi Wallet:</span><span class="text">Pay with Pi via Pi Browser - Instant and Secure.</span></li> <li><span class="label">Bank QR:</span><span class="text">Scan our official bank QR to complete payment securely.</span></li> <li><span class="label">Touch ’n Go:</span><span class="text">Pay using your TNG eWallet with instant confirmation.</span></li> </ul> <p>Payment details will be displayed during checkout.</p> </section>
 
   <section>
     <h3>Testimonials</h3>
@@ -569,4 +589,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
