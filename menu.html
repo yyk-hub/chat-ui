@@ -31,7 +31,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 12px 0;
+    padding: 12px 20px;
     border-bottom: 2px solid #d1c4a1;
   }
 
@@ -319,7 +319,7 @@ li {
               <h3>HEALTH FOOD . BIOTECH PRODUCT . BEVERAGE . SKIN CARE . PERSONAL CARE . HOUSEHOLD</h3><br>
     <h3>Introduction</h3>
     <p>CEO Health and Wellness is a distributor of a trusted brand of products promoting health, beauty, and quality of life. <br>
-      It is a trusted health and wellness brand with over 30 years of experience, combining traditional herbal knowledge with modern scientific formulation. The products are made with high-quality natural ingredients, manufactured under strict quality control, and certified Halal, making them suitable for all consumers.<br?
+      It is a trusted health and wellness brand with over 30 years of experience, combining traditional herbal knowledge with modern scientific formulation. The products are made with high-quality natural ingredients, manufactured under strict quality control, and certified Halal, making them suitable for all consumers.<br>?
       From daily health supplements to functional wellness products, it supports immunity, energy, digestion, and overall well-being. Trusted locally and internationally, it is the smart choice for those seeking safe, effective, and Halal-certified health solutions.</p>
   </section>
 
@@ -525,13 +525,16 @@ document.addEventListener('click', (e) => {
    - Only fills prod_name, price and image_url for items that have data-prod attribute.
    - Leaves the long <p> descriptions exactly as they are in HTML.
 */
-const API = 'https://https://ceo-9xi.pages.dev/api/products';
+const API = 'https://ceo-9xi.pages.dev/api/products';
 const allowedProdIds = ['berry','cleaner','coffee_ns','coffee_s','lingzhi','tea','toothpaste','vitaking2','lingzhi_t','soya_p','pollen','pollen_c','aqua_cleanser','vcare_shampoo'];
 
 async function syncFeatured() {
   try {
     const res = await fetch(API);
-    if (!res.ok) throw new Error('Products fetch failed');
+   if (!res.ok) {
+      console.error('API error:', res.status);
+      return;
+    }
     const items = await res.json();
     // make a map by prod_id
     const map = {};
@@ -587,3 +590,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
