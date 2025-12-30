@@ -7,21 +7,117 @@
   <meta property="pi:app" content='{"name":"CEO Shop","description":"Premium health and wellness products","image":"https://ceo-9xi.pages.dev/img/logo.jpg"}'>
   
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-    body { background: #ffffff; color: #333333; }
-    @media (prefers-color-scheme: dark) {
-      body { background: #111827; color: #f9fafb; }
-      footer { color: #9ca3af; }
-      a { color: #34d399; }
-    }
-    h1 { font-size: 24px; margin-bottom: 20px; }
-    h2 { font-size: 18px; margin-top: 20px; }
-    p { margin-bottom: 15px; }
-    footer { margin-top: 40px; font-size: 14px; text-align: center; }
-    a { color: #10b981; text-decoration: none; }
+/* Page base */
+body {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 120px auto 40px;
+  padding: 20px;
+  line-height: 1.6;
+  background: #ffffff;
+  color: #333333;
+}
+
+/* Sticky header */
+.top-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  z-index: 1000;
+}
+
+/* Left side */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Logo */
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #8b5a2b, #6b4226);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* Title */
+.title h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Home button (right side) */
+.home-btn {
+  background: #996600;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.home-btn:hover {
+  opacity: 0.9;
+}
+
+/* Headings */
+h2 {
+  font-size: 18px;
+  margin-top: 24px;
+}
+
+p {
+  margin-bottom: 15px;
+}
+
+/* Footer (no back-to-home link) */
+footer {
+  margin-top: 40px;
+  font-size: 14px;
+  text-align: center;
+  color: #6b7280;
+}
+
+a {
+  color: #10b981;
+  text-decoration: none;
+}
+
   </style>
 </head>
 <body>  
+  <header class="top-header">
+  <div class="header-left">
+    <div class="logo">CEO</div>
+    <div class="title">
+      <h1>CEO Health & Wellness</h1>
+      <div class="subtitle">Privacy Policy</div>
+    </div>
+  </div>
+
+  <a href="index.html" class="home-btn">🏠 Home</a>
+</header>
+
   <h1>CEO Health & Wellness</h1>
   <h2>Privacy Policy</h2>
   <p>
