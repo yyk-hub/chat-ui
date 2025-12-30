@@ -2,129 +2,129 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CEO - Privacy Policy</title>
+  <title>Health & Wellness - Privacy Policy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta property="pi:app" content='{"name":"CEO Shop","description":"Premium health and wellness products","image":"https://ceo-9xi.pages.dev/img/logo.jpg"}'>
   
   <style>
-/* Page base */
-body {
-  font-family: Arial, sans-serif;
-  max-width: 800px;
-  margin: 88px auto 40px;
-  padding: 20px;
-  line-height: 1.6;
-  background: #ffffff;
-  color: #333333;
-}
+    /* Base page */
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 80px auto 40px; /* header height + small spacing */
+      padding: 20px;
+      line-height: 1.6;
+      background: #ffffff;
+      color: #333333;
+    }
 
-/* Sticky header */
-.top-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    /* Sticky header */
+    .top-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      z-index: 1000;
+      box-sizing: border-box;
+    }
 
-  padding: 14px max(20px, env(safe-area-inset-left))
-           14px max(20px, env(safe-area-inset-right));
+    /* Header left */
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-  z-index: 1000;
-}
+    /* Logo */
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #8b5a2b, #6b4226);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
 
-/* Left side */
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+    /* Title */
+    .title h1 {
+      font-size: 18px;
+      margin: 0;
+      white-space: nowrap;
+    }
 
-/* Logo */
-.logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #8b5a2b, #6b4226);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: white;
-  flex-shrink: 0;
-}
+    .subtitle {
+      font-size: 13px;
+      color: #6b7280;
+    }
 
-/* Title */
-.title h1 {
-  font-size: 18px;
-  margin: 0;
-}
+    /* Home button */
+    .home-btn {
+      background: #996600;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 14px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
 
-.subtitle {
-  font-size: 13px;
-  color: #6b7280;
-}
+    .home-btn:hover {
+      opacity: 0.9;
+    }
 
-/* Home button (right side) */
-.home-btn {
-  background: #996600;
-  color: white;
-  padding: 6px 14px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 14px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+    /* Headings */
+    h2 { font-size: 18px; margin-top: 24px; }
+    p { margin-bottom: 15px; }
 
-.home-btn:hover {
-  opacity: 0.9;
-}
+    /* Footer */
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      text-align: center;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow-x: auto;
+    }
 
-/* Headings */
-h2 {
-  font-size: 18px;
-  margin-top: 24px;
-}
-
-p {
-  margin-bottom: 15px;
-}
-
-/* Footer (no back-to-home link) */
-footer {
-  margin-top: 40px;
-  font-size: 14px;
-  text-align: center;
-  color: #6b7280;
-}
-
-a {
-  color: #10b981;
-  text-decoration: none;
-}
-
+    /* MOBILE ADJUSTMENTS */
+    @media (max-width: 480px) {
+      .title h1 { font-size: 16px; }
+      .top-header { padding: 8px 12px; }
+      body { margin-top: 70px; } /* smaller header height */
+      footer { font-size: 13px; }
+    }
   </style>
 </head>
-<body>  
+<body>
+
+  <!-- Sticky Header -->
   <header class="top-header">
-  <div class="header-left">
-    <div class="logo">CEO</div>
-    <div class="title">
-      <h1>CEO Health & Wellness</h1>
-      <div class="subtitle">Privacy Policy</div>
+    <div class="header-left">
+      <div class="logo">CEO</div>
+      <div class="title">
+        <h1>Health & Wellness</h1>
+        <div class="subtitle">Privacy Policy</div>
+      </div>
     </div>
-  </div>
 
-  <a href="index.html" class="home-btn">🏠 Home</a>
-</header>
+    <a href="index.html" class="home-btn">🏠 Home</a>
+  </header>
 
+  <!-- Page Content -->
   <h2>Privacy Policy</h2>
   <p>
-    CEO Health & Wellnesst (“CEO Shop”, “we”, “our”) respects your privacy. This Privacy Policy explains how we collect, use, and protect information when you use our online shop and checkout services, including Pi Browser authentication.
+    CEO Health & Wellness (“CEO Shop”, “we”, “our”) respects your privacy. This Privacy Policy explains how we collect, use, and protect information when you use our online shop and checkout services, including Pi Browser authentication.
   </p>
 
   <h2>Information We Collect</h2>
@@ -132,11 +132,11 @@ a {
     We may collect the following information when you place an order or interact with our website:
   </p>
   <p>
-    • Name  
-    • Phone number  
-    • Delivery address  
-    • Order details (items, quantities, total cost)  
-    • Payment method (Pi Network or bank transfer)  
+    • Name<br>
+    • Phone number<br>
+    • Delivery address<br>
+    • Order details (items, quantities, total cost)<br>
+    • Payment method (Pi Network or bank transfer)<br>
     • Technical information such as browser type and timestamps
   </p>
 
@@ -145,22 +145,22 @@ a {
     We use your information to:
   </p>
   <p>
-    • Process and deliver your orders  
-    • Provide customer support  
-    • Verify transactions made using Pi payments  
-    • Improve site performance and security  
+    • Process and deliver your orders<br>
+    • Provide customer support<br>
+    • Verify transactions made using Pi payments<br>
+    • Improve site performance and security<br>
     • Contact you regarding order updates
   </p>
 
   <h2>Pi Network Authentication</h2>
   <p>
-    When accessing CEO Shop through the Pi Browser, we may request your Pi username via the Pi SDK.  
+    When accessing CEO Shop through the Pi Browser, we may request your Pi username via the Pi SDK.<br>
     We do <strong>not</strong> receive your private keys, wallet data, or any sensitive information.
   </p>
 
   <h2>Data Security</h2>
   <p>
-    All communication is protected using HTTPS.  
+    All communication is protected using HTTPS.<br>
     We do not sell or share your personal information with external parties except for fulfilling your order (e.g., courier services).
   </p>
 
@@ -174,9 +174,10 @@ a {
     If you have questions about this Privacy Policy, please contact our customer support.
   </p>
 
-<footer>
-  © 2025 CEO Health & Wellness · All Rights Reserved
-</footer>
+  <!-- Footer -->
+  <footer>
+    © 2025 CEO Health & Wellness · All Rights Reserved
+  </footer>
 
 </body>
 </html>
