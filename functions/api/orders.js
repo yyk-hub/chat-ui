@@ -114,22 +114,69 @@ export async function onRequestGet(context) {
   try {
     const url = new URL(request.url);
     const phone = url.searchParams.get('phone');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 20);
+    const cursor = url.searchParams.get('cursor'); // created_at ISO string
 
     let query;
     let params = [];
 
     if (phone) {
-      query = `SELECT * FROM ceo_orders WHERE phone = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-      params = [phone, limit, offset];
+      if (cursor) {
+        query = `
+          SELECT *
+          FROM ceo_orders
+          WHERE phone = ?
+            AND created_at < ?
+          ORDER BY created_at DESC
+          LIMIT ?
+        `;
+        params = [phone, cursor, limit + 1];
+      } else {
+        query = `
+          SELECT *
+          FROM ceo_orders
+          WHERE phone = ?
+          ORDER BY created_at DESC
+          LIMIT ?
+        `;
+        params = [phone, limit + 1];
+      }
     } else {
-      query = `SELECT * FROM ceo_orders ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-      params = [limit, offset];
+      // admin usage (keep working)
+      if (cursor) {
+        query = `
+          SELECT *
+          FROM ceo_orders
+          WHERE created_at < ?
+          ORDER BY created_at DESC
+          LIMIT ?
+        `;
+        params = [cursor, limit + 1];
+      } else {
+        query = `
+          SELECT *
+          FROM ceo_orders
+          ORDER BY created_at DESC
+          LIMIT ?
+        `;
+        params = [limit + 1];
+      }
     }
 
     const { results } = await env.DB.prepare(query).bind(...params).all();
-    return new Response(JSON.stringify(results), { headers: corsHeaders });
+
+    const hasMore = results.length > limit;
+    if (hasMore) results.pop();
+
+    const nextCursor = results.length
+      ? results[results.length - 1].created_at
+      : null;
+
+    return new Response(JSON.stringify({
+      data: results,
+      hasMore,
+      nextCursor
+    }), { headers: corsHeaders });
 
   } catch (err) {
     console.error('GET error:', err);
@@ -137,7 +184,7 @@ export async function onRequestGet(context) {
       JSON.stringify({ success: false, error: err.message }),
       { status: 500, headers: corsHeaders }
     );
-  };
+  }
 }
 
 export async function onRequestPut(context) {
