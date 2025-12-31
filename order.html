@@ -213,9 +213,22 @@
       </div>
     </div>
   </div>
+  
+  <div style="text-align:center;margin-top:12px;">
+    
+ <button id="loadMoreBtn" style="display:none;" onclick="loadOrders(false)">
+  Load More
+</button>
+
+</div>
 
   <script>
+
     const BACKEND_URL = window.location.origin;
+
+    let orderCursor = null;
+    let hasMoreOrders = true;
+    const PAGE_LIMIT = 10;
 
     function formatDate(iso) {
       if (!iso) return '-';
@@ -265,7 +278,7 @@
   toast.classList.add('show');
   clearTimeout(toast._t);
   toast._t = setTimeout(() => toast.classList.remove('show'), duration);
-}
+  }
 
     async function saveEdit(id) {
       const payload = {
@@ -371,40 +384,67 @@
       setTimeout(() => {
         document.body.removeChild(iframe);
         URL.revokeObjectURL(url);
-      }, 2000);
-    }, 600); // Increased render time
-  };
-}
+       }, 2000);
+     }, 600); // Increased render time
+     };
+     }
 
-    async function loadOrders() {
-      const phone = document.getElementById('custPhone').value.trim();
-      if (!phone) return showToast('Enter phone number');
+    async function loadOrders(reset = true) {
+    const phone = document.getElementById('custPhone').value.trim();
+    if (!phone) return showToast('Enter phone number');
 
-      const btn = document.getElementById('loadBtn');
-      const list = document.getElementById('ordersList');
-      const loading = document.getElementById('loadingMsg');
-      const tbody = document.querySelector('#ordersTable tbody');
+    const btn = document.getElementById('loadBtn');
+    const list = document.getElementById('ordersList');
+    const loading = document.getElementById('loadingMsg');
+    const tbody = document.querySelector('#ordersTable tbody');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
 
-      btn.disabled = true;
-      btn.textContent = "Loading...";
-      list.style.display = 'block';
-      loading.style.display = 'block';
-      tbody.innerHTML = '';
+    btn.disabled = true;
+    btn.textContent = "Loading...";
+    list.style.display = 'block';
+    loading.style.display = 'block';
+
+    if (reset) {
+    tbody.innerHTML = '';
+    orderCursor = null;
+    hasMoreOrders = true;
+    loadMoreBtn.style.display = 'none';
+    }
 
       try {
-        const res = await fetch(`${BACKEND_URL}/api/orders?phone=${encodeURIComponent(phone)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+       const url = new URL(`${BACKEND_URL}/api/orders`);
+       url.searchParams.set('phone', phone);
+       url.searchParams.set('limit', PAGE_LIMIT);
+       if (orderCursor) url.searchParams.set('cursor', orderCursor);
 
-        let orders;
-        try { orders = await res.json(); } catch { throw new Error("Invalid response"); }
-        if (!Array.isArray(orders)) throw new Error("Invalid data");
+      loadMoreBtn.disabled = true;
+      
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        loading.style.display = 'none';
-        if (orders.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="8" class="no-orders">No orders found.</td></tr>`;
-          return;
-        }
+       let payload;
+       try { payload = await res.json(); } catch { throw new Error("Invalid response"); }
+        
+      /* ================= AFTER FETCH RESULT ================= */
+      loadMoreBtn.disabled = false;
+        
+       const orders = payload.data || [];
+       hasMoreOrders = payload.hasMore;
+       orderCursor = payload.nextCursor;
+         loading.style.display = 'none';
 
+      if (orders.length === 0 && reset) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="no-orders">No orders found.</td>
+        </tr>
+      `;
+      loadMoreBtn.style.display = 'none';
+      return;
+      }
+
+    loadMoreBtn.style.display = hasMoreOrders ? 'inline-block' : 'none';
+ /* ================= RENDER ROWS ================= */
         orders.forEach(o => {
           const order = {
             order_id: o.order_id || 'Unknown',
@@ -422,7 +462,7 @@
             shipping_method: o.shipping_method || '',
             phone: o.phone || phone
           };
-
+          
           const canEdit = order.order_status === "Pending Payment";
           const subTotal = (order.total_amt - order.shipping_cost).toFixed(2);
 
@@ -475,7 +515,10 @@
               <p style="text-align:center;font-size:11px;color:#666;margin-top:20px;">Thank you!</p>
             </div>
           `;
-          document.body.appendChild(printArea);
+          
+        if (!document.getElementById(`print-${order.order_id}`)) {
+           document.body.appendChild(printArea);
+           }
 
           // Edit Row
           if (canEdit) {
