@@ -127,7 +127,7 @@
     }
 
     .confirm-btn {
-      background: #14b47e;
+      background:#16a675;
       color: white;
       border: none;
       padding: 12px 24px;
@@ -152,7 +152,7 @@
     }
 
     .pickup-warning {
-      color: #d32f2f;
+      color: #faf4c8;
       font-size: 13px;
       margin-top: 5px;
       display: none;
@@ -226,17 +226,17 @@
 }
 
 .toast.success {
-  background: linear-gradient(135deg, #14b47e 0%, #0f9d6b 90%);
+  background: linear-gradient(135deg, #3ddba6 0%, #2cc9956 90%);
   color: white;
 }
 
 .toast.info {
-  background: linear-gradient(135deg, #7b2cbf 0%, #5a189a 90%);
+  background: linear-gradient(135deg, #a25dde 0%, #7837b8 90%);
   color: white;
 }
 
 .toast.error {
-  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 90%);
+  background: linear-gradient(135deg, #fff996 0%, #f5ee73 90%);
   color: white;
 }
     @media print {
@@ -359,7 +359,7 @@
           <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
         </tr>
         <tr class="pi-only pi-row">
-          <th style="text-align:left; padding:8px 0;">Total in Pi 🥧</th>
+          <th style="text-align:left; padding:8px 0;">Total in Pi ☑️</th>
           <td id="pi-total" style="text-align:right;">π 0.00</td>
         </tr>
       </table>
@@ -534,7 +534,7 @@ function showToast(message, type = 'info', duration = 3500) {
 
 async function loadExchangeRate() {
   try {
-    console.log('💱 Loading exchange rate from D1...');
+    console.log('⏳ Loading exchange rate from D1...');
     const res = await fetch('/api/exchange-rate');
     
     if (!res.ok) {
@@ -596,7 +596,7 @@ async function confirmOrder() {
     showToast('⚠️ Please fill in all delivery details', 'error', 3000);
     alert("Please fill in all delivery details.");
     btn.disabled = false;
-    btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
+    btn.innerText = isPiBrowser ? "☑️ Confirm Pi Order" : "✅ Confirm Order";
     return;
   }
 
@@ -605,7 +605,7 @@ async function confirmOrder() {
     showToast('⚠️ Self Pickup not available in your state', 'error', 3000);
     alert("Self Pickup is only available in Kuala Lumpur, Sabah, Sarawak, Penang, and Johor.");
     btn.disabled = false;
-    btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
+    btn.innerText = isPiBrowser ? "☑️ Confirm Pi Order" : "✅ Confirm Order";
     return;
   }
 
@@ -613,7 +613,7 @@ async function confirmOrder() {
     showToast('🛒 Your cart is empty', 'error', 3000);
     alert("Cart is empty!");
     btn.disabled = false;
-    btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
+    btn.innerText = isPiBrowser ? "☑️ Confirm Pi Order" : "✅ Confirm Order";
     return;
   }
 
@@ -688,7 +688,7 @@ async function confirmOrder() {
     showToast(`❌ Failed: ${err.message}`, 'error', 4000);
     alert("Failed to create order: " + err.message);
     btn.disabled = false;
-    btn.innerText = isPiBrowser ? "🥧 Pay with Pi Network" : "✅ Confirm Order";
+    btn.innerText = isPiBrowser ? "☑️ Confirm Pi Order" : "✅ Confirm Order";
   }
 }
 // === VIEW ORDER ===
@@ -819,7 +819,7 @@ https://ceo-9xi.pages.dev
       if (isMobile) {
         // Ask user if they want to try printing on mobile
         const tryPrint = confirm(
-          "📱 Mobile Print Notice\n\n" +
+          "🏦 Mobile Print Notice\n\n" +
           "Printing may not work well on mobile phones.\n\n" +
           "✅ Click OK to try printing\n" +
           "❌ Click Cancel to use 'Copy Details' instead"
@@ -928,7 +928,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.querySelector('.pi-badge').style.cssText = 'display:flex !important; visibility:visible !important';
     document.querySelector('.pi-row').style.cssText = 'display:table-row !important; visibility:visible !important';
     document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'none');
-    document.getElementById('confirmBtn').textContent = '🥧 Confirm Order';
+    document.getElementById('confirmBtn').textContent = '☑️ Confirm Pi Order';
     console.log('✅ Pi interface activated');
     console.log('⏳ Pi SDK will be initialized by pi-payment.js with correct mode');
   } else {
