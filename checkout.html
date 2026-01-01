@@ -152,7 +152,7 @@
     }
 
     .pickup-warning {
-      color: #faf4c8;
+      color: #d32f2f;
       font-size: 13px;
       margin-top: 5px;
       display: none;
@@ -204,11 +204,11 @@
     }
 .toast {
   position: fixed;
-  top: 24px;
+  top: 50px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(255, 255, 255, 0.90);
-  color: #1f1f1f;
+  background: #333;        /* fallback dark */
+  color: #fff;             /* always readable */
   padding: 14px 18px;
   border-radius: 10px;
   font-size: 14px;
@@ -594,7 +594,6 @@ async function confirmOrder() {
   // Validation
   if (!name || !phone || !address || !postcode || !state_to) {
     showToast('⚠️ Please fill in all delivery details', 'error', 3000);
-    alert("Please fill in all delivery details.");
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "☑️ Confirm Pi Order" : "✅ Confirm Order";
     return;
