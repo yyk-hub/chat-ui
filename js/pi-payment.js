@@ -238,20 +238,47 @@ const PiPayment = {
             .catch(err => console.error('❌ Approval failed:', err));
         },
 
-        onReadyForServerCompletion: (paymentId, txid) => {
-          console.log('✅ Completing:', paymentId, txid);
-          this.completePayment(paymentId, txid, orderData.order_id)
-            .then(() => {
-              localStorage.removeItem('cartItems');
-              alert('✅ Payment successful!\n\nRedirecting...');
-              setTimeout(() => {
-                window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
-              }, 1000);
-            })
-            .catch(err => {
-              alert(`Payment completion failed: ${err.message}`);
-            });
-        },
+onReadyForServerCompletion: (paymentId, txid) => {
+  console.log('✅ Completing:', paymentId, txid);
+  this.completePayment(paymentId, txid, orderData.order_id)
+    .then(() => {
+      localStorage.removeItem('cartItems');
+      
+      // ✅ Prepare WhatsApp notification
+      const piAmount = orderData.pi_amount || (orderData.total_amt / this.PI_EXCHANGE_RATE).toFixed(8);
+      const whatsappMsg = encodeURIComponent(
+        `🎉 Pi Payment Completed!\n\n` +
+        `Order ID: ${orderData.order_id}\n` +
+        `Customer: ${orderData.cus_name}\n` +
+        `Phone: ${orderData.phone}\n` +
+        `Total: RM ${orderData.total_amt.toFixed(2)}\n` +
+        `Pi Paid: π ${parseFloat(piAmount).toString()}\n` +
+        `Transaction: ${txid}\n\n` +
+        `Delivery:\n${orderData.cus_address}\n${orderData.postcode} ${orderData.state_to}\n\n` +
+        `Products:\n${orderData.prod_name}\n\n` +
+        `✅ Payment verified on Pi Blockchain`
+      );
+      
+      // Show success with instruction
+      alert(
+        '✅ Payment Successful!\n\n' +
+        'Please notify seller via WhatsApp.\n' +
+        'WhatsApp will open automatically.'
+      );
+      
+      // ✅ Auto-open WhatsApp
+      const whatsappUrl = `https://wa.me/60168101358?text=${whatsappMsg}`;
+      window.open(whatsappUrl, '_blank');
+      
+      // Redirect to success page
+      setTimeout(() => {
+        window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
+      }, 1500);
+    })
+    .catch(err => {
+      alert(`Payment completion failed: ${err.message}`);
+    });
+}
 
         onCancel: (paymentId) => {
           console.log('❌ Cancelled:', paymentId);
