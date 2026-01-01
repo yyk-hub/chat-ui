@@ -238,6 +238,13 @@ const PiPayment = {
             .catch(err => console.error('❌ Approval failed:', err));
         },
 
+onReadyForServerApproval: (paymentId) => {
+  console.log('📝 Approving:', paymentId);
+  this.approvePayment(paymentId, orderData.order_id)
+    .then(() => console.log('✅ Approved'))
+    .catch(err => console.error('❌ Approval failed:', err));
+},
+
 onReadyForServerCompletion: (paymentId, txid) => {
   console.log('✅ Completing:', paymentId, txid);
   this.completePayment(paymentId, txid, orderData.order_id)
@@ -266,24 +273,26 @@ onReadyForServerCompletion: (paymentId, txid) => {
         'WhatsApp will open automatically.'
       );
       
-      // ✅ Auto-open WhatsApp
-      const whatsappUrl = `https://wa.me/60168101358?text=${whatsappMsg}`;
-      window.open(whatsappUrl, '_blank');
+      // ✅ Auto-open WhatsApp (small delay to ensure alert is dismissed)
+      setTimeout(() => {
+        const whatsappUrl = `https://wa.me/60168101358?text=${whatsappMsg}`;
+        window.open(whatsappUrl, '_blank');
+      }, 500);
       
       // Redirect to success page
       setTimeout(() => {
         window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
-      }, 1500);
+      }, 2000);
     })
     .catch(err => {
-      alert(`Payment completion failed: ${err.message}`);
+      alert('Payment completion failed: ' + err.message); // ✅ FIXED: Added ( after alert
     });
-}
+},
 
-        onCancel: (paymentId) => {
-          console.log('❌ Cancelled:', paymentId);
-          alert('Payment cancelled.');
-        },
+onCancel: (paymentId) => {
+  console.log('❌ Cancelled:', paymentId);
+  alert('Payment cancelled.');
+},
 
         onError: (error, payment) => {
           console.error('❌ Payment error:', error);
