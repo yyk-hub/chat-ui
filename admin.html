@@ -51,7 +51,7 @@
       gap: 8px 10px;
     }
     .current-rate {
-      font-size: 24px;
+      font-size: 20px;
       color: #996600;
       font-weight: bold;
       margin: 10px 0;
@@ -95,7 +95,7 @@
 </head>
 <body>
   <div class="topbar">
-    <button class="btn-back" onclick="window.location.href='index.html'">← Menu</button>
+    <button class="btn-back" onclick="window.location.href='index.html'">← Home</button>
     <h2>Admin Panel</h2>
   </div>
 
@@ -113,7 +113,7 @@
 
     <!-- ✅ NEW: Exchange Rate Section -->
     <div class="card" id="exchangeRateSection" style="display:none">
-      <h3>💱 Pi Exchange Rate Management</h3>
+      <h3>💰 Pi Exchange Rate Management</h3>
       
       <div style="margin-bottom: 20px;">
         <strong>Current Rate:</strong>
@@ -123,7 +123,7 @@
 
       <div class="form-grid" style="max-width: 500px;">
         <label for="newExchangeRate">New Rate (1 Pi = X MYR):</label>
-        <input type="number" id="newExchangeRate" placeholder="0.85" step="0.01" min="0.01" />
+        <input type="number" id="newExchangeRate" placeholder="1.00" step="0.01" min="0.01" />
         <div></div>
         <button id="btnUpdateRate" class="btn">💾 Update Rate</button>
       </div>
