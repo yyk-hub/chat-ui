@@ -528,10 +528,9 @@ function showToast(message, type = 'info', duration = 3500) {
 }
 
 // ============================================
-// Update checkout.html
 // Add this function before confirmOrder()
+// EXCHANGE RATE LOADER
 // ============================================
-
 async function loadExchangeRate() {
   try {
     console.log('⏳ Loading exchange rate from D1...');
@@ -563,20 +562,24 @@ async function loadExchangeRate() {
     }
     
     // Recalculate totals
-    updateSummary();
+    if (typeof updateSummary === 'function') {
+      updateSummary();
+    }
     
   } catch (error) {
     console.error('❌ Failed to load exchange rate:', error);
     console.warn('⚠️ Using fallback exchange rate: 1.0');
     
-    // Still update UI with fallback
     const rateLabel = document.getElementById('pi-rate-label');
     if (rateLabel) {
       rateLabel.textContent = `Exchange Rate: 1 Pi ≈ RM ${PI_EXCHANGE_RATE.toFixed(2)} (fallback)`;
     }
   }
 }
-// === CONFIRM ORDER - INTEGRATED WITH PI-PAYMENT.JS ===
+
+// ============================================
+// CONFIRM ORDER - INTEGRATED WITH PI-PAYMENT
+// ============================================
 async function confirmOrder() {
   const btn = document.getElementById("confirmBtn");
   if (!btn || btn.disabled) return;
@@ -674,13 +677,17 @@ async function confirmOrder() {
       localStorage.removeItem("cartItems");
       
       showToast('✅ Order placed! Send bank receipt via WhatsApp', 'success', 4000);
-      alert("✅ Order placed! Please send your bank receipt via WhatsApp.");
       
+      // ✅ Hide confirm button
       btn.style.display = 'none';
-      showOrderHistoryButton();
       
-      // ✅ Show order with action buttons
-      await viewMyOrder();
+      // ✅ Show "View Order" button (if function exists)
+      if (typeof showOrderHistoryButton === 'function') {
+        showOrderHistoryButton();
+      }
+      
+      // ✅ DIRECTLY show order details with action buttons
+      await displayOrderWithActions(orderData);
     }
 
   } catch (err) {
@@ -692,7 +699,52 @@ async function confirmOrder() {
   }
 }
 
-// === HELPER: CREATE ORDER ACTION BUTTONS ===
+// ============================================
+// DISPLAY ORDER WITH ACTION BUTTONS (NEW)
+// ============================================
+async function displayOrderWithActions(orderData) {
+  const display = document.getElementById("OrderDisplay");
+  if (!display) {
+    console.error('OrderDisplay element not found');
+    return;
+  }
+
+  // Create order details HTML
+  const orderHTML = `
+    <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;margin-top:20px;">
+      <h3 style="color:#996600;margin-top:0;">✅ Order Confirmed!</h3>
+      <p><strong>Order ID:</strong> ${orderData.order_id}</p>
+      <p><strong>Customer:</strong> ${orderData.cus_name}</p>
+      <p><strong>Delivery:</strong> ${orderData.cus_address}, ${orderData.postcode}, ${orderData.state_to}</p>
+      <p><strong>Method:</strong> ${orderData.shipping_method} • ${orderData.delivery_eta}</p>
+      <p><strong>Product(s):</strong> ${orderData.prod_name}</p>
+      <p><strong>Weight:</strong> ${orderData.shipping_wt?.toFixed(2)} kg</p>
+      <hr style="border:0;border-top:1px dashed #ccc;margin:10px 0;">
+      <p><strong>Sub-total:</strong> RM ${(orderData.total_amt - orderData.shipping_cost).toFixed(2)}</p>
+      <p><strong>Shipping:</strong> RM ${orderData.shipping_cost?.toFixed(2)}</p>
+      <p style="font-size:1.1em;"><strong>Total:</strong> 
+        <span style="color:#996600;">RM ${orderData.total_amt?.toFixed(2)}</span>
+      </p>
+      <p><strong>Status:</strong> <span style="color:#d32f2f;">${orderData.order_status}</span></p>
+      <p class="whatsapp-instruction" style="background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;">
+        📱 <strong>Next Step:</strong> Send your bank transfer receipt via WhatsApp using the button below.
+      </p>
+    </div>
+  `;
+  
+  display.innerHTML = orderHTML;
+
+  // ✅ Add action buttons
+  const actionButtons = createOrderActionButtons(orderData);
+  display.appendChild(actionButtons);
+  
+  // ✅ Scroll to order display
+  display.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ============================================
+// HELPER: CREATE ORDER ACTION BUTTONS
+// ============================================
 function createOrderActionButtons(orderData) {
   const btnContainer = document.createElement("div");
   btnContainer.style.cssText = "display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;";
@@ -733,37 +785,17 @@ https://ceo-9xi.pages.dev
       await navigator.clipboard.writeText(orderText);
       copyBtn.textContent = "✅ Copied!";
       copyBtn.style.background = "#4CAF50";
+      showToast('📋 Order details copied!', 'success', 2000);
       setTimeout(() => {
         copyBtn.textContent = "📋 Copy";
         copyBtn.style.background = "#2196F3";
       }, 2000);
     } catch (err) {
-      showToast("Failed to copy. Please select and copy manually.", 'error');
+      showToast("❌ Failed to copy. Please select and copy manually.", 'error');
     }
   };
 
-  // === 2. SHARE BUTTON (if supported) ===
-  if (navigator.share) {
-    const shareBtn = document.createElement("button");
-    shareBtn.textContent = "📤 Share";
-    shareBtn.className = "confirm-btn";
-    shareBtn.style.cssText = "background:#14b47e; flex:1; min-width:120px;";
-    shareBtn.onclick = async () => {
-      const shareText = `CEO Order ${orderData.order_id}\n\nTotal: RM ${orderData.total_amt?.toFixed(2)}\nStatus: ${orderData.order_status}\n\nView: https://ceo-9xi.pages.dev/order.html`;
-      
-      try {
-        await navigator.share({
-          title: `Order ${orderData.order_id}`,
-          text: shareText
-        });
-      } catch (err) {
-        console.log('Share cancelled or failed');
-      }
-    };
-    btnContainer.appendChild(shareBtn);
-  }
-
-  // === 3. PRINT BUTTON ===
+  // === 2. PRINT BUTTON ===
   const printBtn = document.createElement("button");
   printBtn.textContent = "🖨️ Print";
   printBtn.className = "confirm-btn";
@@ -773,7 +805,7 @@ https://ceo-9xi.pages.dev
     
     if (isMobile) {
       const tryPrint = confirm(
-        "🏦 Mobile Print Notice\n\n" +
+        "🖨️ Mobile Print Notice\n\n" +
         "Printing may not work well on mobile phones.\n\n" +
         "✅ Click OK to try printing\n" +
         "❌ Click Cancel to use 'Copy' instead"
@@ -789,17 +821,36 @@ https://ceo-9xi.pages.dev
     }
   };
 
-  // === 4. WHATSAPP BUTTON ===
+  // === 3. WHATSAPP BUTTON ===
   const whatsappBtn = document.createElement("a");
   whatsappBtn.href = `https://wa.me/60168101358?text=${encodeURIComponent(
-    `Order ${orderData.order_id}\nTotal: RM ${orderData.total_amt.toFixed(2)}\nStatus: ${orderData.order_status}`
+    `Hi! I just placed an order.\n\nOrder ID: ${orderData.order_id}\nTotal: RM ${orderData.total_amt.toFixed(2)}\n\nI'll send my bank receipt now.`
   )}`;
   whatsappBtn.target = "_blank";
   whatsappBtn.className = "confirm-btn";
   whatsappBtn.style.cssText = "background:#25D366; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; flex:1; min-width:120px;";
   whatsappBtn.innerHTML = "💬 WhatsApp";
 
-  // Add buttons
+  // === 4. SHARE BUTTON (if supported) ===
+  if (navigator.share) {
+    const shareBtn = document.createElement("button");
+    shareBtn.textContent = "📤 Share";
+    shareBtn.className = "confirm-btn";
+    shareBtn.style.cssText = "background:#14b47e; flex:1; min-width:120px;";
+    shareBtn.onclick = async () => {
+      try {
+        await navigator.share({
+          title: `Order ${orderData.order_id}`,
+          text: `CEO Order ${orderData.order_id}\n\nTotal: RM ${orderData.total_amt?.toFixed(2)}\nStatus: ${orderData.order_status}`
+        });
+      } catch (err) {
+        console.log('Share cancelled or failed');
+      }
+    };
+    btnContainer.appendChild(shareBtn);
+  }
+
+  // Add buttons in order: Copy, Print, WhatsApp, Share
   btnContainer.appendChild(copyBtn);
   btnContainer.appendChild(printBtn);
   btnContainer.appendChild(whatsappBtn);
@@ -807,13 +858,18 @@ https://ceo-9xi.pages.dev
   return btnContainer;
 }
 
-// === VIEW ORDER - SIMPLIFIED ===
+// ============================================
+// VIEW MY ORDER (for "View Order" button)
+// ============================================
 async function viewMyOrder() {
   const phone = document.getElementById("custPhone")?.value.trim();
-  if (!phone) return;
+  if (!phone) {
+    showToast('⚠️ Please enter phone number', 'error', 2000);
+    return;
+  }
 
   const display = document.getElementById("OrderDisplay");
-  display.innerHTML = "<p style='color:#666;'>Loading order...</p>";
+  display.innerHTML = "<p style='color:#666;'>🔍 Loading order...</p>";
 
   try {
     const res = await fetch(`/api/orders?phone=${encodeURIComponent(phone)}`);
@@ -821,7 +877,7 @@ async function viewMyOrder() {
     const orders = await res.json();
     
     if (!orders?.length) {
-      display.innerHTML = "<p>No orders found.</p>";
+      display.innerHTML = "<p style='color:#999;'>No orders found for this phone number.</p>";
       return;
     }
 
@@ -829,7 +885,8 @@ async function viewMyOrder() {
     
     // Create order details HTML
     const orderHTML = `
-      <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;">
+      <div style="background:#fffdf8;padding:16px;border-radius:12px;font-size:15px;margin-top:20px;">
+        <h3 style="color:#996600;margin-top:0;">📦 Your Order</h3>
         <p><strong>Order ID:</strong> ${o.order_id}</p>
         <p><strong>Customer:</strong> ${o.cus_name}</p>
         <p><strong>Delivery:</strong> ${o.cus_address}, ${o.postcode}, ${o.state_to}</p>
@@ -843,23 +900,26 @@ async function viewMyOrder() {
           <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
         </p>
         <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
-        ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">Track Package</a></p>` : '<p>Tracking: Not available until shipped.</p>'}
-        ${!isPiBrowser ? `<p class="whatsapp-instruction">Send bank receipt via <a href="index.html#whatsapp" target="_blank">WhatsApp</a>.</p>` : ''}
+        ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">📦 Track Package</a></p>` : '<p style="color:#999;">Tracking: Not available until shipped</p>'}
+        ${!isPiBrowser && o.order_status !== 'Paid' ? `<p class="whatsapp-instruction" style="background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;">📱 <strong>Reminder:</strong> Send your bank receipt via WhatsApp.</p>` : ''}
       </div>
     `;
     
     display.innerHTML = orderHTML;
 
-    // ✅ Add action buttons using helper function
+    // ✅ Add action buttons
     const actionButtons = createOrderActionButtons(o);
     display.appendChild(actionButtons);
 
   } catch (err) {
-    display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+    display.innerHTML = `<p style="color:red;">❌ Error: ${err.message}</p>`;
+    console.error('Error loading order:', err);
   }
 }
 
-// === PAGE INITIALIZATION ===
+// ============================================
+// PAGE INITIALIZATION
+// ============================================
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
   console.log('🚀 CHECKOUT INITIALIZING');
@@ -942,8 +1002,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   // ✅ LOAD EXCHANGE RATE FROM D1
   await loadExchangeRate();
   
-  loadOrder();
-  checkExistingOrder();
+  // ✅ Load other functions if they exist
+  if (typeof loadOrder === 'function') loadOrder();
+  if (typeof checkExistingOrder === 'function') checkExistingOrder();
+  
   console.log('✅ Initialization complete');
 });
 </script>
