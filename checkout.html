@@ -723,7 +723,7 @@ async function displayOrderWithActions(orderData) {
       <p><strong>Sub-total:</strong> RM ${(orderData.total_amt - orderData.shipping_cost).toFixed(2)}</p>
       <p><strong>Shipping:</strong> RM ${orderData.shipping_cost?.toFixed(2)}</p>
       <p style="font-size:1.1em;"><strong>Total:</strong> 
-        <span style="color:#996600;">RM ${orderData.total_amt?.toFixed(2)}</span>
+        <span style="color:#996600; font-weight:bold;">RM ${orderData.total_amt?.toFixed(2)}</span>
       </p>
       <p><strong>Status:</strong> <span style="color:#d32f2f;">${orderData.order_status}</span></p>
       <p class="whatsapp-instruction" style="background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;">
@@ -747,7 +747,7 @@ async function displayOrderWithActions(orderData) {
 // ============================================
 function createOrderActionButtons(orderData) {
   const btnContainer = document.createElement("div");
-  btnContainer.style.cssText = "display:flex; gap:8px; margin-top:15px; flex-wrap:wrap; row-gap:8px;";
+  btnContainer.style.cssText = "display:flex; gap:5px; margin-top:15px; flex-wrap:wrap; row-gap:5px;";
 
   const orderText = `
 CEO Health & Wellness - Order Receipt
@@ -897,7 +897,7 @@ async function viewMyOrder() {
         <p><strong>Sub-total:</strong> RM ${(o.total_amt - o.shipping_cost).toFixed(2)}</p>
         <p><strong>Shipping:</strong> RM ${o.shipping_cost?.toFixed(2)}</p>
         <p style="font-size:1.1em;"><strong>Total:</strong> 
-          <span style="color:#996600;">RM ${o.total_amt?.toFixed(2)}</span>
+          <span style="color:#996600; font-weight:bold;">RM ${o.total_amt?.toFixed(2)}</span>
         </p>
         <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
         ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">📦 Track Package</a></p>` : '<p style="color:#999;">Tracking: Not available until shipped</p>'}
