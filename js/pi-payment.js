@@ -291,7 +291,7 @@ onReadyForServerCompletion: (paymentId, txid) => {
           width: 100%;
         ">
           <div style="font-size: 36px; margin-bottom: 16px;">✅</div>
-          <h2 style="color: #14b47e; margin: 0 0 8px 0; font-size: 20px;">Payment Successful!</h2>
+          <h2 style="color: #1c994a; margin: 0 0 8px 0; font-size: 20px;">Payment Successful!</h2>
           <p style="color: #666; margin: 8px 0 20px 0; font-size: 14px;">
             Order ID: <strong style="color: #333;">${orderData.order_id}</strong>
           </p>
