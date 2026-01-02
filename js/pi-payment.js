@@ -251,7 +251,6 @@ onReadyForServerCompletion: (paymentId, txid) => {
     .then(() => {
       localStorage.removeItem('cartItems');
       
-      // ✅ Prepare WhatsApp notification
       const piAmount = orderData.pi_amount || (orderData.total_amt / this.PI_EXCHANGE_RATE).toFixed(8);
       const whatsappMsg = encodeURIComponent(
         `🎉 Pi Payment Completed!\n\n` +
@@ -266,70 +265,14 @@ onReadyForServerCompletion: (paymentId, txid) => {
         `✅ Payment verified on Pi Blockchain`
       );
       
-      // ✅ Create success overlay
-      const overlay = document.createElement('div');
-      overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 99999;
-        animation: fadeIn 0.3s ease;
-      `;
+      // Store order ID
+      sessionStorage.setItem('completedOrderId', orderData.order_id);
       
-      overlay.innerHTML = `
-        <div style="
-          background: white;
-          padding: 30px;
-          border-radius: 20px;
-          text-align: center;
-          max-width: 400px;
-          margin: 20px;
-        ">
-          <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
-          <h2 style="color: #14b47e; margin: 0 0 10px 0;">Payment Successful!</h2>
-          <p style="color: #666; margin: 10px 0 20px 0;">
-            Order ID: <strong>${orderData.order_id}</strong>
-          </p>
-          <p style="color: #333; margin-bottom: 20px;">
-            Please notify seller via WhatsApp to complete your order.
-          </p>
-          <a href="https://wa.me/60168101358?text=${whatsappMsg}" 
-             style="
-               display: block;
-               background: #25D366;
-               color: white;
-               padding: 15px 30px;
-               border-radius: 10px;
-               text-decoration: none;
-               font-weight: 600;
-               font-size: 16px;
-               margin-bottom: 10px;
-             ">
-            💬 Notify Seller via WhatsApp
-          </a>
-          <button onclick="window.location.href='/order-success.html?order_id=${orderData.order_id}'"
-             style="
-               background: #996600;
-               color: white;
-               border: none;
-               padding: 12px 24px;
-               border-radius: 8px;
-               font-size: 14px;
-               cursor: pointer;
-               width: 100%;
-             ">
-            Skip & View Order Details
-          </button>
-        </div>
-      `;
+      // Show alert
+      alert('✅ Payment Successful!\n\nRedirecting to WhatsApp...');
       
-      document.body.appendChild(overlay);
+      // ✅ Direct assignment (not blocked)
+      window.location.assign(`https://wa.me/60168101358?text=${whatsappMsg}`);
     })
     .catch(err => {
       alert('Payment completion failed: ' + err.message);
