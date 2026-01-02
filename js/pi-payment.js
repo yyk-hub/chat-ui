@@ -290,8 +290,8 @@ onReadyForServerCompletion: (paymentId, txid) => {
           max-width: 420px;
           width: 100%;
         ">
-          <div style="font-size: 38px; margin-bottom: 16px;">✅</div>
-          <h2 style="color: #14b47e; margin: 0 0 8px 0; font-size: 22px;">Payment Successful!</h2>
+          <div style="font-size: 36px; margin-bottom: 16px;">✅</div>
+          <h2 style="color: #14b47e; margin: 0 0 8px 0; font-size: 20px;">Payment Successful!</h2>
           <p style="color: #666; margin: 8px 0 20px 0; font-size: 14px;">
             Order ID: <strong style="color: #333;">${orderData.order_id}</strong>
           </p>
@@ -317,7 +317,7 @@ onReadyForServerCompletion: (paymentId, txid) => {
           
           <button id="copyBtn" style="
             display: block;
-            background: #25D366;
+            background: #1c994a;
             color: white;
             padding: 14px 28px;
             border: none;
