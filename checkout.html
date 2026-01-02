@@ -658,7 +658,6 @@ async function confirmOrder() {
       const piAmount = (totalAmt / PI_EXCHANGE_RATE).toFixed(8);
       const piDisplay = parseFloat(piAmount).toString();
 
-      // ✅ No confirmation dialog - show toast and open wallet immediately
       showToast(`💳 Pi Payment: π ${piDisplay}. Opening wallet...`, 'info', 3000);
       btn.innerText = "Opening Pi Wallet...";
       
@@ -679,6 +678,8 @@ async function confirmOrder() {
       
       btn.style.display = 'none';
       showOrderHistoryButton();
+      
+      // ✅ Show order with action buttons
       await viewMyOrder();
     }
 
@@ -690,10 +691,123 @@ async function confirmOrder() {
     btn.innerText = isPiBrowser ? "☑️ Confirm Pi Order" : "✅ Confirm Order";
   }
 }
-// === VIEW ORDER ===
-// Replace the viewMyOrder function with this improved version
-// Add after the confirmOrder function in your checkout.html
 
+// === HELPER: CREATE ORDER ACTION BUTTONS ===
+function createOrderActionButtons(orderData) {
+  const btnContainer = document.createElement("div");
+  btnContainer.style.cssText = "display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;";
+
+  const orderText = `
+CEO Health & Wellness - Order Receipt
+=====================================
+
+Order ID: ${orderData.order_id}
+Customer: ${orderData.cus_name}
+Phone: ${orderData.phone}
+Delivery: ${orderData.cus_address}, ${orderData.postcode}, ${orderData.state_to}
+Shipping: ${orderData.shipping_method} • ${orderData.delivery_eta}
+
+Products: ${orderData.prod_name}
+Quantity: ${orderData.quantity}
+Weight: ${orderData.shipping_wt?.toFixed(2)} kg
+
+Sub-total: RM ${(orderData.total_amt - orderData.shipping_cost).toFixed(2)}
+Shipping: RM ${orderData.shipping_cost?.toFixed(2)}
+TOTAL: RM ${orderData.total_amt?.toFixed(2)}
+
+Status: ${orderData.order_status}
+${orderData.tracking_link ? 'Tracking: ' + orderData.tracking_link : 'Tracking: Not available'}
+
+=====================================
+CEO Health & Wellness
+https://ceo-9xi.pages.dev
+  `.trim();
+
+  // === 1. COPY BUTTON ===
+  const copyBtn = document.createElement("button");
+  copyBtn.textContent = "📋 Copy";
+  copyBtn.className = "confirm-btn";
+  copyBtn.style.cssText = "background:#2196F3; flex:1; min-width:120px;";
+  copyBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(orderText);
+      copyBtn.textContent = "✅ Copied!";
+      copyBtn.style.background = "#4CAF50";
+      setTimeout(() => {
+        copyBtn.textContent = "📋 Copy";
+        copyBtn.style.background = "#2196F3";
+      }, 2000);
+    } catch (err) {
+      showToast("Failed to copy. Please select and copy manually.", 'error');
+    }
+  };
+
+  // === 2. SHARE BUTTON (if supported) ===
+  if (navigator.share) {
+    const shareBtn = document.createElement("button");
+    shareBtn.textContent = "📤 Share";
+    shareBtn.className = "confirm-btn";
+    shareBtn.style.cssText = "background:#14b47e; flex:1; min-width:120px;";
+    shareBtn.onclick = async () => {
+      const shareText = `CEO Order ${orderData.order_id}\n\nTotal: RM ${orderData.total_amt?.toFixed(2)}\nStatus: ${orderData.order_status}\n\nView: https://ceo-9xi.pages.dev/order.html`;
+      
+      try {
+        await navigator.share({
+          title: `Order ${orderData.order_id}`,
+          text: shareText
+        });
+      } catch (err) {
+        console.log('Share cancelled or failed');
+      }
+    };
+    btnContainer.appendChild(shareBtn);
+  }
+
+  // === 3. PRINT BUTTON ===
+  const printBtn = document.createElement("button");
+  printBtn.textContent = "🖨️ Print";
+  printBtn.className = "confirm-btn";
+  printBtn.style.cssText = "background:#996600; flex:1; min-width:120px;";
+  printBtn.onclick = () => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      const tryPrint = confirm(
+        "🏦 Mobile Print Notice\n\n" +
+        "Printing may not work well on mobile phones.\n\n" +
+        "✅ Click OK to try printing\n" +
+        "❌ Click Cancel to use 'Copy' instead"
+      );
+      
+      if (tryPrint) {
+        window.print();
+      } else {
+        showToast("💡 Tip: Use the '📋 Copy' button to save your order.", 'info');
+      }
+    } else {
+      window.print();
+    }
+  };
+
+  // === 4. WHATSAPP BUTTON ===
+  const whatsappBtn = document.createElement("a");
+  whatsappBtn.href = `https://wa.me/60168101358?text=${encodeURIComponent(
+    `Order ${orderData.order_id}\nTotal: RM ${orderData.total_amt.toFixed(2)}\nStatus: ${orderData.order_status}`
+  )}`;
+  whatsappBtn.target = "_blank";
+  whatsappBtn.className = "confirm-btn";
+  whatsappBtn.style.cssText = "background:#25D366; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; flex:1; min-width:120px;";
+  whatsappBtn.innerHTML = "💬 WhatsApp";
+
+  // Add buttons
+  btnContainer.appendChild(copyBtn);
+  btnContainer.appendChild(printBtn);
+  btnContainer.appendChild(whatsappBtn);
+  
+  return btnContainer;
+}
+
+// === VIEW ORDER - SIMPLIFIED ===
 async function viewMyOrder() {
   const phone = document.getElementById("custPhone")?.value.trim();
   if (!phone) return;
@@ -736,129 +850,16 @@ async function viewMyOrder() {
     
     display.innerHTML = orderHTML;
 
-    // Create button container
-    const btnContainer = document.createElement("div");
-    btnContainer.style.cssText = "display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;";
-
-    // === 1. COPY TO CLIPBOARD BUTTON (Works on all devices) ===
-    const copyBtn = document.createElement("button");
-    copyBtn.textContent = "📋 Copy Details";
-    copyBtn.className = "confirm-btn";
-    copyBtn.style.cssText = "background:#2196F3; flex:1; min-width:140px;";
-    copyBtn.onclick = async () => {
-      const orderText = `
-CEO Health & Wellness - Order Receipt
-=====================================
-
-Order ID: ${o.order_id}
-Customer: ${o.cus_name}
-Phone: ${phone}
-Delivery: ${o.cus_address}, ${o.postcode}, ${o.state_to}
-Shipping: ${o.shipping_method} • ${o.delivery_eta}
-
-Products: ${o.prod_name}
-Quantity: ${o.quantity}
-Weight: ${o.shipping_wt?.toFixed(2)} kg
-
-Sub-total: RM ${(o.total_amt - o.shipping_cost).toFixed(2)}
-Shipping: RM ${o.shipping_cost?.toFixed(2)}
-TOTAL: RM ${o.total_amt?.toFixed(2)}
-
-Status: ${o.order_status}
-${o.tracking_link ? 'Tracking: ' + o.tracking_link : 'Tracking: Not available'}
-
-=====================================
-CEO Health & Wellness
-https://ceo-9xi.pages.dev
-      `.trim();
-
-      try {
-        await navigator.clipboard.writeText(orderText);
-        copyBtn.textContent = "✅ Copied!";
-        copyBtn.style.background = "#4CAF50";
-        setTimeout(() => {
-          copyBtn.textContent = "📋 Copy Details";
-          copyBtn.style.background = "#2196F3";
-        }, 2000);
-      } catch (err) {
-        showToast("Failed to copy. Please select and copy manually.");
-      }
-    };
-
-    // === 2. SHARE BUTTON (Native mobile share) ===
-    if (navigator.share) {
-      const shareBtn = document.createElement("button");
-      shareBtn.textContent = "📤 Share";
-      shareBtn.className = "confirm-btn";
-      shareBtn.style.cssText = "background:#14b47e; flex:1; min-width:140px;";
-      shareBtn.onclick = async () => {
-        const orderText = `CEO Order ${o.order_id}\n\nTotal: RM ${o.total_amt?.toFixed(2)}\nStatus: ${o.order_status}\n\nView: https://ceo-9xi.pages.dev/order.html`;
-        
-        try {
-          await navigator.share({
-            title: `Order ${o.order_id}`,
-            text: orderText
-          });
-        } catch (err) {
-          console.log('Share cancelled or failed');
-        }
-      };
-      btnContainer.appendChild(shareBtn);
-    }
-
-    // === 3. PRINT BUTTON (Always available) ===
-    const printBtn = document.createElement("button");
-    printBtn.textContent = "🖨️ Print";
-    printBtn.className = "confirm-btn";
-    printBtn.style.cssText = "background:#996600; flex:1; min-width:140px;";
-    printBtn.onclick = () => {
-      // Check if it's mobile
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        // Ask user if they want to try printing on mobile
-        const tryPrint = confirm(
-          "🏦 Mobile Print Notice\n\n" +
-          "Printing may not work well on mobile phones.\n\n" +
-          "✅ Click OK to try printing\n" +
-          "❌ Click Cancel to use 'Copy Details' instead"
-        );
-        
-        if (tryPrint) {
-          window.print();
-        } else {
-          showToast("💡 Tip: Use the '📋 Copy Details' button to save your order information.");
-        }
-      } else {
-        // Desktop: print normally
-        window.print();
-      }
-    };
-
-    // Add buttons in order
-    btnContainer.appendChild(copyBtn);
-    btnContainer.appendChild(printBtn);
-    
-    display.appendChild(btnContainer);
+    // ✅ Add action buttons using helper function
+    const actionButtons = createOrderActionButtons(o);
+    display.appendChild(actionButtons);
 
   } catch (err) {
     display.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
   }
 }
 
-// === ADDITIONAL: Add WhatsApp Share Button (Optional) ===
-function createWhatsAppShareButton(orderData) {
-  const whatsappBtn = document.createElement("a");
-  whatsappBtn.href = `https://wa.me/60168101358?text=${encodeURIComponent(
-    `Order ${orderData.order_id}\nTotal: RM ${orderData.total_amt.toFixed(2)}\nStatus: ${orderData.order_status}`
-  )}`;
-  whatsappBtn.target = "_blank";
-  whatsappBtn.className = "confirm-btn";
-  whatsappBtn.style.cssText = "background:#25D366; color:white; text-decoration:none; display:inline-block; flex:1; min-width:140px; text-align:center;";
-  whatsappBtn.innerHTML = "💬 WhatsApp Us";
-  return whatsappBtn;
-}
-// === PAGE INITIALIZATION - FIXED ===
+// === PAGE INITIALIZATION ===
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('========================================');
   console.log('🚀 CHECKOUT INITIALIZING');
@@ -937,7 +938,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('confirmBtn').textContent = '✅ Confirm Order';
     console.log('✅ Fiat interface activated');
   }
-   // ✅ LOAD EXCHANGE RATE FROM D1
+  
+  // ✅ LOAD EXCHANGE RATE FROM D1
   await loadExchangeRate();
   
   loadOrder();
