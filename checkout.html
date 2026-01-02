@@ -349,7 +349,7 @@
         </tr>
         <tr>
           <th style="text-align:left; padding:6px 0; color:#654321;">Shipping</th>
-          <td id="shipping-cost" style="text-align:right; color:#20ab54;">RM 0.00</td>
+          <td id="shipping-cost" style="text-align:right;">RM 0.00</td>
         </tr>
         <tr>
           <td colspan="2" id="shipping-note" class="shipping-note"></td>
@@ -727,7 +727,7 @@ async function displayOrderWithActions(orderData) {
       </p>
       <p><strong>Status:</strong> <span style="color:#d32f2f;">${orderData.order_status}</span></p>
       <p class="whatsapp-instruction" style="background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;">
-        📱 <strong>Next Step:</strong> Send your bank transfer receipt via WhatsApp using the button below.
+        🏢 <strong>Next Step:</strong> Send your bank transfer receipt via WhatsApp using the button below.
       </p>
     </div>
   `;
@@ -779,7 +779,7 @@ https://ceo-9xi.pages.dev
   const copyBtn = document.createElement("button");
   copyBtn.textContent = "📋 Copy";
   copyBtn.className = "confirm-btn";
-  copyBtn.style.cssText = "background:#2196F3; flex:1; min-width:120px;";
+  copyBtn.style.cssText = "background:#1a86db; flex:1; min-width:120px;";
   copyBtn.onclick = async () => {
     try {
       await navigator.clipboard.writeText(orderText);
