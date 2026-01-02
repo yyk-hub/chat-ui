@@ -252,7 +252,7 @@ onReadyForServerCompletion: (paymentId, txid) => {
       localStorage.removeItem('cartItems');
       
       const piAmount = orderData.pi_amount || (orderData.total_amt / this.PI_EXCHANGE_RATE).toFixed(8);
-      const whatsappMsg = encodeURIComponent(
+      const whatsappMessage = 
         `🎉 Pi Payment Completed!\n\n` +
         `Order ID: ${orderData.order_id}\n` +
         `Customer: ${orderData.cus_name}\n` +
@@ -262,23 +262,118 @@ onReadyForServerCompletion: (paymentId, txid) => {
         `Transaction: ${txid}\n\n` +
         `Delivery:\n${orderData.cus_address}\n${orderData.postcode} ${orderData.state_to}\n\n` +
         `Products:\n${orderData.prod_name}\n\n` +
-        `✅ Payment verified on Pi Blockchain`
-      );
+        `✅ Payment verified on Pi Blockchain`;
       
-      // Store order ID
-      sessionStorage.setItem('completedOrderId', orderData.order_id);
+      // ✅ Create simple overlay with copy button
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        padding: 20px;
+        box-sizing: border-box;
+      `;
       
-      // Show alert
-      alert('✅ Payment Successful!\n\nRedirecting to WhatsApp...');
+      overlay.innerHTML = `
+        <div style="
+          background: white;
+          padding: 24px;
+          border-radius: 16px;
+          text-align: center;
+          max-width: 420px;
+          width: 100%;
+        ">
+          <div style="font-size: 56px; margin-bottom: 16px;">✅</div>
+          <h2 style="color: #14b47e; margin: 0 0 8px 0; font-size: 22px;">Payment Successful!</h2>
+          <p style="color: #666; margin: 8px 0 20px 0; font-size: 14px;">
+            Order ID: <strong style="color: #333;">${orderData.order_id}</strong>
+          </p>
+          
+          <div style="
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.5;
+          ">
+            <pre style="
+              white-space: pre-wrap;
+              word-wrap: break-word;
+              margin: 0;
+              font-family: inherit;
+            ">${whatsappMessage}</pre>
+          </div>
+          
+          <button id="copyBtn" style="
+            display: block;
+            background: #25D366;
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            width: 100%;
+          ">
+            📋 Copy & Send via WhatsApp
+          </button>
+          
+          <p style="font-size: 12px; color: #999; margin: 10px 0;">
+            Seller's WhatsApp: <strong style="color: #333;">+60 16-810 1358</strong>
+          </p>
+          
+          <button id="doneBtn" style="
+            background: #996600;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+          ">
+            Done - View Order Details
+          </button>
+        </div>
+      `;
       
-      // ✅ Direct assignment (not blocked)
-      window.location.assign(`https://wa.me/60168101358?text=${whatsappMsg}`);
+      document.body.appendChild(overlay);
+      
+      // Copy button handler
+      document.getElementById('copyBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('copyBtn');
+        try {
+          await navigator.clipboard.writeText(whatsappMessage);
+          btn.textContent = '✅ Copied! Now open WhatsApp';
+          btn.style.background = '#4CAF50';
+        } catch (err) {
+          btn.textContent = '✅ Message ready to copy';
+          btn.style.background = '#4CAF50';
+        }
+      });
+      
+      // Done button handler
+      document.getElementById('doneBtn').addEventListener('click', () => {
+        window.location.href = `/order-success.html?order_id=${orderData.order_id}`;
+      });
     })
     .catch(err => {
       alert('Payment completion failed: ' + err.message);
     });
 },
-
 onCancel: (paymentId) => {
   console.log('❌ Cancelled:', paymentId);
   alert('Payment cancelled.');
