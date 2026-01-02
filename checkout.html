@@ -126,18 +126,23 @@
       font-size: 14px;
     }
 
-    .confirm-btn {
-      background:#16a675;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: block;
-      margin: 25px auto;
-      font-size: 16px;
-      font-weight: 600;
-    }
+.confirm-btn {
+  background: #16a675;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;          /* allows flex alignment inside */
+  align-items: center;    /* center text vertically */
+  justify-content: center;/* center text horizontally */
+  margin: 0;              /* remove vertical gaps */
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;                /* let buttons share space evenly */
+  min-width: 120px;       /* prevent shrinking too small */
+}
+
 
     .confirm-btn:disabled {
       background: #ccc;
