@@ -226,12 +226,12 @@
 }
 
 .toast.success {
-  background: linear-gradient(135deg, #3ddba6 0%, #2cc9956 90%);
+  background: linear-gradient(135deg, #2dcc97 0%, #20b381 90%);
   color: white;
 }
 
 .toast.info {
-  background: linear-gradient(135deg, #a25dde 0%, #7837b8 90%);
+  background: linear-gradient(135deg, #9250cc 0%, #8040b8 90%);
   color: white;
 }
 
@@ -349,7 +349,7 @@
         </tr>
         <tr>
           <th style="text-align:left; padding:6px 0; color:#654321;">Shipping</th>
-          <td id="shipping-cost" style="text-align:right; color:#14b47e;">RM 0.00</td>
+          <td id="shipping-cost" style="text-align:right; color:#20ab54;">RM 0.00</td>
         </tr>
         <tr>
           <td colspan="2" id="shipping-note" class="shipping-note"></td>
@@ -747,7 +747,7 @@ async function displayOrderWithActions(orderData) {
 // ============================================
 function createOrderActionButtons(orderData) {
   const btnContainer = document.createElement("div");
-  btnContainer.style.cssText = "display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;";
+  btnContainer.style.cssText = "display:flex; gap:8px; margin-top:15px; flex-wrap:wrap; row-gap:8px;";
 
   const orderText = `
 CEO Health & Wellness - Order Receipt
@@ -828,7 +828,7 @@ https://ceo-9xi.pages.dev
   )}`;
   whatsappBtn.target = "_blank";
   whatsappBtn.className = "confirm-btn";
-  whatsappBtn.style.cssText = "background:#25D366; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; flex:1; min-width:120px;";
+  whatsappBtn.style.cssText = "background:#20ab54; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; flex:1; min-width:120px;";
   whatsappBtn.innerHTML = "💬 WhatsApp";
 
   // === 4. SHARE BUTTON (if supported) ===
@@ -836,7 +836,7 @@ https://ceo-9xi.pages.dev
     const shareBtn = document.createElement("button");
     shareBtn.textContent = "📤 Share";
     shareBtn.className = "confirm-btn";
-    shareBtn.style.cssText = "background:#14b47e; flex:1; min-width:120px;";
+    shareBtn.style.cssText = "background:#8040b8; flex:1; min-width:120px;";
     shareBtn.onclick = async () => {
       try {
         await navigator.share({
