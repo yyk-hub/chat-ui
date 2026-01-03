@@ -117,8 +117,8 @@
     }
 
     input, textarea, select {
-  width: 100%;
-  box-sizing: border-box;
+      width: 100%;
+      box-sizing: border-box;
       padding: 8px;
       border-radius: 8px;
       border: 1px solid #ccc;
@@ -239,6 +239,34 @@
   background: linear-gradient(135deg, #f03740 0%, #ed2630 90%);
   color: white;
 }
+
+/* NEW: container for action buttons (two per row) */
+.order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* NEW: override confirm-btn when inside .order-actions to allow flex layout */
+.order-actions .confirm-btn {
+  flex: 1 1 48%;
+  max-width: 48%;
+  margin: 0; /* override the global .confirm-btn margin:5px auto; */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Small screens: make each button take full width */
+@media (max-width: 480px) {
+  .order-actions .confirm-btn {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
     @media print {
       body * { visibility: hidden; }
       #OrderDisplay, #OrderDisplay * { visibility: visible; }
@@ -527,7 +555,6 @@ function showToast(message, type = 'info', duration = 3500) {
   }, duration);
 }
 // ============================================
-// Add this function before confirmOrder()
 // EXCHANGE RATE LOADER
 // ============================================
 async function loadExchangeRate() {
@@ -746,7 +773,8 @@ async function displayOrderWithActions(orderData) {
 // ============================================
 function createOrderActionButtons(orderData) {
   const btnContainer = document.createElement("div");
-  btnContainer.style.cssText = "display:flex; column-gap:8px; row-gap:5px; margin-top:15px; flex-wrap:wrap;";
+  // Use the CSS class that provides the flex layout and wrapping
+  btnContainer.className = "order-actions";
 
   const orderText = `
 CEO Health & Wellness - Order Receipt
@@ -778,7 +806,7 @@ https://ceo-9xi.pages.dev
   const copyBtn = document.createElement("button");
   copyBtn.textContent = "📋 Copy";
   copyBtn.className = "confirm-btn";
-  copyBtn.style.cssText = "background:#1a86db; color:white; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border:none; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer;";
+  copyBtn.style.cssText = "background:#1a86db; color:white; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border:none; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;";
   copyBtn.onclick = async () => {
     try {
       await navigator.clipboard.writeText(orderText);
@@ -787,7 +815,7 @@ https://ceo-9xi.pages.dev
       showToast('📋 Order details copied!', 'success', 2000);
       setTimeout(() => {
         copyBtn.textContent = "📋 Copy";
-        copyBtn.style.background = "#2196F3";
+        copyBtn.style.background = "#1a86db";
       }, 2000);
     } catch (err) {
       showToast("❌ Failed to copy. Please select and copy manually.", 'error');
@@ -798,7 +826,7 @@ https://ceo-9xi.pages.dev
   const printBtn = document.createElement("button");
   printBtn.textContent = "🖨️ Print";
   printBtn.className = "confirm-btn";
-  printBtn.style.cssText = "background:#996600; color:white; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border:none; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer;";
+  printBtn.style.cssText = "background:#996600; color:white; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border:none; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;";
   printBtn.onclick = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
@@ -835,7 +863,7 @@ https://ceo-9xi.pages.dev
     const shareBtn = document.createElement("button");
     shareBtn.textContent = "📤 Share";
     shareBtn.className = "confirm-btn";
-    shareBtn.style.cssText = "background:#8040b8; color:white; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border:none; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer;";
+    shareBtn.style.cssText = "background:#8040b8; color:white; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border:none; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;";
     shareBtn.onclick = async () => {
       try {
         await navigator.share({
@@ -849,7 +877,7 @@ https://ceo-9xi.pages.dev
     btnContainer.appendChild(shareBtn);
   }
 
-  // Add buttons in order: Copy, Print, WhatsApp, Share
+  // Add buttons in order: Copy, Print, WhatsApp, Share (Share was added conditionally above)
   btnContainer.appendChild(copyBtn);
   btnContainer.appendChild(printBtn);
   btnContainer.appendChild(whatsappBtn);
@@ -900,7 +928,7 @@ async function viewMyOrder() {
         </p>
         <p><strong>Status:</strong> <span style="color:${o.order_status === 'Paid' ? 'green' : '#d32f2f'};">${o.order_status}</span></p>
         ${o.tracking_link ? `<p><a href="${o.tracking_link}" target="_blank" style="color:#14b47e;">📦 Track Package</a></p>` : '<p style="color:#999;">Tracking: Not available until shipped</p>'}
-        ${!isPiBrowser && o.order_status !== 'Paid' ? `<p class="whatsapp-instruction" style="background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;">📱 <strong>Reminder:</strong> Send your bank receipt via WhatsApp.</p>` : ''}
+        ${!isPiBrowser && o.order_status !== 'Paid' ? `<p class="whatsapp-instruction" style="background:#fff3cd;padding:10px;border-radius:6px;margin-top:10px;">📱 <strong>Reminder:</strong> Send your bank receipt via WhatsApp using the button below.</p>` : ''}
       </div>
     `;
     
@@ -984,28 +1012,29 @@ document.addEventListener('DOMContentLoaded', async function() {
   isPiBrowser = piWorks;
   
   if (piWorks) {
-    document.querySelector('.pi-badge').style.cssText = 'display:flex !important; visibility:visible !important';
-    document.querySelector('.pi-row').style.cssText = 'display:table-row !important; visibility:visible !important';
+    const piBadge = document.querySelector('.pi-badge');
+    const piRow = document.querySelector('.pi-row');
+    if (piBadge) piBadge.style.cssText = 'display:flex !important; visibility:visible !important';
+    if (piRow) piRow.style.cssText = 'display:table-row !important; visibility:visible !important';
     document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'none');
     document.getElementById('confirmBtn').textContent = '☑️ Confirm Pi Order';
     console.log('✅ Pi interface activated');
     console.log('⏳ Pi SDK will be initialized by pi-payment.js with correct mode');
   } else {
-    document.querySelector('.pi-badge').style.cssText = 'display:none !important';
-    document.querySelector('.pi-row').style.cssText = 'display:none !important';
+    const piBadge = document.querySelector('.pi-badge');
+    const piRow = document.querySelector('.pi-row');
+    if (piBadge) piBadge.style.cssText = 'display:none !important';
+    if (piRow) piRow.style.cssText = 'display:none !important';
     document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'block');
     document.getElementById('confirmBtn').textContent = '✅ Confirm Order';
     console.log('✅ Fiat interface activated');
   }
-  
-  // ✅ LOAD EXCHANGE RATE FROM D1
+
+  // Initial data & UI setup
   await loadExchangeRate();
+  loadOrder();
+  checkExistingOrder();
   
-  // ✅ Load other functions if they exist
-  if (typeof loadOrder === 'function') loadOrder();
-  if (typeof checkExistingOrder === 'function') checkExistingOrder();
-  
-  console.log('✅ Initialization complete');
 });
 </script>
 </body>
