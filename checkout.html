@@ -781,7 +781,7 @@ https://ceo-9xi.pages.dev
   const copyBtn = document.createElement("button");
   copyBtn.textContent = "📋 Copy";
   copyBtn.className = "confirm-btn";
-  copyBtn.style.cssText = "background:#1a86db; flex:1 1 calc(50% - 4px); min-width:120px; margin:0;";
+  copyBtn.style.cssText = "background:#1a86db; color:white; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border:none; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer;";
   copyBtn.onclick = async () => {
     try {
       await navigator.clipboard.writeText(orderText);
@@ -801,7 +801,7 @@ https://ceo-9xi.pages.dev
   const printBtn = document.createElement("button");
   printBtn.textContent = "🖨️ Print";
   printBtn.className = "confirm-btn";
-  printBtn.style.cssText = "background:#996600; flex:1 1 calc(50% - 4px); min-width:120px; margin:0;";
+  printBtn.style.cssText = "background:#996600; color:white; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border:none; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer;";
   printBtn.onclick = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
@@ -830,7 +830,7 @@ https://ceo-9xi.pages.dev
   )}`;
   whatsappBtn.target = "_blank";
   whatsappBtn.className = "confirm-btn";
-  whatsappBtn.style.cssText = "background:#20ab54; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; flex:1 1 calc(50% - 4px); min-width:120px; margin:0;";
+  whatsappBtn.style.cssText = "background:#20ab54; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer;";
   whatsappBtn.innerHTML = "💬 WhatsApp";
 
   // === 4. SHARE BUTTON (if supported) ===
@@ -838,7 +838,7 @@ https://ceo-9xi.pages.dev
     const shareBtn = document.createElement("button");
     shareBtn.textContent = "📤 Share";
     shareBtn.className = "confirm-btn";
-    shareBtn.style.cssText = "background:#8040b8; flex:1 1 calc(50% - 4px); min-width:120px; margin:0;";
+    shareBtn.style.cssText = "background:#8040b8; color:white; flex:1 1 50%; max-width:50%; margin:0; padding:12px 24px; border:none; border-radius:10px; font-size:16px; font-weight:600; box-sizing:border-box; cursor:pointer;";
     shareBtn.onclick = async () => {
       try {
         await navigator.share({
