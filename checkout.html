@@ -555,20 +555,21 @@ function checkExistingOrder() {
 
 function showOrderHistoryButton() {
   if (document.getElementById('viewHistoryBtn')) return;
-
+  
   const historyBtn = document.createElement('a');
   historyBtn.id = 'viewHistoryBtn';
-  historyBtn.href = '#';
+  historyBtn.href = 'order.html';
   historyBtn.className = 'confirm-btn';
   historyBtn.style.background = '#996600';
-  historyBtn.innerHTML = '📋 View Order';
+  historyBtn.innerHTML = '📋 View Order History';
   historyBtn.style.textDecoration = 'none';
   historyBtn.style.textAlign = 'center';
-
-  historyBtn.addEventListener('click', function (e) {
-    e.preventDefault();
-    viewMyOrder();
-  });
+  
+  const confirmBtn = document.getElementById('confirmBtn');
+  if (confirmBtn?.parentNode) {
+    confirmBtn.parentNode.insertBefore(historyBtn, confirmBtn.nextSibling);
+  }
+}
 
   const confirmBtn = document.getElementById('confirmBtn');
   if (confirmBtn?.parentNode) {
