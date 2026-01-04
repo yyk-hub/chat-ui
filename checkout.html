@@ -570,12 +570,6 @@ function showOrderHistoryButton() {
     confirmBtn.parentNode.insertBefore(historyBtn, confirmBtn.nextSibling);
   }
 }
-
-  const confirmBtn = document.getElementById('confirmBtn');
-  if (confirmBtn?.parentNode) {
-    confirmBtn.parentNode.insertBefore(historyBtn, confirmBtn.nextSibling);
-  }
-}
   
 function showToast(message, type = 'info', duration = 3500) {
   const toast = document.getElementById('toast');
