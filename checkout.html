@@ -418,6 +418,12 @@
           <th style="text-align:left; padding:8px 0; color:#996600;">Total Amount</th>
           <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
         </tr>
+      <!-- Add pi-rate-label -->
+        <tr class="pi-row" style="display:none;">
+         <td colspan="2" style="font-size:13px;color:#666;padding-top:8px;">
+         <span id="pi-rate-label">Exchange Rate: 1 Pi ≈ RM 1.00</span>
+         </td>
+        </tr>
         <tr class="pi-only pi-row">
           <th style="text-align:left; padding:8px 0;">Total in Pi ☑️</th>
           <td id="pi-total" style="text-align:right;">π 0.00</td>
@@ -549,16 +555,21 @@ function checkExistingOrder() {
 
 function showOrderHistoryButton() {
   if (document.getElementById('viewHistoryBtn')) return;
-  
+
   const historyBtn = document.createElement('a');
   historyBtn.id = 'viewHistoryBtn';
-  historyBtn.href = 'order.html';
+  historyBtn.href = '#';
   historyBtn.className = 'confirm-btn';
   historyBtn.style.background = '#996600';
-  historyBtn.innerHTML = '📋 View Order History';
+  historyBtn.innerHTML = '📋 View Order';
   historyBtn.style.textDecoration = 'none';
   historyBtn.style.textAlign = 'center';
-  
+
+  historyBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    viewMyOrder();
+  });
+
   const confirmBtn = document.getElementById('confirmBtn');
   if (confirmBtn?.parentNode) {
     confirmBtn.parentNode.insertBefore(historyBtn, confirmBtn.nextSibling);
