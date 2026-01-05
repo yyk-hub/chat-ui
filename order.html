@@ -134,6 +134,7 @@
     .paid { color: #0b8b0b; font-weight: bold; }
     .pending { color: #d32f2f; font-weight: bold; }
     .other { color: #555; font-weight: bold; }
+    .pi-payment { color: #14b47e; font-weight: bold; }
     a.track-link { color: #14b47e; text-decoration: none; font-weight: 500; }
     a.track-link:hover { text-decoration: underline; }
     .loading { text-align: center; color: #996600; font-style: italic; padding: 20px; }
@@ -154,28 +155,27 @@
       .action-cell button { font-size: 10px; padding: 4px 6px; margin: 1px; }
       .header-title { font-size: 18px; }
     }
-      .toast {
-  position: fixed;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;        /* fallback dark */
-  color: #fff;             /* always readable */
-  padding: 14px 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .25s ease, transform .25s ease;
-  z-index: 9999;
- }
-
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(-8px);
- }
+    .toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease, transform .25s ease;
+      z-index: 9999;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-8px);
+    }
   </style>
 </head>
 <body>
@@ -215,15 +215,12 @@
   </div>
   
   <div style="text-align:center;margin-top:12px;">
-    
- <button id="loadMoreBtn" style="display:none;" onclick="loadOrders(false)">
-  Load More
-</button>
-
-</div>
+    <button id="loadMoreBtn" style="display:none;" onclick="loadOrders(false)">
+      Load More
+    </button>
+  </div>
 
   <script>
-
     const BACKEND_URL = window.location.origin;
 
     let orderCursor = null;
@@ -271,14 +268,14 @@
       if (row) row.classList.remove("show");
     }
     
-  function showToast(message, duration = 3500) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add('show');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => toast.classList.remove('show'), duration);
-  }
+    function showToast(message, duration = 3500) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toast.classList.remove('show'), duration);
+    }
 
     async function saveEdit(id) {
       const payload = {
@@ -292,7 +289,7 @@
 
       try {
         const res = await fetch(`${BACKEND_URL}/api/orders/${id}`, {
-          method: "PUT",  // PATCH → 405, use PUT
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
@@ -309,142 +306,143 @@
       }
     }
 
-   function printOrder(id, phone) {
-  const area = document.getElementById(`print-${id}`);
-  if (!area) return showToast("Print content not ready");
+    function printOrder(id, phone) {
+      const area = document.getElementById(`print-${id}`);
+      if (!area) return showToast("Print content not ready");
 
-  let html = area.innerHTML.replace(/\{PHONE\}/g, phone);
+      let html = area.innerHTML.replace(/\{PHONE\}/g, phone);
 
-  const printDoc = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
-      <title>CEO Coffee - ${id}</title>
-      <style>
-        * { box-sizing: border-box; }
-        body { 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
-          margin: 0; 
-          padding: 15px; 
-          background: white; 
-          font-size: 16px;
-          line-height: 1.6;
-          -webkit-print-color-adjust: exact;
-          color-adjust: exact;
-        }
-        h2 { 
-          text-align: center; 
-          color: #996600; 
-          margin: 10px 0; 
-          font-size: 18px; 
-          font-weight: 600;
-        }
-        p { margin: 6px 0; font-size: 15px; }
-        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-        td { padding: 3px 0; font-size: 15px; }
-        hr { border: 0; border-top: 1px dashed #ccc; margin: 14px 0; }
-        .total { 
-          font-weight: bold; 
-          font-size: 15px; 
-          border-top: 2px solid #996600; 
-          padding-top: 6px; 
-        }
-        @page { margin: 0.8cm; size: A4; }
-        @media print {
-          body { padding: 10px; font-size: 15px; }
-          * { -webkit-print-color-adjust: exact !important; }
-        }
-      </style>
-    </head>
-    <body>${html}</body>
-    </html>
-  `;
+      const printDoc = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
+          <title>CEO Coffee - ${id}</title>
+          <style>
+            * { box-sizing: border-box; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+              margin: 0; 
+              padding: 15px; 
+              background: white; 
+              font-size: 16px;
+              line-height: 1.6;
+              -webkit-print-color-adjust: exact;
+              color-adjust: exact;
+            }
+            h2 { 
+              text-align: center; 
+              color: #996600; 
+              margin: 10px 0; 
+              font-size: 18px; 
+              font-weight: 600;
+            }
+            p { margin: 6px 0; font-size: 15px; }
+            table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+            td { padding: 3px 0; font-size: 15px; }
+            hr { border: 0; border-top: 1px dashed #ccc; margin: 14px 0; }
+            .total { 
+              font-weight: bold; 
+              font-size: 15px; 
+              border-top: 2px solid #996600; 
+              padding-top: 6px; 
+            }
+            .pi-info { color: #14b47e; font-weight: 600; }
+            @page { margin: 0.8cm; size: A4; }
+            @media print {
+              body { padding: 10px; font-size: 15px; }
+              * { -webkit-print-color-adjust: exact !important; }
+            }
+          </style>
+        </head>
+        <body>${html}</body>
+        </html>
+      `;
 
-  const blob = new Blob([printDoc], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const iframe = document.createElement('iframe');
-  
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  document.body.appendChild(iframe);
-  iframe.src = url;
-
-  iframe.onload = () => {
-    setTimeout(() => {
-      const win = iframe.contentWindow;
-      win.focus();
-      win.print();
+      const blob = new Blob([printDoc], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const iframe = document.createElement('iframe');
       
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-        URL.revokeObjectURL(url);
-       }, 2000);
-     }, 600); // Increased render time
-     };
-     }
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+      iframe.src = url;
 
-    async function loadOrders(reset = true) {
-    const phone = document.getElementById('custPhone').value.trim();
-    if (!phone) return showToast('Enter phone number');
-
-    const btn = document.getElementById('loadBtn');
-    const list = document.getElementById('ordersList');
-    const loading = document.getElementById('loadingMsg');
-    const tbody = document.querySelector('#ordersTable tbody');
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
-
-    btn.disabled = true;
-    btn.textContent = "Loading...";
-    list.style.display = 'block';
-    loading.style.display = 'block';
-
-    if (reset) {
-    tbody.innerHTML = '';
-    orderCursor = null;
-    hasMoreOrders = true;
-    loadMoreBtn.style.display = 'none';
+      iframe.onload = () => {
+        setTimeout(() => {
+          const win = iframe.contentWindow;
+          win.focus();
+          win.print();
+          
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            URL.revokeObjectURL(url);
+          }, 2000);
+        }, 600);
+      };
     }
 
-      try {
-       const url = new URL(`${BACKEND_URL}/api/orders`);
-       url.searchParams.set('phone', phone);
-       url.searchParams.set('limit', PAGE_LIMIT);
-       if (orderCursor) url.searchParams.set('cursor', orderCursor);
+    async function loadOrders(reset = true) {
+      const phone = document.getElementById('custPhone').value.trim();
+      if (!phone) return showToast('Enter phone number');
 
-      loadMoreBtn.disabled = true;
-      
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const btn = document.getElementById('loadBtn');
+      const list = document.getElementById('ordersList');
+      const loading = document.getElementById('loadingMsg');
+      const tbody = document.querySelector('#ordersTable tbody');
+      const loadMoreBtn = document.getElementById('loadMoreBtn');
 
-       let payload;
-       try { payload = await res.json(); } catch { throw new Error("Invalid response"); }
-        
-      /* ================= AFTER FETCH RESULT ================= */
-      loadMoreBtn.disabled = false;
-        
-       const orders = payload.data || [];
-       hasMoreOrders = payload.hasMore;
-       orderCursor = payload.nextCursor;
-         loading.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+      list.style.display = 'block';
+      loading.style.display = 'block';
 
-      if (orders.length === 0 && reset) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="8" class="no-orders">No orders found.</td>
-        </tr>
-      `;
-      loadMoreBtn.style.display = 'none';
-      return;
+      if (reset) {
+        tbody.innerHTML = '';
+        orderCursor = null;
+        hasMoreOrders = true;
+        loadMoreBtn.style.display = 'none';
       }
 
-    loadMoreBtn.style.display = hasMoreOrders ? 'inline-block' : 'none';
- /* ================= RENDER ROWS ================= */
+      try {
+        const url = new URL(`${BACKEND_URL}/api/orders`);
+        url.searchParams.set('phone', phone);
+        url.searchParams.set('limit', PAGE_LIMIT);
+        if (orderCursor) url.searchParams.set('cursor', orderCursor);
+
+        loadMoreBtn.disabled = true;
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        let payload;
+        try { payload = await res.json(); } catch { throw new Error("Invalid response"); }
+        
+          /* ================= AFTER FETCH RESULT ================= */
+        loadMoreBtn.disabled = false;
+       
+        const orders = payload.data || [];
+        hasMoreOrders = payload.hasMore;
+        orderCursor = payload.nextCursor;
+        loading.style.display = 'none';
+
+        if (orders.length === 0 && reset) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" class="no-orders">No orders found.</td>
+            </tr>
+          `;
+          loadMoreBtn.style.display = 'none';
+          return;
+        }
+
+        loadMoreBtn.style.display = hasMoreOrders ? 'inline-block' : 'none';
+        /* ================= RENDER ROWS ================= */
         orders.forEach(o => {
           const order = {
             order_id: o.order_id || 'Unknown',
@@ -460,17 +458,27 @@
             postcode: o.postcode || '',
             state_to: o.state_to || '',
             shipping_method: o.shipping_method || '',
-            phone: o.phone || phone
+            phone: o.phone || phone,
+            pymt_method: o.pymt_method || '',
+            pi_amount: parseFloat(o.pi_amount) || null,
+            pi_exchange_rate: parseFloat(o.pi_exchange_rate) || null
           };
           
           const canEdit = order.order_status === "Pending Payment";
           const subTotal = (order.total_amt - order.shipping_cost).toFixed(2);
+          const isPiPayment = order.pymt_method === 'Pi Network' && order.pi_amount;
+
+          // ✅ Format total display with Pi info if available
+          let totalDisplay = `<strong>RM ${order.total_amt.toFixed(2)}</strong>`;
+          if (isPiPayment) {
+            totalDisplay += `<br><span class="pi-payment">π ${order.pi_amount.toFixed(8)}</span>`;
+          }
 
           const row = document.createElement('tr');
           row.innerHTML = `
             <td><strong>${order.order_id}</strong></td>
             <td>${formatProductList(order.prod_name, order.order_id)}</td>
-            <td><strong>RM ${order.total_amt.toFixed(2)}</strong></td>
+            <td>${totalDisplay}</td>
             <td>${order.courier_name}</td>
             <td>${order.tracking_link ? `<a href="${order.tracking_link}" target="_blank" class="track-link">Track</a>` : '-'}</td>
             <td class="${order.order_status === 'Paid' ? 'paid' : order.order_status === 'Pending Payment' ? 'pending' : 'other'}">${order.order_status}</td>
@@ -482,11 +490,23 @@
           `;
           tbody.appendChild(row);
 
-          // Print Area
+          // ✅ Print Area with Pi info
           const printArea = document.createElement('div');
           printArea.id = `print-${order.order_id}`;
           printArea.className = 'print-area';
           printArea.style.display = 'none';
+          
+          let piInfoHTML = '';
+          if (isPiPayment) {
+            piInfoHTML = `
+              <p style="margin:8px 0;background:#f0fdf4;padding:8px;border-radius:6px;">
+                <strong class="pi-info">Pi Payment:</strong><br>
+                <span class="pi-info">π ${order.pi_amount.toFixed(8)}</span>
+                <span style="font-size:12px;color:#666;"> (at rate: 1 Pi = RM ${order.pi_exchange_rate.toFixed(2)})</span>
+              </p>
+            `;
+          }
+          
           printArea.innerHTML = `
             <div style="font-family:Arial;max-width:580px;margin:auto;padding:15px;">
               <h2 style="text-align:center;color:#996600;">CEO Online</h2>
@@ -507,6 +527,7 @@
                   <td>Total</td><td style="text-align:right;color:#996600;">RM ${order.total_amt.toFixed(2)}</td>
                 </tr>
               </table>
+              ${piInfoHTML}
               <hr style="border:0;border-top:1px dashed #ccc;margin:12px 0;">
               <p style="margin:8px 0;"><strong>Status:</strong> 
                 <span style="color:${order.order_status === 'Paid' ? '#0b8b0b' : '#d32f2f'}">${order.order_status}</span>
@@ -516,9 +537,9 @@
             </div>
           `;
           
-        if (!document.getElementById(`print-${order.order_id}`)) {
-           document.body.appendChild(printArea);
-           }
+          if (!document.getElementById(`print-${order.order_id}`)) {
+            document.body.appendChild(printArea);
+          }
 
           // Edit Row
           if (canEdit) {
