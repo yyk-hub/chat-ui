@@ -418,16 +418,18 @@
           <th style="text-align:left; padding:8px 0; color:#996600;">Total Amount</th>
           <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
         </tr>
-      <!-- Add pi-rate-label -->
-        <tr class="pi-row" style="display:none;">
-         <td colspan="2" style="font-size:13px;color:#666;padding-top:8px;">
-         <span id="pi-rate-label">Exchange Rate: 1 Pi ≈ RM 1.00</span>
-         </td>
-        </tr>
-        <tr class="pi-only pi-row">
-          <th style="text-align:left; padding:8px 0;">Total in Pi ☑️</th>
-          <td id="pi-total" style="text-align:right;">π 0.00</td>
-        </tr>
+  <!-- ✅ Pi Row 1: Exchange Rate (Hidden by default) -->
+  <tr class="pi-row" style="display:none;">
+    <td colspan="2" style="font-size:13px; color:#666; padding:8px 0 4px 0; text-align:center;">
+      <span id="pi-rate-label">Exchange Rate: 1 Pi ≈ RM 1.00</span>
+    </td>
+  </tr>
+
+  <!-- ✅ Pi Row 2: Total in Pi (Hidden by default) -->
+  <tr class="pi-row" style="display:none; border-top:1px dashed #ccc;">
+    <th style="text-align:left; padding:8px 0; color:#14b47e;">Total in Pi ☑️</th>
+    <td id="pi-total" style="text-align:right; color:#14b47e; font-weight:bold; font-size:1.1em;">π 0.00</td>
+  </tr>
       </table>
      <!-- Add id="pi-rate-label" -->
 <p id="pi-rate-label" class="pi-only" style="font-size:12px; color:#666; text-align:center; margin-top:8px;">
@@ -1052,26 +1054,53 @@ document.addEventListener('DOMContentLoaded', async function() {
     }, 3000);
   }
   
-  isPiBrowser = piWorks;
-  
-  if (piWorks) {
-    const piBadge = document.querySelector('.pi-badge');
-    const piRow = document.querySelector('.pi-row');
-    if (piBadge) piBadge.style.cssText = 'display:flex !important; visibility:visible !important';
-    if (piRow) piRow.style.cssText = 'display:table-row !important; visibility:visible !important';
-    document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'none');
-    document.getElementById('confirmBtn').textContent = '☑️ Confirm Pi Order';
-    console.log('✅ Pi interface activated');
-    console.log('⏳ Pi SDK will be initialized by pi-payment.js with correct mode');
-  } else {
-    const piBadge = document.querySelector('.pi-badge');
-    const piRow = document.querySelector('.pi-row');
-    if (piBadge) piBadge.style.cssText = 'display:none !important';
-    if (piRow) piRow.style.cssText = 'display:none !important';
-    document.querySelectorAll('.fiat-only').forEach(el => el.style.display = 'block');
-    document.getElementById('confirmBtn').textContent = '✅ Confirm Order';
-    console.log('✅ Fiat interface activated');
+isPiBrowser = piWorks;
+
+if (piWorks) {
+  // ✅ Show Pi badge (single element)
+  const piBadge = document.querySelector('.pi-badge');
+  if (piBadge) {
+    piBadge.style.cssText = 'display:flex !important; visibility:visible !important';
   }
+  
+  // ✅ Show ALL .pi-row elements (multiple elements)
+  document.querySelectorAll('.pi-row').forEach(row => {
+    row.style.cssText = 'display:table-row !important; visibility:visible !important';
+  });
+  
+  // Hide fiat-only elements
+  document.querySelectorAll('.fiat-only').forEach(el => {
+    el.style.display = 'none';
+  });
+  
+  // Update button text
+  document.getElementById('confirmBtn').textContent = '☑️ Confirm Pi Order';
+  
+  console.log('✅ Pi interface activated');
+  console.log('⏳ Pi SDK will be initialized by pi-payment.js with correct mode');
+  
+} else {
+  // ✅ Hide Pi badge (single element)
+  const piBadge = document.querySelector('.pi-badge');
+  if (piBadge) {
+    piBadge.style.cssText = 'display:none !important';
+  }
+  
+  // ✅ Hide ALL .pi-row elements (multiple elements)
+  document.querySelectorAll('.pi-row').forEach(row => {
+    row.style.cssText = 'display:none !important';
+  });
+  
+  // Show fiat-only elements
+  document.querySelectorAll('.fiat-only').forEach(el => {
+    el.style.display = 'block';
+  });
+  
+  // Update button text
+  document.getElementById('confirmBtn').textContent = '✅ Confirm Order';
+  
+  console.log('✅ Fiat interface activated');
+}
 
   // Initial data & UI setup
   await loadExchangeRate();
