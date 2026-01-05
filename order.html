@@ -227,6 +227,168 @@
     let hasMoreOrders = true;
     const PAGE_LIMIT = 10;
 
+    // ✅ Check for Pi payment success on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isSuccess = urlParams.get('success') === '1';
+      const orderId = urlParams.get('order_id');
+      
+      if (isSuccess && orderId) {
+        showPiPaymentSuccess();
+      }
+    });
+
+    // ✅ Show Pi payment success overlay
+    function showPiPaymentSuccess() {
+      const successData = sessionStorage.getItem('piPaymentSuccess');
+      if (!successData) {
+        console.log('⚠️ No success data found, skipping overlay');
+        return;
+      }
+
+      try {
+        const data = JSON.parse(successData);
+        const whatsappMessage = data.whatsapp_message;
+        const orderId = data.order_id;
+        
+        // Clear the data
+        sessionStorage.removeItem('piPaymentSuccess');
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'successOverlay';
+        overlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.9);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 99999;
+          padding: 20px;
+          box-sizing: border-box;
+        `;
+        
+        overlay.innerHTML = `
+          <div style="
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+          ">
+            <div style="font-size: 36px; margin-bottom: 16px;">✅</div>
+            <h2 style="color: #1c994a; margin: 0 0 8px 0; font-size: 20px;">Payment Successful!</h2>
+            <p style="color: #666; margin: 8px 0 20px 0; font-size: 14px;">
+              Order ID: <strong style="color: #333;">${orderId}</strong>
+            </p>
+            
+            <div style="
+              background: #f5f5f5;
+              padding: 16px;
+              border-radius: 10px;
+              margin-bottom: 16px;
+              text-align: left;
+              max-height: 200px;
+              overflow-y: auto;
+              font-size: 13px;
+              line-height: 1.5;
+            ">
+              <pre style="
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                margin: 0;
+                font-family: inherit;
+              ">${whatsappMessage}</pre>
+            </div>
+            
+            <button id="copySuccessBtn" style="
+              display: block;
+              background: #1c994a;
+              color: white;
+              padding: 14px 28px;
+              border: none;
+              border-radius: 10px;
+              font-weight: 600;
+              font-size: 15px;
+              margin-bottom: 10px;
+              cursor: pointer;
+              width: 100%;
+            ">
+              📋 Copy & Send via WhatsApp
+            </button>
+            
+            <a href="https://wa.me/60168101358?text=${encodeURIComponent(whatsappMessage)}" 
+               target="_blank"
+               style="
+                 display: block;
+                 background: #25D366;
+                 color: white;
+                 padding: 14px 28px;
+                 border: none;
+                 border-radius: 10px;
+                 font-weight: 600;
+                 font-size: 15px;
+                 margin-bottom: 10px;
+                 cursor: pointer;
+                 text-decoration: none;
+               ">
+              💬 Open WhatsApp
+            </a>
+            
+            <button id="closeSuccessBtn" style="
+              background: #996600;
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              border-radius: 8px;
+              font-size: 14px;
+              cursor: pointer;
+              width: 100%;
+            ">
+              View My Orders
+            </button>
+          </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        // Copy button handler
+        document.getElementById('copySuccessBtn').addEventListener('click', async () => {
+          const btn = document.getElementById('copySuccessBtn');
+          try {
+            await navigator.clipboard.writeText(whatsappMessage);
+            btn.textContent = '✅ Copied!';
+            btn.style.background = '#4CAF50';
+            setTimeout(() => {
+              btn.textContent = '📋 Copy & Send via WhatsApp';
+              btn.style.background = '#1c994a';
+            }, 2000);
+          } catch (err) {
+            showToast('Failed to copy. Please try again.');
+          }
+        });
+        
+        // Close button handler
+        document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+          overlay.remove();
+          // Extract phone from order and load orders
+          const phone = whatsappMessage.match(/Phone: ([\d\s-]+)/)?.[1]?.trim();
+          if (phone) {
+            document.getElementById('custPhone').value = phone;
+            loadOrders(true);
+          }
+        });
+        
+      } catch (err) {
+        console.error('Failed to parse success data:', err);
+      }
+    }
+
     function formatDate(iso) {
       if (!iso) return '-';
       try {
@@ -422,10 +584,9 @@
 
         let payload;
         try { payload = await res.json(); } catch { throw new Error("Invalid response"); }
-        
-          /* ================= AFTER FETCH RESULT ================= */
+        /* ================= AFTER FETCH RESULT ================= */
         loadMoreBtn.disabled = false;
-       
+        
         const orders = payload.data || [];
         hasMoreOrders = payload.hasMore;
         orderCursor = payload.nextCursor;
