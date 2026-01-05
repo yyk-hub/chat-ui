@@ -398,39 +398,40 @@
       <h3>Order Summary</h3>
       <div id="cart-items"></div>
 
-      <table>
-        <tr>
-          <th style="text-align:left; padding:6px 0; color:#654321;">Total Weight</th>
-          <td id="total-weight" style="text-align:right; font-weight:600;">0.00 kg</td>
-        </tr>
-        <tr>
-          <th style="text-align:left; padding:6px 0; color:#654321;">Sub-total</th>
-          <td id="sub-total" style="text-align:right;">RM 0.00</td>
-        </tr>
-        <tr>
-          <th style="text-align:left; padding:6px 0; color:#654321;">Shipping</th>
-          <td id="shipping-cost" style="text-align:right;">RM 0.00</td>
-        </tr>
-        <tr>
-          <td colspan="2" id="shipping-note" class="shipping-note"></td>
-        </tr>
-        <tr style="border-top:2px solid #996600; font-weight:bold; font-size:1.1em;">
-          <th style="text-align:left; padding:8px 0; color:#996600;">Total Amount</th>
-          <td id="grand-total" style="text-align:right; color:#996600;">RM 0.00</td>
-        </tr>
+<table>
+  <tr>
+    <th style="text-align:left; padding:6px 0 6px 8px; color:#654321; background:#e9d8a6;">Total Weight</th>
+    <td id="total-weight" style="text-align:right; padding:6px 8px 6px 0; font-weight:600;">0.00 kg</td>
+  </tr>
+  <tr>
+    <th style="text-align:left; padding:6px 0 6px 8px; color:#654321; background:#e9d8a6;">Sub-total</th>
+    <td id="sub-total" style="text-align:right; padding:6px 8px 6px 0;">RM 0.00</td>
+  </tr>
+  <tr>
+    <th style="text-align:left; padding:6px 0 6px 8px; color:#654321; background:#e9d8a6;">Shipping</th>
+    <td id="shipping-cost" style="text-align:right; padding:6px 8px 6px 0;">RM 0.00</td>
+  </tr>
+  <tr>
+    <td colspan="2" id="shipping-note" class="shipping-note" style="padding:4px 8px;"></td>
+  </tr>
+  <tr style="border-top:2px solid #996600; font-weight:bold; font-size:1.1em;">
+    <th style="text-align:left; padding:8px 0 8px 8px; color:#996600; background:#e9d8a6;">Total Amount</th>
+    <td id="grand-total" style="text-align:right; padding:8px 8px 8px 0; color:#996600; font-weight:bold;">RM 0.00</td>
+  </tr>
+
   <!-- ✅ Pi Row 1: Exchange Rate (Hidden by default) -->
   <tr class="pi-row" style="display:none;">
-    <td colspan="2" style="font-size:13px; color:#666; padding:8px 0 4px 0; text-align:center;">
+    <td colspan="2" style="font-size:13px; color:#666; padding:8px 8px 4px 8px; text-align:center;">
       <span id="pi-rate-label">Exchange Rate: 1 Pi ≈ RM 1.00</span>
     </td>
   </tr>
 
   <!-- ✅ Pi Row 2: Total in Pi (Hidden by default) -->
   <tr class="pi-row" style="display:none; border-top:1px dashed #ccc;">
-    <th style="text-align:left; padding:8px 0; color:#14b47e;">Total in Pi ☑️</th>
-    <td id="pi-total" style="text-align:right; color:#14b47e; font-weight:bold; font-size:1.1em;">π 0.00</td>
+    <th style="text-align:left; padding:8px 0 8px 8px; color:#14b47e; background:#e9d8a6;">Total in Pi ☑️</th>
+    <td id="pi-total" style="text-align:right; padding:8px 8px 8px 0; color:#14b47e; font-weight:bold; font-size:1.1em;">π 0.00</td>
   </tr>
-      </table>
+</table>
      <!-- Add id="pi-rate-label" -->
 <p id="pi-rate-label" class="pi-only" style="font-size:12px; color:#666; text-align:center; margin-top:8px;">
   Exchange Rate: 1 Pi ≈ RM 1.00 (loading...)
