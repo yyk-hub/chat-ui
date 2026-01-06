@@ -453,41 +453,56 @@ async function copyOrder(id, phone) {
   const area = document.getElementById(`print-${id}`);
   if (!area) return showToast("Details not ready");
 
-  // Helper: Get value from table by exact label
-  const getFromTable = (label) => {
-    const tables = area.querySelectorAll('table');
-    for (const table of tables) {
-      const rows = table.querySelectorAll('tr');
-      for (const row of rows) {
-        const cells = row.querySelectorAll('td');
-        if (cells.length === 2) {
-          const key = cells[0].textContent.trim();
-          if (key === label || key === label + ':') {
-            return cells[1].textContent.trim();
-          }
-        }
-      }
-    }
-    return null;
+  // Get date
+  const getDate = () => {
+    const p = area.querySelector('p[style*="text-align:center"][style*="font-size:11px"]');
+    return p ? p.textContent.trim() : 'N/A';
   };
 
-  // Get multi-line address (from <p> after Address strong)
-  const getAddress = () => {
-    const addressP = Array.from(area.querySelectorAll('p')).find(p => 
-      p.querySelector('strong') && p.querySelector('strong').textContent.trim() === 'Address:'
-    );
-    if (addressP) {
-      let addr = addressP.innerHTML
-        .replace(/<strong>Address:<\/strong><br>/gi, '')
-        .replace(/<br>/g, '\n')
-        .replace(/&nbsp;/g, ' ')
-        .trim();
-      return addr || 'N/A';
+  // Get name from first table
+  const getName = () => {
+    const tables = area.querySelectorAll('table');
+    if (tables.length > 0) {
+      const rows = tables[0].querySelectorAll('tr');
+      for (const row of rows) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length === 2 && cells[0].textContent.trim() === 'Name') {
+          return cells[1].textContent.trim();
+        }
+      }
     }
     return 'N/A';
   };
 
-  // Get products from the pricing table (second table, Products row)
+  // Get address from <p> after Address:
+  const getAddress = () => {
+    const strong = Array.from(area.querySelectorAll('strong')).find(s => s.textContent.trim() === 'Address:');
+    if (strong) {
+      let addr = '';
+      let sibling = strong.parentElement.nextSibling;
+      while (sibling) {
+        if (sibling.nodeType === Node.TEXT_NODE) {
+          addr += sibling.textContent.trim();
+        } else if (sibling.tagName === 'BR') {
+          addr += '\n';
+        }
+        sibling = sibling.nextSibling;
+      }
+      return addr.trim() || 'N/A';
+    }
+    return 'N/A';
+  };
+
+  // Get shipping method from <p>
+  const getShippingMethod = () => {
+    const strong = Array.from(area.querySelectorAll('strong')).find(s => s.textContent.trim() === 'Shipping:');
+    if (strong && strong.parentElement) {
+      return strong.parentElement.textContent.replace('Shipping:', '').trim();
+    }
+    return 'RM 0.00';
+  };
+
+  // Get products from second table (pricing table)
   const getProducts = () => {
     const products = [];
     const tables = area.querySelectorAll('table');
@@ -497,50 +512,36 @@ async function copyOrder(id, phone) {
       for (const row of rows) {
         const cells = row.querySelectorAll('td');
         if (cells.length === 2 && cells[0].textContent.trim() === 'Products') {
-          const prodText = cells[1].innerText;
-          const lines = prodText.split('\n').map(l => l.trim()).filter(l => l);
-          return lines.length > 0 ? lines : ['N/A'];
+          const lines = cells[1].innerText.split('\n');
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed) products.push(trimmed);
+          }
+          break;
         }
       }
     }
-    return ['N/A'];
+    return products.length > 0 ? products : ['(No products listed)'];
   };
 
-  // Get date
-  const getDate = () => {
-    const dateP = area.querySelector('p[style*="text-align:center"][style*="font-size:11px"]');
-    return dateP ? dateP.textContent.trim() : 'N/A';
-  };
-
-  // Get status
-  const getStatus = () => {
-    const statusP = Array.from(area.querySelectorAll('p')).find(p => 
-      p.querySelector('strong') && p.querySelector('strong').textContent.trim() === 'Status:'
-    );
-    if (statusP) {
-      const span = statusP.querySelector('span');
-      return span ? span.textContent.trim() : statusP.textContent.replace('Status:', '').trim();
+  // Get amounts from second table
+  const getAmount = (label) => {
+    const tables = area.querySelectorAll('table');
+    if (tables.length >= 2) {
+      const rows = tables[1].querySelectorAll('tr');
+      for (const row of rows) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length === 2 && cells[0].textContent.trim() === label) {
+          return cells[1].textContent.trim();
+        }
+      }
     }
-    return 'N/A';
-  };
-
-  // Get tracking link
-  const getTrack = () => {
-    const trackP = Array.from(area.querySelectorAll('p')).find(p => 
-      p.querySelector('strong') && p.querySelector('strong').textContent.trim() === 'Track:'
-    );
-    if (trackP) {
-      const link = trackP.querySelector('a');
-      return link ? link.href : null;
-    }
-    return null;
+    return 'RM 0.00';
   };
 
   // Get Pi payment
   const getPi = () => {
-    const piP = Array.from(area.querySelectorAll('p')).find(p => 
-      p.querySelector('strong') && p.querySelector('strong').textContent.includes('Pi Payment')
-    );
+    const piP = Array.from(area.querySelectorAll('p')).find(p => p.innerHTML.includes('Pi Payment'));
     if (piP) {
       const text = piP.textContent;
       const amountMatch = text.match(/π\s*([\d.]+)/);
@@ -552,46 +553,51 @@ async function copyOrder(id, phone) {
     return null;
   };
 
-  // Build formatted text with slightly more left margin
-  let text = `CEO Online Order Receipt\n\n`;
+  // Get status
+  const getStatus = () => {
+    const statusP = Array.from(area.querySelectorAll('p')).find(p => p.textContent.includes('Status:'));
+    if (statusP) {
+      const span = statusP.querySelector('span');
+      return span ? span.textContent.trim() : statusP.textContent.replace('Status:', '').trim();
+    }
+    return 'N/A';
+  };
 
-  text += `  Order ID     : ${id}\n`;
-  text += `  Date         : ${getDate()}\n`;
-  text += `  Name         : ${getFromTable('Name') || 'N/A'}\n`;
-  text += `  Phone        : ${phone}\n`;
+  // Build formatted text with increased left margin
+  let text = `    CEO Online Order Receipt\n\n`;
+
+  text += `    Order ID     : ${id}\n`;
+  text += `    Date         : ${getDate()}\n`;
+  text += `    Name         : ${getName()}\n`;
+  text += `    Phone        : ${phone}\n`;
 
   const address = getAddress();
-  text += `  Address      : ${address.replace(/\n/g, '\n                 ')}\n`;
+  text += `    Address      : ${address.replace(/\n/g, '\n                   ')}\n`;
 
-  text += `  Shipping     : ${getFromTable('Shipping') || 'RM 0.00'}\n\n`;
+  text += `    Shipping     : ${getShippingMethod()}\n\n`;
 
-  text += `  Products:\n`;
+  text += `    Products:\n`;
   const products = getProducts();
   products.forEach(p => {
-    text += `      • ${p}\n`;
+    text += `        • ${p}\n`;
   });
 
-  text += `\n  Sub-total    : ${getFromTable('Sub-total') || 'RM 0.00'}\n`;
-  text += `  Shipping     : ${getFromTable('Shipping') || 'RM 0.00'}\n`;
-  text += `  Total        : ${getFromTable('Total') || 'RM 0.00'}\n`;
+  text += `\n    Sub-total    : ${getAmount('Sub-total')}\n`;
+  text += `    Shipping     : ${getAmount('Shipping')}\n`;
+  text += `    Total        : ${getAmount('Total')}\n`;
 
   const pi = getPi();
   if (pi) {
-    text += `\n  Pi Payment   : ${pi.amount}\n                 ${pi.rate}\n`;
+    text += `\n    Pi Payment   : ${pi.amount}\n                   ${pi.rate}\n`;
   }
 
-  text += `\n  Status       : ${getStatus()}\n`;
+  text += `\n    Status       : ${getStatus()}\n`;
 
-  const track = getTrack();
-  if (track) {
-    text += `  Track        : ${track}\n`;
-  }
-
-  text += `\n  Thank you for your order! ❤️`;
+  text += `\n    Thank you for your order! ❤️`;
 
   try {
     await navigator.clipboard.writeText(text);
-    showToast("✅ Copied with perfect format!");
+    showToast("✅ Copied with beautiful formatting!");
   } catch (err) {
     showToast("Copy failed — showing text");
     alert(text);
