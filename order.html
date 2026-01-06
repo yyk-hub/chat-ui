@@ -305,51 +305,64 @@
     }
 
     // NEW: PDF Download / Share
-    async function downloadPdf(id, phone) {
-      const area = document.getElementById(`print-${id}`);
-      if (!area) return showToast("Details not ready");
+async function downloadPdf(id, phone) {
+  const area = document.getElementById(`print-${id}`);
+  if (!area) return showToast("Details not ready");
 
-      const clone = area.cloneNode(true);
-      clone.innerHTML = clone.innerHTML.replace(/\{PHONE\}/g, phone);
-      clone.style.width = '640px';
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      document.body.appendChild(clone);
+  const clone = area.cloneNode(true);
+  clone.innerHTML = clone.innerHTML.replace(/\{PHONE\}/g, phone);
 
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: `CEO-Order-${id}.pdf`,
-        image: { type: 'jpeg', quality: 0.90 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
+  // Critical fixes:
+  clone.style.display = 'block';           // Make visible for rendering
+  clone.style.position = 'absolute';
+  clone.style.left = '-9999px';            // Hide off-screen (no visual flash)
+  clone.style.top = '-9999px';
+  clone.style.width = '640px';             // Fixed width = consistent + smaller canvas (less memory)
+  clone.style.background = 'white';        // Ensure white background
+  clone.style.padding = '20px';            // Optional: match your print styles
 
-      try {
-        showToast("Generating PDF...");
-        const pdfBlob = await html2pdf().set(opt).from(clone).output('blob');
-        const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
+  document.body.appendChild(clone);
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: `Order ${id}` });
-          showToast("PDF shared!");
-        } else {
-          const url = URL.createObjectURL(pdfBlob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = opt.filename;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-          showToast("PDF downloaded!");
-        }
-      } catch (err) {
-        console.error(err);
-        showToast("PDF failed – use Copy button");
-      } finally {
-        document.body.removeChild(clone);
-      }
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: `CEO-Order-${id}.pdf`,
+    image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: { 
+      scale: 2, 
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  try {
+    showToast("Generating PDF...");
+    const pdfBlob = await html2pdf().set(opt).from(clone).output('blob');
+    
+    const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: `Order ${id}` });
+      showToast("PDF shared!");
+    } else {
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = opt.filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast("PDF downloaded!");
     }
+  } catch (err) {
+    console.error(err);
+    showToast("PDF failed – use Copy button instead");
+  } finally {
+    document.body.removeChild(clone);
+  }
+}
 
     // NEW: Copy order details to clipboard
     async function copyOrder(id, phone) {
