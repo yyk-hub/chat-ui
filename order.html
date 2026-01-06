@@ -220,6 +220,10 @@
     </button>
   </div>
 
+  <!-- Dependencies for PDF generation (html2canvas + jsPDF UMD) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNa5m5YdEuY8Gm/6suZ0xMC8oQv6v3n6y6O1z6J/6iqy4n7u+g6Oa3NqgQpL3w0C3R1zQF+6n2qzJbT4f0cJ2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-+9sqz7hGvY9Dqea6gP0OqvKQVr2Gf6s7x6h2mZpVQ6gXk3qCkLh2Y6Q9w1Q1t6y4g2h3z6dC0x6b9f5s7t3w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
   <script>
     const BACKEND_URL = window.location.origin;
 
@@ -470,6 +474,74 @@
       }
     }
 
+    // Helper: convert HTML string to a temporary element and generate a PDF Blob using html2canvas + jsPDF
+    async function generatePdfFromHtml(html, filename = 'order.pdf') {
+      // create a hidden container with the content
+      const temp = document.createElement('div');
+      temp.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;width:800px;'; // width helps layout
+      temp.innerHTML = html;
+      document.body.appendChild(temp);
+
+      try {
+        // ensure html2canvas and jsPDF are present
+        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+          throw new Error('PDF libraries not loaded');
+        }
+
+        // use html2canvas to render
+        const canvas = await html2canvas(temp, {
+          scale: Math.min(2, window.devicePixelRatio || 1), // keep reasonable scale
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        // jsPDF (UMD) exposes window.jspdf
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Compute image size to fit width, keep aspect ratio
+        const imgProps = { width: canvas.width, height: canvas.height };
+        const pdfWidth = pageWidth;
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        if (pdfHeight <= pageHeight) {
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        } else {
+          // If content is longer than one page, split across pages
+          let remainingHeight = imgProps.height;
+          const pxPerMm = imgProps.width / pdfWidth;
+          let position = 0;
+
+          while (remainingHeight > 0) {
+            const canvasSection = document.createElement('canvas');
+            const sectionHeight = Math.min(remainingHeight, pageHeight * pxPerMm);
+            canvasSection.width = imgProps.width;
+            canvasSection.height = sectionHeight;
+            const ctx = canvasSection.getContext('2d');
+            ctx.drawImage(canvas, 0, position, imgProps.width, sectionHeight, 0, 0, imgProps.width, sectionHeight);
+            const sectionData = canvasSection.toDataURL('image/png');
+
+            if (position > 0) pdf.addPage();
+            pdf.addImage(sectionData, 'PNG', 0, 0, pdfWidth, (sectionHeight * pdfWidth) / imgProps.width);
+
+            position += sectionHeight;
+            remainingHeight -= sectionHeight;
+          }
+        }
+
+        const blob = pdf.output('blob');
+        return blob;
+      } finally {
+        // cleanup
+        document.body.removeChild(temp);
+      }
+    }
+
     function printOrder(id, phone) {
       const area = document.getElementById(`print-${id}`);
       if (!area) return showToast("Print content not ready");
@@ -528,46 +600,72 @@
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
       if (isMobile) {
-        // Mobile: Show confirmation and use direct window.print()
-        const userConfirmed = confirm(
-          "🖨️ Mobile Print\n\n" +
-          "Printing on mobile may have limited support.\n\n" +
-          "Tips:\n" +
-          "• Save as PDF instead\n" +
-          "• Use Copy button for text\n\n" +
-          "Continue to print?"
-        );
-        
-        if (!userConfirmed) {
-          showToast('💡 Use the Copy button to save order details');
-          return;
-        }
-        
-        // Mobile printing via iframe
-        const iframe = document.createElement('iframe');
-        iframe.style.cssText = 'position:fixed; width:0; height:0; border:0; visibility:hidden;';
-        document.body.appendChild(iframe);
-        
-        iframe.contentDocument.open();
-        iframe.contentDocument.write(printDoc);
-        iframe.contentDocument.close();
-        
-        setTimeout(() => {
-          try {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-            setTimeout(() => {
-              document.body.removeChild(iframe);
-            }, 1000);
-          } catch (err) {
-            console.error('Print error:', err);
-            document.body.removeChild(iframe);
-            showToast('Print failed. Please use Copy button instead.');
-          }
-        }, 500);
-        
+        // Mobile: generate PDF and try to share or download
+        showToast('Preparing PDF for mobile...', 4000);
+        generatePdfFromHtml(printDoc, `order-${id}.pdf`)
+          .then(async (blob) => {
+            if (!blob) throw new Error('Failed to generate PDF');
+
+            const filename = `order-${id}.pdf`;
+            const file = new File([blob], filename, { type: 'application/pdf' });
+
+            // Try Web Share API for files
+            if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+              try {
+                await navigator.share({
+                  files: [file],
+                  title: `Order ${id}`,
+                  text: `Order ${id} details`
+                });
+                showToast('Shared PDF via system share dialog');
+                return;
+              } catch (err) {
+                // If user cancels or share fails, fall back to download
+                console.warn('Share failed or cancelled:', err);
+              }
+            }
+
+            // Fallback: download PDF
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            showToast('PDF downloaded to your device');
+          })
+          .catch(err => {
+            console.error('PDF generation error:', err);
+            showToast('PDF generation failed. Trying print dialog...');
+            // Last-resort: try the iframe print fallback
+            try {
+              const iframe = document.createElement('iframe');
+              iframe.style.cssText = 'position:fixed; width:0; height:0; border:0; visibility:hidden;';
+              document.body.appendChild(iframe);
+              iframe.contentDocument.open();
+              iframe.contentDocument.write(printDoc);
+              iframe.contentDocument.close();
+              setTimeout(() => {
+                try {
+                  iframe.contentWindow.focus();
+                  iframe.contentWindow.print();
+                } catch (e) {
+                  console.error('Print fallback failed:', e);
+                  showToast('Print failed. Please download or copy the order details.');
+                } finally {
+                  document.body.removeChild(iframe);
+                }
+              }, 600);
+            } catch (e) {
+              console.error('Print fallback error:', e);
+              showToast('Unable to print or generate PDF on this device.');
+            }
+          });
+
       } else {
-        // Desktop: Use blob URL method
+        // Desktop: Use blob URL method (unchanged)
         const blob = new Blob([printDoc], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const iframe = document.createElement('iframe');
