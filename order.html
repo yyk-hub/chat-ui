@@ -461,79 +461,79 @@ async function copyOrder(id, phone) {
 
   // Get name from first table
   const getName = () => {
-    const tables = area.querySelectorAll('table');
-    if (tables.length > 0) {
-      const rows = tables[0].querySelectorAll('tr');
-      for (const row of rows) {
-        const cells = row.querySelectorAll('td');
-        if (cells.length === 2 && cells[0].textContent.trim() === 'Name') {
-          return cells[1].textContent.trim();
-        }
+    const table = area.querySelector('table');
+    if (!table) return 'N/A';
+    const rows = table.querySelectorAll('tr');
+    for (const row of rows) {
+      const cells = row.querySelectorAll('td');
+      if (cells.length === 2 && cells[0].textContent.trim() === 'Name') {
+        return cells[1].textContent.trim();
       }
     }
     return 'N/A';
   };
 
-  // Get address from <p> after Address:
+  // Get address (multi-line after Address: <br>)
   const getAddress = () => {
-    const strong = Array.from(area.querySelectorAll('strong')).find(s => s.textContent.trim() === 'Address:');
-    if (strong) {
-      let addr = '';
-      let sibling = strong.parentElement.nextSibling;
+    const strong = area.querySelector('strong');
+    if (strong && strong.textContent.trim() === 'Address:') {
+      const p = strong.parentElement;
+      const parts = [];
+      let sibling = strong.nextSibling;
       while (sibling) {
         if (sibling.nodeType === Node.TEXT_NODE) {
-          addr += sibling.textContent.trim();
+          const txt = sibling.textContent.trim();
+          if (txt) parts.push(txt);
         } else if (sibling.tagName === 'BR') {
-          addr += '\n';
+          // <br> separates lines
+          // but since text nodes are between, we collect them
         }
         sibling = sibling.nextSibling;
       }
-      return addr.trim() || 'N/A';
+      // Alternative: use innerText and split
+      let full = p.innerText.replace('Address:', '').trim();
+      return full.replace(/\s+/g, ' ').replace(/ \n /g, '\n').trim() || 'N/A';
     }
     return 'N/A';
   };
 
-  // Get shipping method from <p>
-  const getShippingMethod = () => {
-    const strong = Array.from(area.querySelectorAll('strong')).find(s => s.textContent.trim() === 'Shipping:');
-    if (strong && strong.parentElement) {
-      return strong.parentElement.textContent.replace('Shipping:', '').trim();
+  // Get shipping method
+  const getShipping = () => {
+    const strongs = area.querySelectorAll('p strong');
+    for (const s of strongs) {
+      if (s.textContent.trim() === 'Shipping:') {
+        return s.parentElement.textContent.replace('Shipping:', '').trim();
+      }
     }
     return 'RM 0.00';
   };
 
-  // Get products from second table (pricing table)
+  // Get products from second table
   const getProducts = () => {
-    const products = [];
     const tables = area.querySelectorAll('table');
-    if (tables.length >= 2) {
-      const pricingTable = tables[1];
-      const rows = pricingTable.querySelectorAll('tr');
-      for (const row of rows) {
-        const cells = row.querySelectorAll('td');
-        if (cells.length === 2 && cells[0].textContent.trim() === 'Products') {
-          const lines = cells[1].innerText.split('\n');
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed) products.push(trimmed);
-          }
-          break;
-        }
+    if (tables.length < 2) return ['(No products listed)'];
+    const pricingTable = tables[1];
+    const rows = pricingTable.querySelectorAll('tr');
+    for (const row of rows) {
+      const cells = row.querySelectorAll('td');
+      if (cells.length === 2 && cells[0].textContent.trim() === 'Products') {
+        const prodCell = cells[1];
+        const lines = prodCell.innerText.split('\n').map(l => l.trim()).filter(l => l);
+        return lines.length > 0 ? lines : ['(No products listed)'];
       }
     }
-    return products.length > 0 ? products : ['(No products listed)'];
+    return ['(No products listed)'];
   };
 
-  // Get amounts from second table
+  // Get amount by label from second table
   const getAmount = (label) => {
     const tables = area.querySelectorAll('table');
-    if (tables.length >= 2) {
-      const rows = tables[1].querySelectorAll('tr');
-      for (const row of rows) {
-        const cells = row.querySelectorAll('td');
-        if (cells.length === 2 && cells[0].textContent.trim() === label) {
-          return cells[1].textContent.trim();
-        }
+    if (tables.length < 2) return 'RM 0.00';
+    const rows = tables[1].querySelectorAll('tr');
+    for (const row of rows) {
+      const cells = row.querySelectorAll('td');
+      if (cells.length === 2 && cells[0].textContent.trim() === label) {
+        return cells[1].textContent.trim();
       }
     }
     return 'RM 0.00';
@@ -541,13 +541,13 @@ async function copyOrder(id, phone) {
 
   // Get Pi payment
   const getPi = () => {
-    const piP = Array.from(area.querySelectorAll('p')).find(p => p.innerHTML.includes('Pi Payment'));
+    const piP = Array.from(area.querySelectorAll('p')).find(p => p.textContent.includes('Pi Payment'));
     if (piP) {
       const text = piP.textContent;
       const amountMatch = text.match(/π\s*([\d.]+)/);
-      const rateMatch = text.match(/\((at rate:[^)]+)\)/);
+      const rateMatch = text.match(/at rate:\s*1 Pi = RM ([\d.]+)/);
       const amount = amountMatch ? `π ${amountMatch[1]}` : '';
-      const rate = rateMatch ? rateMatch[1] : '';
+      const rate = rateMatch ? `at rate: 1 Pi = RM ${rateMatch[1]}` : '';
       return amount ? { amount, rate } : null;
     }
     return null;
@@ -563,7 +563,7 @@ async function copyOrder(id, phone) {
     return 'N/A';
   };
 
-  // Build formatted text with increased left margin
+  // Build formatted text with nice left margin
   let text = `    CEO Online Order Receipt\n\n`;
 
   text += `    Order ID     : ${id}\n`;
@@ -574,13 +574,11 @@ async function copyOrder(id, phone) {
   const address = getAddress();
   text += `    Address      : ${address.replace(/\n/g, '\n                   ')}\n`;
 
-  text += `    Shipping     : ${getShippingMethod()}\n\n`;
+  text += `    Shipping     : ${getShipping()}\n\n`;
 
   text += `    Products:\n`;
   const products = getProducts();
-  products.forEach(p => {
-    text += `        • ${p}\n`;
-  });
+  products.forEach(p => text += `        • ${p}\n`);
 
   text += `\n    Sub-total    : ${getAmount('Sub-total')}\n`;
   text += `    Shipping     : ${getAmount('Shipping')}\n`;
@@ -597,7 +595,7 @@ async function copyOrder(id, phone) {
 
   try {
     await navigator.clipboard.writeText(text);
-    showToast("✅ Copied with beautiful formatting!");
+    showToast("✅ Copied perfectly!");
   } catch (err) {
     showToast("Copy failed — showing text");
     alert(text);
