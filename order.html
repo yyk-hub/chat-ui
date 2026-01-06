@@ -474,71 +474,113 @@
       }
     }
 
-    // Helper: convert HTML string to a temporary element and generate a PDF Blob using html2canvas + jsPDF
+    // Robust PDF generator with progressive fallbacks.
+    // Returns a Blob (application/pdf) or throws an Error with details.
     async function generatePdfFromHtml(html, filename = 'order.pdf') {
-      // create a hidden container with the content
       const temp = document.createElement('div');
-      temp.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;width:800px;'; // width helps layout
+      // Narrow width helps layout and reduces canvas size
+      temp.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;width:640px;';
       temp.innerHTML = html;
       document.body.appendChild(temp);
 
       try {
-        // ensure html2canvas and jsPDF are present
-        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-          throw new Error('PDF libraries not loaded');
+        // sanity checks
+        if (typeof html2canvas === 'undefined') {
+          throw new Error('html2canvas not loaded');
+        }
+        // Support different jspdf exports (UMD / older globals)
+        const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF || (window.jspdf && window.jspdf);
+        if (!jsPDFCtor) {
+          throw new Error('jsPDF not loaded or not found on window');
         }
 
-        // use html2canvas to render
-        const canvas = await html2canvas(temp, {
-          scale: Math.min(2, window.devicePixelRatio || 1), // keep reasonable scale
-          useCORS: true,
-          backgroundColor: '#ffffff'
-        });
+        // Try multiple scales to avoid OOM on mobile. Start higher for quality.
+        const scales = [2, 1.5, 1, 0.8, 0.6];
+        let lastErr = null;
 
-        const imgData = canvas.toDataURL('image/png');
+        for (const scale of scales) {
+          try {
+            // html2canvas options tuned for mobile reliability
+            const canvas = await html2canvas(temp, {
+              scale: scale,
+              useCORS: true,
+              imageTimeout: 20000,
+              backgroundColor: '#ffffff',
+              logging: false,
+              allowTaint: false
+            });
 
-        // jsPDF (UMD) exposes window.jspdf
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+            // convert to compressed JPEG to reduce size/memory
+            const imgData = canvas.toDataURL('image/jpeg', 0.85);
 
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
+            const { width: pxWidth, height: pxHeight } = canvas;
+            // jsPDF expects mm units by default here; we'll generate an A4 PDF
+            const pdf = new jsPDFCtor({ unit: 'mm', format: 'a4', compress: true });
 
-        // Compute image size to fit width, keep aspect ratio
-        const imgProps = { width: canvas.width, height: canvas.height };
-        const pdfWidth = pageWidth;
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
 
-        if (pdfHeight <= pageHeight) {
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        } else {
-          // If content is longer than one page, split across pages
-          let remainingHeight = imgProps.height;
-          const pxPerMm = imgProps.width / pdfWidth;
-          let position = 0;
+            // compute how many mm per pixel for width
+            const pxPerMm = pxWidth / pageWidth;
+            const imgHeightMm = pxHeight / pxPerMm;
 
-          while (remainingHeight > 0) {
-            const canvasSection = document.createElement('canvas');
-            const sectionHeight = Math.min(remainingHeight, pageHeight * pxPerMm);
-            canvasSection.width = imgProps.width;
-            canvasSection.height = sectionHeight;
-            const ctx = canvasSection.getContext('2d');
-            ctx.drawImage(canvas, 0, position, imgProps.width, sectionHeight, 0, 0, imgProps.width, sectionHeight);
-            const sectionData = canvasSection.toDataURL('image/png');
+            if (imgHeightMm <= pageHeight) {
+              // single page
+              pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeightMm, undefined, 'FAST');
+            } else {
+              // multi-page: slice canvas into sections
+              const totalPx = pxHeight;
+              const sectionPxHeight = Math.floor(pageHeight * pxPerMm);
+              let position = 0;
+              let pageIndex = 0;
 
-            if (position > 0) pdf.addPage();
-            pdf.addImage(sectionData, 'PNG', 0, 0, pdfWidth, (sectionHeight * pdfWidth) / imgProps.width);
+              while (position < totalPx) {
+                const h = Math.min(sectionPxHeight, totalPx - position);
+                const canvasSection = document.createElement('canvas');
+                canvasSection.width = pxWidth;
+                canvasSection.height = h;
+                const ctx = canvasSection.getContext('2d');
+                ctx.drawImage(canvas, 0, position, pxWidth, h, 0, 0, pxWidth, h);
+                const sectionData = canvasSection.toDataURL('image/jpeg', 0.8);
 
-            position += sectionHeight;
-            remainingHeight -= sectionHeight;
+                if (pageIndex > 0) pdf.addPage();
+                const sectionHeightMm = h / pxPerMm;
+                pdf.addImage(sectionData, 'JPEG', 0, 0, pageWidth, sectionHeightMm, undefined, 'FAST');
+
+                position += h;
+                pageIndex++;
+                // free memory by dereferencing canvasSection
+              }
+            }
+
+            const blob = pdf.output('blob');
+            return blob;
+          } catch (err) {
+            // record and try next scale
+            console.warn(`generatePdfFromHtml: html2canvas/jsPDF failed at scale ${scale}`, err);
+            lastErr = err;
+            // allow a brief pause for memory to be reclaimed on mobile
+            await new Promise(r => setTimeout(r, 200));
           }
         }
 
-        const blob = pdf.output('blob');
-        return blob;
+        // last-resort: try a very small text-only PDF (guaranteed to work if jsPDF present)
+        try {
+          const pdf = new jsPDFCtor({ unit: 'mm', format: 'a4' });
+          pdf.setFontSize(12);
+          // strip tags (very basic) and add fallback text
+          const text = temp.innerText ? temp.innerText.substring(0, 20000) : 'Order details';
+          pdf.text(text, 10, 10);
+          return pdf.output('blob');
+        } catch (err2) {
+          console.error('generatePdfFromHtml: fallback text-PDF failed', err2);
+        }
+
+        // if we reach here, throw the last error we saw (or a generic one)
+        throw lastErr || new Error('Failed to generate PDF (unknown error)');
       } finally {
         // cleanup
-        document.body.removeChild(temp);
+        try { document.body.removeChild(temp); } catch (e) {}
       }
     }
 
