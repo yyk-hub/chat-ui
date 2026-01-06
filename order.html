@@ -319,11 +319,12 @@
               cursor: pointer;
               width: 100%;
             ">
-              📋 Copy & Send via WhatsApp
+              📋 Copy Details
             </button>
             
             <a href="https://wa.me/60168101358?text=${encodeURIComponent(whatsappMessage)}" 
                target="_blank"
+               rel="noopener noreferrer"
                style="
                  display: block;
                  background: #25D366;
@@ -337,7 +338,7 @@
                  cursor: pointer;
                  text-decoration: none;
                ">
-              💬 Open WhatsApp
+              💬 Send via WhatsApp
             </a>
             
             <button id="closeSuccessBtn" style="
@@ -350,7 +351,7 @@
               cursor: pointer;
               width: 100%;
             ">
-              View My Orders
+              Close & View My Orders
             </button>
           </div>
         `;
@@ -364,10 +365,11 @@
             await navigator.clipboard.writeText(whatsappMessage);
             btn.textContent = '✅ Copied!';
             btn.style.background = '#4CAF50';
+            showToast('Copied! You can now paste into WhatsApp', 'success');
             setTimeout(() => {
-              btn.textContent = '📋 Copy & Send via WhatsApp';
+              btn.textContent = '📋 Copy Details';
               btn.style.background = '#1c994a';
-            }, 2000);
+            }, 3000);
           } catch (err) {
             showToast('Failed to copy. Please try again.');
           }
@@ -522,31 +524,71 @@
         </html>
       `;
 
-      const blob = new Blob([printDoc], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const iframe = document.createElement('iframe');
+      // Detect mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      document.body.appendChild(iframe);
-      iframe.src = url;
-
-      iframe.onload = () => {
+      if (isMobile) {
+        // Mobile: Show confirmation and use direct window.print()
+        const userConfirmed = confirm(
+          "🖨️ Mobile Print\n\n" +
+          "Printing on mobile may have limited support.\n\n" +
+          "Tips:\n" +
+          "• Save as PDF instead\n" +
+          "• Use Copy button for text\n\n" +
+          "Continue to print?"
+        );
+        
+        if (!userConfirmed) {
+          showToast('💡 Use the Copy button to save order details');
+          return;
+        }
+        
+        // Mobile printing via iframe
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = 'position:fixed; width:0; height:0; border:0; visibility:hidden;';
+        document.body.appendChild(iframe);
+        
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(printDoc);
+        iframe.contentDocument.close();
+        
         setTimeout(() => {
-          const win = iframe.contentWindow;
-          win.focus();
-          win.print();
-          
-          setTimeout(() => {
+          try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            setTimeout(() => {
+              document.body.removeChild(iframe);
+            }, 1000);
+          } catch (err) {
+            console.error('Print error:', err);
             document.body.removeChild(iframe);
-            URL.revokeObjectURL(url);
-          }, 2000);
-        }, 600);
-      };
+            showToast('Print failed. Please use Copy button instead.');
+          }
+        }, 500);
+        
+      } else {
+        // Desktop: Use blob URL method
+        const blob = new Blob([printDoc], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const iframe = document.createElement('iframe');
+        
+        iframe.style.cssText = 'position:fixed; right:0; bottom:0; width:0; height:0; border:0;';
+        document.body.appendChild(iframe);
+        iframe.src = url;
+
+        iframe.onload = () => {
+          setTimeout(() => {
+            const win = iframe.contentWindow;
+            win.focus();
+            win.print();
+            
+            setTimeout(() => {
+              document.body.removeChild(iframe);
+              URL.revokeObjectURL(url);
+            }, 2000);
+          }, 600);
+        };
+      }
     }
 
     async function loadOrders(reset = true) {
@@ -603,7 +645,7 @@
         }
 
         loadMoreBtn.style.display = hasMoreOrders ? 'inline-block' : 'none';
-        /* ================= RENDER ROWS ================= */
+       /* ================= RENDER ROWS ================= */
         orders.forEach(o => {
           const order = {
             order_id: o.order_id || 'Unknown',
@@ -645,8 +687,8 @@
             <td class="${order.order_status === 'Paid' ? 'paid' : order.order_status === 'Pending Payment' ? 'pending' : 'other'}">${order.order_status}</td>
             <td>${formatDate(order.created_at)}</td>
             <td class="action-cell">
-              ${canEdit ? `<button class="edit-btn" onclick="showEdit('${order.order_id}')">Edit</button>` : ''}
-              <button class="print-btn" onclick="printOrder('${order.order_id}', '${order.phone}')">Print</button>
+              ${canEdit ? `<button class="edit-btn" onclick="event.stopPropagation(); showEdit('${order.order_id}')">Edit</button>` : ''}
+              <button class="print-btn" onclick="event.stopPropagation(); printOrder('${order.order_id}', '${order.phone}')">Print</button>
             </td>
           `;
           tbody.appendChild(row);
