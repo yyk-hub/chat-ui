@@ -5,6 +5,7 @@
   <title>CEO - My Orders</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <meta property="pi:app" content='{"name":"CEO Shop","description":"Premium health and wellness products","image":"https://ceo-9xi.pages.dev/img/logo.jpg"}'>
+
   <style>
     body {
       background: #f4ecd6;
@@ -86,7 +87,6 @@
     button:disabled { background: #aaa; cursor: not-allowed; }
     .edit-btn { background: #996600; }
     .print-btn { background: #14b47e; }
-    .copy-btn { background: #996600; }
     .save-btn { background: #14b47e; }
     .cancel-btn { background: #d32f2f; }
     .action-cell { white-space: nowrap; text-align: center; }
@@ -139,12 +139,14 @@
     a.track-link:hover { text-decoration: underline; }
     .loading { text-align: center; color: #996600; font-style: italic; padding: 20px; }
     .no-orders { text-align: center; color: #999; padding: 20px; font-style: italic; }
+
     @media print {
       body * { visibility: hidden; }
       .print-area, .print-area * { visibility: visible; }
       .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 15px; background: white; }
-      .edit-btn, .print-btn, .copy-btn, .cancel-btn, .save-btn, .edit-row, .header, .section:not(.print-area), .action-cell { display: none !important; }
+      .edit-btn, .print-btn, .cancel-btn, .save-btn, .edit-row, .header, .section:not(.print-area), .action-cell { display: none !important; }
     }
+
     @media (max-width: 600px) {
       .container { padding: 10px; }
       table { font-size: 11px; min-width: 600px; }
@@ -182,6 +184,7 @@
     <h2 class="header-title">My Orders</h2>
   </div>
   <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
+
   <div class="container">
     <div class="section">
       <label for="custPhone">Phone Number <span style="color:#d32f2f;">*</span></label>
@@ -210,7 +213,7 @@
       </div>
     </div>
   </div>
- 
+  
   <div style="text-align:center;margin-top:12px;">
     <button id="loadMoreBtn" style="display:none;" onclick="loadOrders(false)">
       Load More
@@ -219,77 +222,202 @@
 
   <script>
     const BACKEND_URL = window.location.origin;
+
     let orderCursor = null;
     let hasMoreOrders = true;
     const PAGE_LIMIT = 10;
 
+    // ✅ Check for Pi payment success on page load
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const isSuccess = urlParams.get('success') === '1';
       const orderId = urlParams.get('order_id');
-      if (isSuccess && orderId) {
+      
+      // Check if overlay should be shown
+      const shouldShowOverlay = isSuccess && orderId && sessionStorage.getItem('piPaymentSuccess');
+      
+      if (shouldShowOverlay) {
         showPiPaymentSuccess();
       }
     });
 
+    // ✅ Restore overlay when user returns (e.g., from WhatsApp)
+    window.addEventListener('pageshow', (event) => {
+      // Detect if page was loaded from cache (back/forward navigation)
+      if (event.persisted || performance.navigation.type === 2) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasSuccessParam = urlParams.get('success') === '1';
+        
+        // If success param exists and overlay data still in storage, restore it
+        if (hasSuccessParam && sessionStorage.getItem('piPaymentSuccess')) {
+          const overlay = document.getElementById('successOverlay');
+          if (!overlay) {
+            console.log('🔄 User returned, restoring overlay...');
+            showPiPaymentSuccess();
+          }
+        }
+      }
+    });
+
+    // ✅ Show Pi payment success overlay
     function showPiPaymentSuccess() {
       const successData = sessionStorage.getItem('piPaymentSuccess');
-      if (!successData) return;
+      if (!successData) {
+        console.log('⚠️ No success data found, skipping overlay');
+        return;
+      }
+
       try {
         const data = JSON.parse(successData);
         const whatsappMessage = data.whatsapp_message;
         const orderId = data.order_id;
-        sessionStorage.removeItem('piPaymentSuccess');
-
+        
+        // DON'T clear the data yet - keep it for when user returns from WhatsApp
+        // sessionStorage.removeItem('piPaymentSuccess'); // ❌ Removed
+        
+        // Check if overlay already exists
+        if (document.getElementById('successOverlay')) {
+          console.log('✅ Overlay already exists');
+          return;
+        }
+        
+        // Create overlay
         const overlay = document.createElement('div');
         overlay.id = 'successOverlay';
         overlay.style.cssText = `
-          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-          background: rgba(0, 0, 0, 0.9); display: flex; align-items: center;
-          justify-content: center; z-index: 99999; padding: 20px; box-sizing: border-box;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.9);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 99999;
+          padding: 20px;
+          box-sizing: border-box;
         `;
-
+        
         overlay.innerHTML = `
-          <div style="background: white; padding: 24px; border-radius: 16px; text-align: center; max-width: 420px; width: 100%;">
+          <div style="
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+          ">
             <div style="font-size: 36px; margin-bottom: 16px;">✅</div>
             <h2 style="color: #1c994a; margin: 0 0 8px 0; font-size: 20px;">Payment Successful!</h2>
             <p style="color: #666; margin: 8px 0 20px 0; font-size: 14px;">
               Order ID: <strong style="color: #333;">${orderId}</strong>
             </p>
-            <div style="background: #f5f5f5; padding: 16px; border-radius: 10px; margin-bottom: 16px; text-align: left; max-height: 200px; overflow-y: auto; font-size: 13px; line-height: 1.5;">
-              <pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: inherit;">${whatsappMessage}</pre>
+            
+            <div style="
+              background: #f5f5f5;
+              padding: 16px;
+              border-radius: 10px;
+              margin-bottom: 16px;
+              text-align: left;
+              max-height: 200px;
+              overflow-y: auto;
+              font-size: 13px;
+              line-height: 1.5;
+            ">
+              <pre style="
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                margin: 0;
+                font-family: inherit;
+              ">${whatsappMessage}</pre>
             </div>
-            <button id="copySuccessBtn" style="display: block; background: #1c994a; color: white; padding: 14px 28px; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; margin-bottom: 10px; cursor: pointer; width: 100;">
+            
+            <button id="copySuccessBtn" style="
+              display: block;
+              background: #1c994a;
+              color: white;
+              padding: 14px 28px;
+              border: none;
+              border-radius: 10px;
+              font-weight: 600;
+              font-size: 15px;
+              margin-bottom: 10px;
+              cursor: pointer;
+              width: 100%;
+            ">
               📋 Copy Details
             </button>
-            <a href="https://wa.me/60168101358?text=${encodeURIComponent(whatsappMessage)}" target="_blank" rel="noopener noreferrer" style="display: block; background: #25D366; color: white; padding: 14px 28px; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; margin-bottom: 10px; cursor: pointer; text-decoration: none;">
+            
+            <a href="https://wa.me/60168101358?text=${encodeURIComponent(whatsappMessage)}" 
+               target="_blank"
+               rel="noopener noreferrer"
+               style="
+                 display: block;
+                 background: #25D366;
+                 color: white;
+                 padding: 14px 28px;
+                 border: none;
+                 border-radius: 10px;
+                 font-weight: 600;
+                 font-size: 15px;
+                 margin-bottom: 10px;
+                 cursor: pointer;
+                 text-decoration: none;
+               ">
               💬 Send via WhatsApp
             </a>
-            <button id="closeSuccessBtn" style="background: #996600; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; width: 100;">
+            
+            <button id="closeSuccessBtn" style="
+              background: #996600;
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              border-radius: 8px;
+              font-size: 14px;
+              cursor: pointer;
+              width: 100%;
+            ">
               Close & View My Orders
             </button>
           </div>
         `;
-
+        
         document.body.appendChild(overlay);
-
+        
+        console.log('✅ Success overlay displayed');
+        
+        // Copy button handler
         document.getElementById('copySuccessBtn').addEventListener('click', async () => {
+          const btn = document.getElementById('copySuccessBtn');
           try {
             await navigator.clipboard.writeText(whatsappMessage);
-            showToast('Copied! You can now paste into WhatsApp');
+            btn.textContent = '✅ Copied!';
+            btn.style.background = '#4CAF50';
+            showToast('Copied! You can now paste into WhatsApp', 'success');
+            setTimeout(() => {
+              btn.textContent = '📋 Copy Details';
+              btn.style.background = '#1c994a';
+            }, 3000);
           } catch (err) {
             showToast('Failed to copy. Please try again.');
           }
         });
-
+        
+        // Close button handler
         document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+          // ✅ NOW clear the session data
+          sessionStorage.removeItem('piPaymentSuccess');
           overlay.remove();
+          
+          // Extract phone from order and load orders
           const phone = whatsappMessage.match(/Phone: ([\d\s-]+)/)?.[1]?.trim();
           if (phone) {
             document.getElementById('custPhone').value = phone;
             loadOrders(true);
           }
         });
+        
       } catch (err) {
         console.error('Failed to parse success data:', err);
       }
@@ -335,7 +463,7 @@
       const row = document.getElementById(`edit-${id}`);
       if (row) row.classList.remove("show");
     }
-
+    
     function showToast(message, duration = 3500) {
       const toast = document.getElementById('toast');
       if (!toast) return;
@@ -354,13 +482,18 @@
         shipping_method: document.getElementById(`shipping-${id}`).value === "pickup" ? "Self Pickup" :
                          document.getElementById(`shipping-${id}`).value === "express" ? "Express Free" : "Standard Courier"
       };
+
       try {
         const res = await fetch(`${BACKEND_URL}/api/orders/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        if (!res.ok) throw new Error((await res.json()).error || `HTTP ${res.status}`);
+
+        let data;
+        try { data = await res.json(); } catch { data = { error: "Invalid JSON" }; }
+
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
         showToast("Updated!");
         hideEdit(id);
         loadOrders();
@@ -372,7 +505,9 @@
     function printOrder(id, phone) {
       const area = document.getElementById(`print-${id}`);
       if (!area) return showToast("Print content not ready");
+
       let html = area.innerHTML.replace(/\{PHONE\}/g, phone);
+
       const printDoc = `
         <!DOCTYPE html>
         <html>
@@ -382,64 +517,103 @@
           <title>CEO Coffee - ${id}</title>
           <style>
             * { box-sizing: border-box; }
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; margin: 0; padding: 15px; background: white; font-size: 16px; line-height: 1.6; -webkit-print-color-adjust: exact; color-adjust: exact; }
-            h2 { text-align: center; color: #996600; margin: 10px 0; font-size: 18px; font-weight: 600; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+              margin: 0; 
+              padding: 15px; 
+              background: white; 
+              font-size: 16px;
+              line-height: 1.6;
+              -webkit-print-color-adjust: exact;
+              color-adjust: exact;
+            }
+            h2 { 
+              text-align: center; 
+              color: #996600; 
+              margin: 10px 0; 
+              font-size: 18px; 
+              font-weight: 600;
+            }
             p { margin: 6px 0; font-size: 15px; }
             table { width: 100%; border-collapse: collapse; margin: 12px 0; }
             td { padding: 3px 0; font-size: 15px; }
             hr { border: 0; border-top: 1px dashed #ccc; margin: 14px 0; }
+            .total { 
+              font-weight: bold; 
+              font-size: 15px; 
+              border-top: 2px solid #996600; 
+              padding-top: 6px; 
+            }
             .pi-info { color: #14b47e; font-weight: 600; }
             @page { margin: 0.8cm; size: A4; }
+            @media print {
+              body { padding: 10px; font-size: 15px; }
+              * { -webkit-print-color-adjust: exact !important; }
+            }
           </style>
         </head>
         <body>${html}</body>
         </html>
       `;
 
+      // Detect mobile
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
+      
       if (isMobile) {
+        // Mobile: Show confirmation and use direct window.print()
         const userConfirmed = confirm(
           "🖨️ Mobile Print\n\n" +
           "Printing on mobile may have limited support.\n\n" +
           "Tips:\n" +
           "• Save as PDF instead\n" +
-          "• Use 📋 Copy button below\n\n" +
+          "• Use Copy button for text\n\n" +
           "Continue to print?"
         );
+        
         if (!userConfirmed) {
-          showToast('💡 Use the 📋 Copy button to save order details');
+          showToast('💡 Use the Copy button to save order details');
           return;
         }
-
+        
+        // Mobile printing via iframe
         const iframe = document.createElement('iframe');
         iframe.style.cssText = 'position:fixed; width:0; height:0; border:0; visibility:hidden;';
         document.body.appendChild(iframe);
+        
         iframe.contentDocument.open();
         iframe.contentDocument.write(printDoc);
         iframe.contentDocument.close();
-
+        
         setTimeout(() => {
           try {
             iframe.contentWindow.focus();
             iframe.contentWindow.print();
-            setTimeout(() => document.body.removeChild(iframe), 1000);
+            setTimeout(() => {
+              document.body.removeChild(iframe);
+            }, 1000);
           } catch (err) {
+            console.error('Print error:', err);
             document.body.removeChild(iframe);
-            showToast('Print failed. Use Copy button instead.');
+            showToast('Print failed. Please use Copy button instead.');
           }
         }, 500);
+        
       } else {
+        // Desktop: Use blob URL method
         const blob = new Blob([printDoc], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const iframe = document.createElement('iframe');
+        
         iframe.style.cssText = 'position:fixed; right:0; bottom:0; width:0; height:0; border:0;';
         document.body.appendChild(iframe);
         iframe.src = url;
+
         iframe.onload = () => {
           setTimeout(() => {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
+            const win = iframe.contentWindow;
+            win.focus();
+            win.print();
+            
             setTimeout(() => {
               document.body.removeChild(iframe);
               URL.revokeObjectURL(url);
@@ -449,196 +623,59 @@
       }
     }
 
-async function copyOrder(id, phone) {
-  const area = document.getElementById(`print-${id}`);
-  if (!area) return showToast("Details not ready");
-
-  // Get date
-  const getDate = () => {
-    const p = area.querySelector('p[style*="text-align:center"][style*="font-size:11px"]');
-    return p ? p.textContent.trim() : 'N/A';
-  };
-
-  // Get name from first table
-  const getName = () => {
-    const table = area.querySelector('table');
-    if (!table) return 'N/A';
-    const rows = table.querySelectorAll('tr');
-    for (const row of rows) {
-      const cells = row.querySelectorAll('td');
-      if (cells.length === 2 && cells[0].textContent.trim() === 'Name') {
-        return cells[1].textContent.trim();
-      }
-    }
-    return 'N/A';
-  };
-
-  // Get address (multi-line after Address: <br>)
-  const getAddress = () => {
-    const strong = area.querySelector('strong');
-    if (strong && strong.textContent.trim() === 'Address:') {
-      const p = strong.parentElement;
-      const parts = [];
-      let sibling = strong.nextSibling;
-      while (sibling) {
-        if (sibling.nodeType === Node.TEXT_NODE) {
-          const txt = sibling.textContent.trim();
-          if (txt) parts.push(txt);
-        } else if (sibling.tagName === 'BR') {
-          // <br> separates lines
-          // but since text nodes are between, we collect them
-        }
-        sibling = sibling.nextSibling;
-      }
-      // Alternative: use innerText and split
-      let full = p.innerText.replace('Address:', '').trim();
-      return full.replace(/\s+/g, ' ').replace(/ \n /g, '\n').trim() || 'N/A';
-    }
-    return 'N/A';
-  };
-
-  // Get shipping method
-  const getShipping = () => {
-    const strongs = area.querySelectorAll('p strong');
-    for (const s of strongs) {
-      if (s.textContent.trim() === 'Shipping:') {
-        return s.parentElement.textContent.replace('Shipping:', '').trim();
-      }
-    }
-    return 'RM 0.00';
-  };
-
-  // Get products from second table
-  const getProducts = () => {
-    const tables = area.querySelectorAll('table');
-    if (tables.length < 2) return ['(No products listed)'];
-    const pricingTable = tables[1];
-    const rows = pricingTable.querySelectorAll('tr');
-    for (const row of rows) {
-      const cells = row.querySelectorAll('td');
-      if (cells.length === 2 && cells[0].textContent.trim() === 'Products') {
-        const prodCell = cells[1];
-        const lines = prodCell.innerText.split('\n').map(l => l.trim()).filter(l => l);
-        return lines.length > 0 ? lines : ['(No products listed)'];
-      }
-    }
-    return ['(No products listed)'];
-  };
-
-  // Get amount by label from second table
-  const getAmount = (label) => {
-    const tables = area.querySelectorAll('table');
-    if (tables.length < 2) return 'RM 0.00';
-    const rows = tables[1].querySelectorAll('tr');
-    for (const row of rows) {
-      const cells = row.querySelectorAll('td');
-      if (cells.length === 2 && cells[0].textContent.trim() === label) {
-        return cells[1].textContent.trim();
-      }
-    }
-    return 'RM 0.00';
-  };
-
-  // Get Pi payment
-  const getPi = () => {
-    const piP = Array.from(area.querySelectorAll('p')).find(p => p.textContent.includes('Pi Payment'));
-    if (piP) {
-      const text = piP.textContent;
-      const amountMatch = text.match(/π\s*([\d.]+)/);
-      const rateMatch = text.match(/at rate:\s*1 Pi = RM ([\d.]+)/);
-      const amount = amountMatch ? `π ${amountMatch[1]}` : '';
-      const rate = rateMatch ? `at rate: 1 Pi = RM ${rateMatch[1]}` : '';
-      return amount ? { amount, rate } : null;
-    }
-    return null;
-  };
-
-  // Get status
-  const getStatus = () => {
-    const statusP = Array.from(area.querySelectorAll('p')).find(p => p.textContent.includes('Status:'));
-    if (statusP) {
-      const span = statusP.querySelector('span');
-      return span ? span.textContent.trim() : statusP.textContent.replace('Status:', '').trim();
-    }
-    return 'N/A';
-  };
-
-  // Build formatted text with nice left margin
-  let text = `    CEO Online Order Receipt\n\n`;
-
-  text += `    Order ID     : ${id}\n`;
-  text += `    Date         : ${getDate()}\n`;
-  text += `    Name         : ${getName()}\n`;
-  text += `    Phone        : ${phone}\n`;
-
-  const address = getAddress();
-  text += `    Address      : ${address.replace(/\n/g, '\n                   ')}\n`;
-
-  text += `    Shipping     : ${getShipping()}\n\n`;
-
-  text += `    Products:\n`;
-  const products = getProducts();
-  products.forEach(p => text += `        • ${p}\n`);
-
-  text += `\n    Sub-total    : ${getAmount('Sub-total')}\n`;
-  text += `    Shipping     : ${getAmount('Shipping')}\n`;
-  text += `    Total        : ${getAmount('Total')}\n`;
-
-  const pi = getPi();
-  if (pi) {
-    text += `\n    Pi Payment   : ${pi.amount}\n                   ${pi.rate}\n`;
-  }
-
-  text += `\n    Status       : ${getStatus()}\n`;
-
-  text += `\n    Thank you for your order! ❤️`;
-
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast("✅ Copied perfectly!");
-  } catch (err) {
-    showToast("Copy failed — showing text");
-    alert(text);
-  }
-}
     async function loadOrders(reset = true) {
       const phone = document.getElementById('custPhone').value.trim();
       if (!phone) return showToast('Enter phone number');
+
       const btn = document.getElementById('loadBtn');
       const list = document.getElementById('ordersList');
       const loading = document.getElementById('loadingMsg');
       const tbody = document.querySelector('#ordersTable tbody');
       const loadMoreBtn = document.getElementById('loadMoreBtn');
+
       btn.disabled = true;
       btn.textContent = "Loading...";
       list.style.display = 'block';
       loading.style.display = 'block';
+
       if (reset) {
         tbody.innerHTML = '';
         orderCursor = null;
         hasMoreOrders = true;
         loadMoreBtn.style.display = 'none';
       }
+
       try {
         const url = new URL(`${BACKEND_URL}/api/orders`);
         url.searchParams.set('phone', phone);
         url.searchParams.set('limit', PAGE_LIMIT);
         if (orderCursor) url.searchParams.set('cursor', orderCursor);
 
+        loadMoreBtn.disabled = true;
+        
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const payload = await res.json();
 
+        let payload;
+        try { payload = await res.json(); } catch { throw new Error("Invalid response"); }
+        
+        loadMoreBtn.disabled = false;
+        
         const orders = payload.data || [];
         hasMoreOrders = payload.hasMore;
         orderCursor = payload.nextCursor;
         loading.style.display = 'none';
 
         if (orders.length === 0 && reset) {
-          tbody.innerHTML = `<tr><td colspan="8" class="no-orders">No orders found.</td></tr>`;
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" class="no-orders">No orders found.</td>
+            </tr>
+          `;
           loadMoreBtn.style.display = 'none';
           return;
         }
+
         loadMoreBtn.style.display = hasMoreOrders ? 'inline-block' : 'none';
 
         orders.forEach(o => {
@@ -661,10 +698,12 @@ async function copyOrder(id, phone) {
             pi_amount: parseFloat(o.pi_amount) || null,
             pi_exchange_rate: parseFloat(o.pi_exchange_rate) || null
           };
-
+          
           const canEdit = order.order_status === "Pending Payment";
           const subTotal = (order.total_amt - order.shipping_cost).toFixed(2);
           const isPiPayment = order.pymt_method === 'Pi Network' && order.pi_amount;
+
+          // ✅ Format total display with Pi info if available
           let totalDisplay = `<strong>RM ${order.total_amt.toFixed(2)}</strong>`;
           if (isPiPayment) {
             totalDisplay += `<br><span class="pi-payment">π ${order.pi_amount.toFixed(8)}</span>`;
@@ -682,16 +721,16 @@ async function copyOrder(id, phone) {
             <td class="action-cell">
               ${canEdit ? `<button class="edit-btn" onclick="event.stopPropagation(); showEdit('${order.order_id}')">Edit</button>` : ''}
               <button class="print-btn" onclick="event.stopPropagation(); printOrder('${order.order_id}', '${order.phone}')">Print</button>
-              <button class="copy-btn" onclick="event.stopPropagation(); copyOrder('${order.order_id}', '${order.phone}')">📋 Copy</button>
             </td>
           `;
           tbody.appendChild(row);
 
+          // ✅ Print Area with Pi info
           const printArea = document.createElement('div');
           printArea.id = `print-${order.order_id}`;
           printArea.className = 'print-area';
           printArea.style.display = 'none';
-
+          
           let piInfoHTML = '';
           if (isPiPayment) {
             piInfoHTML = `
@@ -702,7 +741,7 @@ async function copyOrder(id, phone) {
               </p>
             `;
           }
-
+          
           printArea.innerHTML = `
             <div style="font-family:Arial;max-width:580px;margin:auto;padding:15px;">
               <h2 style="text-align:center;color:#996600;">CEO Online</h2>
@@ -720,22 +759,24 @@ async function copyOrder(id, phone) {
                 <tr><td>Sub-total</td><td style="text-align:right;">RM ${subTotal}</td></tr>
                 <tr><td>Shipping</td><td style="text-align:right;color:#14b47e;">RM ${order.shipping_cost.toFixed(2)}</td></tr>
                 <tr style="border-top:2px solid #996600;font-weight:bold;font-size:15px;">
-                  <td>Total</td><td style="text-align:right;color:#996600;">RM ${order.total_amt.toFixed(2)}</td></tr>
+                  <td>Total</td><td style="text-align:right;color:#996600;">RM ${order.total_amt.toFixed(2)}</td>
+                </tr>
               </table>
               ${piInfoHTML}
               <hr style="border:0;border-top:1px dashed #ccc;margin:12px 0;">
-              <p style="margin:8px 0;"><strong>Status:</strong>
+              <p style="margin:8px 0;"><strong>Status:</strong> 
                 <span style="color:${order.order_status === 'Paid' ? '#0b8b0b' : '#d32f2f'}">${order.order_status}</span>
               </p>
               ${order.tracking_link ? `<p style="margin:8px 0;"><strong>Track:</strong> <a href="${order.tracking_link}" style="color:#14b47e;">Click here</a></p>` : ''}
               <p style="text-align:center;font-size:11px;color:#666;margin-top:20px;">Thank you!</p>
             </div>
           `;
-
+          
           if (!document.getElementById(`print-${order.order_id}`)) {
             document.body.appendChild(printArea);
           }
 
+          // Edit Row
           if (canEdit) {
             const editRow = document.createElement('tr');
             editRow.id = `edit-${order.order_id}`;
@@ -773,6 +814,7 @@ async function copyOrder(id, phone) {
             tbody.appendChild(editRow);
           }
         });
+
       } catch (err) {
         loading.style.display = 'none';
         tbody.innerHTML = `<tr><td colspan="8" style="color:red;text-align:center;">Error: ${err.message}</td></tr>`;
