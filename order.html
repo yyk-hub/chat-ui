@@ -449,18 +449,71 @@
       }
     }
 
-    async function copyOrder(id, phone) {
-      const area = document.getElementById(`print-${id}`);
-      if (!area) return showToast("Details not ready");
-      let text = area.innerText || area.textContent;
-      text = text.replace(/\{PHONE\}/g, phone).trim();
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast("✅ Order details copied! Paste into WhatsApp or Notes");
-      } catch (err) {
-        showToast("Copy failed — long-press text to select manually");
-      }
-    }
+async function copyOrder(id, phone) {
+  const area = document.getElementById(`print-${id}`);
+  if (!area) return showToast("Details not ready");
+
+  // Extract clean values (you can get these from the order object if available, but here we parse safely)
+  const getText = (selector) => {
+    const el = area.querySelector(selector);
+    return el ? el.textContent.trim() : '';
+  };
+
+  // Build formatted text with consistent alignment
+  let text = `CEO Online Order Receipt\n\n`;
+
+  text += `Order ID     : ${getText('strong') || id}\n`;
+  text += `Date         : ${getText('p[style*="text-align:center"][style*="font-size:11px"]') || 'N/A'}\n`;
+  text += `Name         : ${getText('td:contains("Name") ~ td') || getText('td:nth-child(2):nth-last-child(3)') || 'N/A'}\n`;
+  text += `Phone        : ${phone}\n`;
+
+  const addressParts = [];
+  const addressP = area.querySelector('p strong:contains("Address")')?.parentElement;
+  if (addressP) {
+    const lines = addressP.innerText.replace('Address:', '').trim().split('\n');
+    lines.forEach(line => addressParts.push(line.trim()));
+  }
+  text += `Address      : ${addressParts.join('\n               ')}\n`;
+
+  text += `Shipping     : ${getText('p strong:contains("Shipping")')?.parentElement?.textContent.replace('Shipping:', '').trim() || 'N/A'}\n\n`;
+
+  text += `Products:\n`;
+  const productsTd = area.querySelector('td:contains("Products") ~ td');
+  if (productsTd) {
+    const prods = productsTd.innerText.trim().split('\n');
+    prods.forEach(p => text += `   • ${p.trim()}\n`);
+  }
+
+  text += `\nSub-total    : RM ${getText('td:contains("Sub-total") ~ td') || '0.00'}\n`;
+  text += `Shipping     : RM ${getText('td:contains("Shipping") ~ td') || '0.00'}\n`;
+  text += `Total        : RM ${getText('td:contains("Total") ~ td') || '0.00'}\n`;
+
+  // Pi payment info if present
+  const piInfo = area.querySelector('.pi-info');
+  if (piInfo) {
+    const piAmount = piInfo.textContent.trim();
+    const rate = piInfo.nextSibling?.textContent?.trim() || '';
+    text += `Pi Payment   : ${piAmount}\n               ${rate}\n`;
+  }
+
+  text += `\nStatus       : ${getText('p strong:contains("Status") ~ span') || getText('p strong:contains("Status")')?.parentElement?.textContent.replace('Status:', '').trim() || 'N/A'}\n`;
+
+  const trackLink = area.querySelector('a[href*="http"]');
+  if (trackLink) {
+    text += `Track        : ${trackLink.href}\n`;
+  }
+
+  text += `\nThank you for your order!`;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast("✅ Order details copied beautifully!");
+  } catch (err) {
+    // Fallback: show in alert for manual copy
+    alert("Copy failed. Here's your order details:\n\n" + text);
+    console.log(text); // Also log for debugging
+  }
+}
 
     async function loadOrders(reset = true) {
       const phone = document.getElementById('custPhone').value.trim();
