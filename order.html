@@ -233,29 +233,8 @@
       const isSuccess = urlParams.get('success') === '1';
       const orderId = urlParams.get('order_id');
       
-      // Check if overlay should be shown
-      const shouldShowOverlay = isSuccess && orderId && sessionStorage.getItem('piPaymentSuccess');
-      
-      if (shouldShowOverlay) {
+      if (isSuccess && orderId) {
         showPiPaymentSuccess();
-      }
-    });
-
-    // ✅ Restore overlay when user returns (e.g., from WhatsApp)
-    window.addEventListener('pageshow', (event) => {
-      // Detect if page was loaded from cache (back/forward navigation)
-      if (event.persisted || performance.navigation.type === 2) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasSuccessParam = urlParams.get('success') === '1';
-        
-        // If success param exists and overlay data still in storage, restore it
-        if (hasSuccessParam && sessionStorage.getItem('piPaymentSuccess')) {
-          const overlay = document.getElementById('successOverlay');
-          if (!overlay) {
-            console.log('🔄 User returned, restoring overlay...');
-            showPiPaymentSuccess();
-          }
-        }
       }
     });
 
@@ -272,14 +251,8 @@
         const whatsappMessage = data.whatsapp_message;
         const orderId = data.order_id;
         
-        // DON'T clear the data yet - keep it for when user returns from WhatsApp
-        // sessionStorage.removeItem('piPaymentSuccess'); // ❌ Removed
-        
-        // Check if overlay already exists
-        if (document.getElementById('successOverlay')) {
-          console.log('✅ Overlay already exists');
-          return;
-        }
+        // Clear the data
+        sessionStorage.removeItem('piPaymentSuccess');
         
         // Create overlay
         const overlay = document.createElement('div');
@@ -385,8 +358,6 @@
         
         document.body.appendChild(overlay);
         
-        console.log('✅ Success overlay displayed');
-        
         // Copy button handler
         document.getElementById('copySuccessBtn').addEventListener('click', async () => {
           const btn = document.getElementById('copySuccessBtn');
@@ -406,10 +377,7 @@
         
         // Close button handler
         document.getElementById('closeSuccessBtn').addEventListener('click', () => {
-          // ✅ NOW clear the session data
-          sessionStorage.removeItem('piPaymentSuccess');
           overlay.remove();
-          
           // Extract phone from order and load orders
           const phone = whatsappMessage.match(/Phone: ([\d\s-]+)/)?.[1]?.trim();
           if (phone) {
@@ -677,7 +645,7 @@
         }
 
         loadMoreBtn.style.display = hasMoreOrders ? 'inline-block' : 'none';
-        /* ================= RENDER ROWS ================= */
+       /* ================= RENDER ROWS ================= */
         orders.forEach(o => {
           const order = {
             order_id: o.order_id || 'Unknown',
