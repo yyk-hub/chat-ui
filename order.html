@@ -453,65 +453,94 @@ async function copyOrder(id, phone) {
   const area = document.getElementById(`print-${id}`);
   if (!area) return showToast("Details not ready");
 
-  // Extract clean values (you can get these from the order object if available, but here we parse safely)
-  const getText = (selector) => {
-    const el = area.querySelector(selector);
-    return el ? el.textContent.trim() : '';
+  // Helper to safely get text from elements
+  const getTextByLabel = (labelText) => {
+    const rows = area.querySelectorAll('table tr');
+    for (let row of rows) {
+      const cells = row.querySelectorAll('td');
+      if (cells.length >= 2 && cells[0].textContent.trim().includes(labelText)) {
+        return cells[1].textContent.trim();
+      }
+    }
+    return 'N/A';
   };
 
-  // Build formatted text with consistent alignment
+  const getProducts = () => {
+    const productsCell = area.querySelector('td strong:-soup-contains("Products")')?.parentElement?.nextElementSibling;
+    if (productsCell) {
+      return productsCell.textContent.trim().split('\n').map(p => p.trim()).filter(p => p);
+    }
+    return ['N/A'];
+  };
+
+  const getStatus = () => {
+    const statusP = Array.from(area.querySelectorAll('p')).find(p => p.textContent.includes('Status:'));
+    if (statusP) {
+      return statusP.querySelector('span')?.textContent.trim() || statusP.textContent.replace('Status:', '').trim();
+    }
+    return 'N/A';
+  };
+
+  const getTrackLink = () => {
+    const link = area.querySelector('a[href^="http"]');
+    return link ? link.href : 'N/A';
+  };
+
+  const getPiInfo = () => {
+    const piStrong = Array.from(area.querySelectorAll('strong')).find(s => s.textContent.includes('Pi Payment'));
+    if (piStrong) {
+      const parent = piStrong.parentElement;
+      const amount = piStrong.nextSibling?.textContent?.trim() || '';
+      const rateLine = parent.querySelector('span[style*="font-size:12px"]');
+      const rate = rateLine ? rateLine.textContent.trim() : '';
+      return { amount, rate };
+    }
+    return null;
+  };
+
+  // Build beautiful formatted text
   let text = `CEO Online Order Receipt\n\n`;
 
-  text += `Order ID     : ${getText('strong') || id}\n`;
-  text += `Date         : ${getText('p[style*="text-align:center"][style*="font-size:11px"]') || 'N/A'}\n`;
-  text += `Name         : ${getText('td:contains("Name") ~ td') || getText('td:nth-child(2):nth-last-child(3)') || 'N/A'}\n`;
+  text += `Order ID     : ${id}\n`;
+  text += `Date         : ${area.querySelector('p[style*="text-align:center"][style*="font-size:11px"]')?.textContent.trim() || 'N/A'}\n`;
+  text += `Name         : ${getTextByLabel('Name')}\n`;
   text += `Phone        : ${phone}\n`;
 
-  const addressParts = [];
-  const addressP = area.querySelector('p strong:contains("Address")')?.parentElement;
-  if (addressP) {
-    const lines = addressP.innerText.replace('Address:', '').trim().split('\n');
-    lines.forEach(line => addressParts.push(line.trim()));
-  }
-  text += `Address      : ${addressParts.join('\n               ')}\n`;
+  const address = getTextByLabel('Address');
+  text += `Address      : ${address.replace(/\n/g, '\n               ')}\n`;
 
-  text += `Shipping     : ${getText('p strong:contains("Shipping")')?.parentElement?.textContent.replace('Shipping:', '').trim() || 'N/A'}\n\n`;
+  text += `Shipping     : ${getTextByLabel('Shipping')}\n\n`;
 
   text += `Products:\n`;
-  const productsTd = area.querySelector('td:contains("Products") ~ td');
-  if (productsTd) {
-    const prods = productsTd.innerText.trim().split('\n');
-    prods.forEach(p => text += `   • ${p.trim()}\n`);
+  const products = getProducts();
+  products.forEach(p => {
+    text += `   • ${p}\n`;
+  });
+
+  text += `\nSub-total    : RM ${getTextByLabel('Sub-total').replace('RM ', '')}\n`;
+  text += `Shipping     : RM ${getTextByLabel('Shipping').replace('RM ', '')}\n`;
+  text += `Total        : RM ${getTextByLabel('Total').replace('RM ', '')}\n`;
+
+  const pi = getPiInfo();
+  if (pi) {
+    text += `\nPi Payment   : ${pi.amount}\n               ${pi.rate}\n`;
   }
 
-  text += `\nSub-total    : RM ${getText('td:contains("Sub-total") ~ td') || '0.00'}\n`;
-  text += `Shipping     : RM ${getText('td:contains("Shipping") ~ td') || '0.00'}\n`;
-  text += `Total        : RM ${getText('td:contains("Total") ~ td') || '0.00'}\n`;
-
-  // Pi payment info if present
-  const piInfo = area.querySelector('.pi-info');
-  if (piInfo) {
-    const piAmount = piInfo.textContent.trim();
-    const rate = piInfo.nextSibling?.textContent?.trim() || '';
-    text += `Pi Payment   : ${piAmount}\n               ${rate}\n`;
+  text += `\nStatus       : ${getStatus()}\n`;
+  const track = getTrackLink();
+  if (track !== 'N/A') {
+    text += `Track        : ${track}\n`;
   }
 
-  text += `\nStatus       : ${getText('p strong:contains("Status") ~ span') || getText('p strong:contains("Status")')?.parentElement?.textContent.replace('Status:', '').trim() || 'N/A'}\n`;
-
-  const trackLink = area.querySelector('a[href*="http"]');
-  if (trackLink) {
-    text += `Track        : ${trackLink.href}\n`;
-  }
-
-  text += `\nThank you for your order!`;
+  text += `\nThank you for shopping with CEO Online! ❤️`;
 
   try {
     await navigator.clipboard.writeText(text);
-    showToast("✅ Order details copied beautifully!");
+    showToast("✅ Copied beautifully! Paste into WhatsApp");
   } catch (err) {
-    // Fallback: show in alert for manual copy
-    alert("Copy failed. Here's your order details:\n\n" + text);
-    console.log(text); // Also log for debugging
+    // Fallback if clipboard fails (very rare)
+    showToast("Copy failed — showing details");
+    alert(text); // User can long-press and copy from alert
   }
 }
 
