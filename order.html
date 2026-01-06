@@ -220,6 +220,10 @@
     </button>
   </div>
 
+  <!-- Dependencies for PDF generation (html2canvas + jsPDF UMD) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNa5m5YdEuY8Gm/6suZ0xMC8oQv6v3n6y6O1z6J/6iqy4n7u+g6Oa3NqgQpL3w0C3R1zQF+6n2qzJbT4f0cJ2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-+9sqz7hGvY9Dqea6gP0OqvKQVr2Gf6s7x6h2mZpVQ6gXk3qCkLh2Y6Q9w1Q1t6y4g2h3z6dC0x6b9f5s7t3w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
   <script>
     const BACKEND_URL = window.location.origin;
 
@@ -470,6 +474,116 @@
       }
     }
 
+    // Robust PDF generator with progressive fallbacks.
+    // Returns a Blob (application/pdf) or throws an Error with details.
+    async function generatePdfFromHtml(html, filename = 'order.pdf') {
+      const temp = document.createElement('div');
+      // Narrow width helps layout and reduces canvas size
+      temp.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;width:640px;';
+      temp.innerHTML = html;
+      document.body.appendChild(temp);
+
+      try {
+        // sanity checks
+        if (typeof html2canvas === 'undefined') {
+          throw new Error('html2canvas not loaded');
+        }
+        // Support different jspdf exports (UMD / older globals)
+        const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF || (window.jspdf && window.jspdf);
+        if (!jsPDFCtor) {
+          throw new Error('jsPDF not loaded or not found on window');
+        }
+
+        // Try multiple scales to avoid OOM on mobile. Start higher for quality.
+        const scales = [2, 1.5, 1, 0.8, 0.6];
+        let lastErr = null;
+
+        for (const scale of scales) {
+          try {
+            // html2canvas options tuned for mobile reliability
+            const canvas = await html2canvas(temp, {
+              scale: scale,
+              useCORS: true,
+              imageTimeout: 20000,
+              backgroundColor: '#ffffff',
+              logging: false,
+              allowTaint: false
+            });
+
+            // convert to compressed JPEG to reduce size/memory
+            const imgData = canvas.toDataURL('image/jpeg', 0.85);
+
+            const { width: pxWidth, height: pxHeight } = canvas;
+            // jsPDF expects mm units by default here; we'll generate an A4 PDF
+            const pdf = new jsPDFCtor({ unit: 'mm', format: 'a4', compress: true });
+
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+
+            // compute how many mm per pixel for width
+            const pxPerMm = pxWidth / pageWidth;
+            const imgHeightMm = pxHeight / pxPerMm;
+
+            if (imgHeightMm <= pageHeight) {
+              // single page
+              pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeightMm, undefined, 'FAST');
+            } else {
+              // multi-page: slice canvas into sections
+              const totalPx = pxHeight;
+              const sectionPxHeight = Math.floor(pageHeight * pxPerMm);
+              let position = 0;
+              let pageIndex = 0;
+
+              while (position < totalPx) {
+                const h = Math.min(sectionPxHeight, totalPx - position);
+                const canvasSection = document.createElement('canvas');
+                canvasSection.width = pxWidth;
+                canvasSection.height = h;
+                const ctx = canvasSection.getContext('2d');
+                ctx.drawImage(canvas, 0, position, pxWidth, h, 0, 0, pxWidth, h);
+                const sectionData = canvasSection.toDataURL('image/jpeg', 0.8);
+
+                if (pageIndex > 0) pdf.addPage();
+                const sectionHeightMm = h / pxPerMm;
+                pdf.addImage(sectionData, 'JPEG', 0, 0, pageWidth, sectionHeightMm, undefined, 'FAST');
+
+                position += h;
+                pageIndex++;
+                // free memory by dereferencing canvasSection
+              }
+            }
+
+            const blob = pdf.output('blob');
+            return blob;
+          } catch (err) {
+            // record and try next scale
+            console.warn(`generatePdfFromHtml: html2canvas/jsPDF failed at scale ${scale}`, err);
+            lastErr = err;
+            // allow a brief pause for memory to be reclaimed on mobile
+            await new Promise(r => setTimeout(r, 200));
+          }
+        }
+
+        // last-resort: try a very small text-only PDF (guaranteed to work if jsPDF present)
+        try {
+          const pdf = new jsPDFCtor({ unit: 'mm', format: 'a4' });
+          pdf.setFontSize(12);
+          // strip tags (very basic) and add fallback text
+          const text = temp.innerText ? temp.innerText.substring(0, 20000) : 'Order details';
+          pdf.text(text, 10, 10);
+          return pdf.output('blob');
+        } catch (err2) {
+          console.error('generatePdfFromHtml: fallback text-PDF failed', err2);
+        }
+
+        // if we reach here, throw the last error we saw (or a generic one)
+        throw lastErr || new Error('Failed to generate PDF (unknown error)');
+      } finally {
+        // cleanup
+        try { document.body.removeChild(temp); } catch (e) {}
+      }
+    }
+
     function printOrder(id, phone) {
       const area = document.getElementById(`print-${id}`);
       if (!area) return showToast("Print content not ready");
@@ -528,45 +642,72 @@
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
       if (isMobile) {
-        // Mobile: Show confirmation and use direct window.print()
-        const userConfirmed = confirm(
-          "🖨️ Mobile Print\n\n" +
-          "Printing on mobile may have limited support.\n\n" +
-          "Tips:\n" +
-          "• Save as PDF instead\n" +
-          "Continue to print?"
-        );
-        
-        if (!userConfirmed) {
-          showToast('💡 Use the Copy button to save order details');
-          return;
-        }
-        
-        // Mobile printing via iframe
-        const iframe = document.createElement('iframe');
-        iframe.style.cssText = 'position:fixed; width:0; height:0; border:0; visibility:hidden;';
-        document.body.appendChild(iframe);
-        
-        iframe.contentDocument.open();
-        iframe.contentDocument.write(printDoc);
-        iframe.contentDocument.close();
-        
-        setTimeout(() => {
-          try {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-            setTimeout(() => {
-              document.body.removeChild(iframe);
-            }, 1000);
-          } catch (err) {
-            console.error('Print error:', err);
-            document.body.removeChild(iframe);
-            showToast('Print failed. Please use Copy button instead.');
-          }
-        }, 500);
-        
+        // Mobile: generate PDF and try to share or download
+        showToast('Preparing PDF for mobile...', 4000);
+        generatePdfFromHtml(printDoc, `order-${id}.pdf`)
+          .then(async (blob) => {
+            if (!blob) throw new Error('Failed to generate PDF');
+
+            const filename = `order-${id}.pdf`;
+            const file = new File([blob], filename, { type: 'application/pdf' });
+
+            // Try Web Share API for files
+            if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+              try {
+                await navigator.share({
+                  files: [file],
+                  title: `Order ${id}`,
+                  text: `Order ${id} details`
+                });
+                showToast('Shared PDF via system share dialog');
+                return;
+              } catch (err) {
+                // If user cancels or share fails, fall back to download
+                console.warn('Share failed or cancelled:', err);
+              }
+            }
+
+            // Fallback: download PDF
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            showToast('PDF downloaded to your device');
+          })
+          .catch(err => {
+            console.error('PDF generation error:', err);
+            showToast('PDF generation failed. Trying print dialog...');
+            // Last-resort: try the iframe print fallback
+            try {
+              const iframe = document.createElement('iframe');
+              iframe.style.cssText = 'position:fixed; width:0; height:0; border:0; visibility:hidden;';
+              document.body.appendChild(iframe);
+              iframe.contentDocument.open();
+              iframe.contentDocument.write(printDoc);
+              iframe.contentDocument.close();
+              setTimeout(() => {
+                try {
+                  iframe.contentWindow.focus();
+                  iframe.contentWindow.print();
+                } catch (e) {
+                  console.error('Print fallback failed:', e);
+                  showToast('Print failed. Please download or copy the order details.');
+                } finally {
+                  document.body.removeChild(iframe);
+                }
+              }, 600);
+            } catch (e) {
+              console.error('Print fallback error:', e);
+              showToast('Unable to print or generate PDF on this device.');
+            }
+          });
+
       } else {
-        // Desktop: Use blob URL method
+        // Desktop: Use blob URL method (unchanged)
         const blob = new Blob([printDoc], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const iframe = document.createElement('iframe');
@@ -644,7 +785,7 @@
         }
 
         loadMoreBtn.style.display = hasMoreOrders ? 'inline-block' : 'none';
-        /* ================= RENDER ROWS ================= */
+       /* ================= RENDER ROWS ================= */
         orders.forEach(o => {
           const order = {
             order_id: o.order_id || 'Unknown',
