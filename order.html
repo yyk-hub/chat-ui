@@ -86,6 +86,7 @@
     button:hover { background: #12a16d; }
     button:disabled { background: #aaa; cursor: not-allowed; }
     .edit-btn { background: #996600; }
+    .copy-btn { background: #1a86db; }
     .print-btn { background: #14b47e; }
     .save-btn { background: #14b47e; }
     .cancel-btn { background: #d32f2f; }
@@ -144,7 +145,7 @@
       body * { visibility: hidden; }
       .print-area, .print-area * { visibility: visible; }
       .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 15px; background: white; }
-      .edit-btn, .print-btn, .cancel-btn, .save-btn, .edit-row, .header, .section:not(.print-area), .action-cell { display: none !important; }
+      .edit-btn, .copy-btn, .print-btn, .cancel-btn, .save-btn, .edit-row, .header, .section:not(.print-area), .action-cell { display: none !important; }
     }
 
     @media (max-width: 600px) {
@@ -233,7 +234,7 @@
       const isSuccess = urlParams.get('success') === '1';
       const orderId = urlParams.get('order_id');
       
-      // Check if overlay should be shown
+      // Check if overlay should be shown (Pi Browser only)
       const shouldShowOverlay = isSuccess && orderId && sessionStorage.getItem('piPaymentSuccess');
       
       if (shouldShowOverlay) {
@@ -243,12 +244,10 @@
 
     // ✅ Restore overlay when user returns (e.g., from WhatsApp)
     window.addEventListener('pageshow', (event) => {
-      // Detect if page was loaded from cache (back/forward navigation)
       if (event.persisted || performance.navigation.type === 2) {
         const urlParams = new URLSearchParams(window.location.search);
         const hasSuccessParam = urlParams.get('success') === '1';
         
-        // If success param exists and overlay data still in storage, restore it
         if (hasSuccessParam && sessionStorage.getItem('piPaymentSuccess')) {
           const overlay = document.getElementById('successOverlay');
           if (!overlay) {
@@ -259,7 +258,7 @@
       }
     });
 
-    // ✅ Show Pi payment success overlay
+    // ✅ Show Pi payment success overlay (Pi Browser ONLY)
     function showPiPaymentSuccess() {
       const successData = sessionStorage.getItem('piPaymentSuccess');
       if (!successData) {
@@ -272,16 +271,11 @@
         const whatsappMessage = data.whatsapp_message;
         const orderId = data.order_id;
         
-        // DON'T clear the data yet - keep it for when user returns from WhatsApp
-        // sessionStorage.removeItem('piPaymentSuccess'); // ❌ Removed
-        
-        // Check if overlay already exists
         if (document.getElementById('successOverlay')) {
           console.log('✅ Overlay already exists');
           return;
         }
         
-        // Create overlay
         const overlay = document.createElement('div');
         overlay.id = 'successOverlay';
         overlay.style.cssText = `
@@ -385,16 +379,15 @@
         
         document.body.appendChild(overlay);
         
-        console.log('✅ Success overlay displayed');
+        console.log('✅ Pi payment success overlay displayed');
         
-        // Copy button handler
         document.getElementById('copySuccessBtn').addEventListener('click', async () => {
           const btn = document.getElementById('copySuccessBtn');
           try {
             await navigator.clipboard.writeText(whatsappMessage);
             btn.textContent = '✅ Copied!';
             btn.style.background = '#4CAF50';
-            showToast('Copied! You can now paste into WhatsApp', 'success');
+            showToast('Copied! You can now paste into WhatsApp');
             setTimeout(() => {
               btn.textContent = '📋 Copy Details';
               btn.style.background = '#1c994a';
@@ -404,13 +397,10 @@
           }
         });
         
-        // Close button handler
         document.getElementById('closeSuccessBtn').addEventListener('click', () => {
-          // ✅ NOW clear the session data
           sessionStorage.removeItem('piPaymentSuccess');
           overlay.remove();
           
-          // Extract phone from order and load orders
           const phone = whatsappMessage.match(/Phone: ([\d\s-]+)/)?.[1]?.trim();
           if (phone) {
             document.getElementById('custPhone').value = phone;
@@ -502,6 +492,26 @@
       }
     }
 
+    // ✅ NEW: Copy order function for order history
+    async function copyOrder(id, phone) {
+      const area = document.getElementById(`print-${id}`);
+      if (!area) {
+        showToast("Order details not ready");
+        return;
+      }
+
+      let text = area.innerText.replace(/\{PHONE\}/g, phone);
+      text = text.replace(/\s+/g, ' ').trim();
+      
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("✅ Order details copied!");
+      } catch (err) {
+        showToast("❌ Failed to copy");
+        console.error('Copy failed:', err);
+      }
+    }
+
     function printOrder(id, phone) {
       const area = document.getElementById(`print-${id}`);
       if (!area) return showToast("Print content not ready");
@@ -556,11 +566,9 @@
         </html>
       `;
 
-      // Detect mobile
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
       if (isMobile) {
-        // Mobile: Show confirmation and use direct window.print()
         const userConfirmed = confirm(
           "🖨️ Mobile Print\n\n" +
           "Printing on mobile may have limited support.\n\n" +
@@ -575,7 +583,6 @@
           return;
         }
         
-        // Mobile printing via iframe
         const iframe = document.createElement('iframe');
         iframe.style.cssText = 'position:fixed; width:0; height:0; border:0; visibility:hidden;';
         document.body.appendChild(iframe);
@@ -599,7 +606,6 @@
         }, 500);
         
       } else {
-        // Desktop: Use blob URL method
         const blob = new Blob([printDoc], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const iframe = document.createElement('iframe');
@@ -703,7 +709,6 @@
           const subTotal = (order.total_amt - order.shipping_cost).toFixed(2);
           const isPiPayment = order.pymt_method === 'Pi Network' && order.pi_amount;
 
-          // ✅ Format total display with Pi info if available
           let totalDisplay = `<strong>RM ${order.total_amt.toFixed(2)}</strong>`;
           if (isPiPayment) {
             totalDisplay += `<br><span class="pi-payment">π ${order.pi_amount.toFixed(8)}</span>`;
@@ -720,12 +725,12 @@
             <td>${formatDate(order.created_at)}</td>
             <td class="action-cell">
               ${canEdit ? `<button class="edit-btn" onclick="event.stopPropagation(); showEdit('${order.order_id}')">Edit</button>` : ''}
+              <button class="copy-btn" onclick="event.stopPropagation(); copyOrder('${order.order_id}', '${order.phone}')">Copy</button>
               <button class="print-btn" onclick="event.stopPropagation(); printOrder('${order.order_id}', '${order.phone}')">Print</button>
             </td>
           `;
           tbody.appendChild(row);
 
-          // ✅ Print Area with Pi info
           const printArea = document.createElement('div');
           printArea.id = `print-${order.order_id}`;
           printArea.className = 'print-area';
@@ -776,7 +781,6 @@
             document.body.appendChild(printArea);
           }
 
-          // Edit Row
           if (canEdit) {
             const editRow = document.createElement('tr');
             editRow.id = `edit-${order.order_id}`;
