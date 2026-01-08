@@ -492,7 +492,7 @@
       }
     }
 
-    // ✅ NEW: Copy order function for order history
+    // ✅ FIXED: Copy order function with proper formatting (includes Pi payment & tracking)
     async function copyOrder(id, phone) {
       const area = document.getElementById(`print-${id}`);
       if (!area) {
@@ -500,11 +500,157 @@
         return;
       }
 
-      let text = area.innerText.replace(/\{PHONE\}/g, phone);
-      text = text.replace(/\s+/g, ' ').trim();
+      // Extract order data from the print area
+      const orderData = {
+        id: id,
+        name: '',
+        phone: phone,
+        address: '',
+        shipping: '',
+        products: '',
+        subtotal: '',
+        shippingCost: '',
+        total: '',
+        status: '',
+        tracking: '',
+        trackingLink: '',
+        date: area.querySelector('p')?.textContent.trim() || '',
+        piAmount: '',
+        piRate: ''
+      };
+
+      // Parse the HTML content properly
+      const tables = area.querySelectorAll('table');
+      if (tables.length > 0) {
+        const rows = tables[0].querySelectorAll('tr');
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length === 2) {
+            const label = cells[0].textContent.trim();
+            const value = cells[1].textContent.trim();
+            if (label === 'ID:') orderData.id = value;
+            if (label === 'Name:') orderData.name = value;
+          }
+        });
+      }
+
+      // Get address
+      const addressP = Array.from(area.querySelectorAll('p')).find(p => p.innerHTML.includes('Address:'));
+      if (addressP) {
+        orderData.address = addressP.innerHTML
+          .replace(/<strong>Address:<\/strong><br>/i, '')
+          .replace(/<br>/g, '\n')
+          .replace(/&nbsp;/g, ' ')
+          .trim();
+      }
+
+      // Get shipping method
+      const shippingP = Array.from(area.querySelectorAll('p')).find(p => p.innerHTML.includes('Shipping:'));
+      if (shippingP) {
+        orderData.shipping = shippingP.textContent.replace('Shipping:', '').trim();
+      }
+
+      // Get products and amounts from second table
+      if (tables.length > 1) {
+        const rows = tables[1].querySelectorAll('tr');
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length === 2) {
+            const label = cells[0].textContent.trim();
+            const value = cells[1].textContent.trim();
+            if (label === 'Products:') orderData.products = value.replace(/<br>/g, ', ');
+            if (label === 'Sub-total') orderData.subtotal = value;
+            if (label === 'Shipping') orderData.shippingCost = value;
+            if (label === 'Total') orderData.total = value;
+          }
+        });
+      }
+
+      // Get Pi payment info
+      const piInfoP = Array.from(area.querySelectorAll('p')).find(p => p.innerHTML.includes('Pi Payment:'));
+      if (piInfoP) {
+        const piText = piInfoP.textContent;
+        const piMatch = piText.match(/π\s*([\d.]+)/);
+        const rateMatch = piText.match(/1 Pi = RM\s*([\d.]+)/);
+        if (piMatch) orderData.piAmount = piMatch[1];
+        if (rateMatch) orderData.piRate = rateMatch[1];
+      }
+
+      // Get status
+      const statusP = Array.from(area.querySelectorAll('p')).find(p => p.innerHTML.includes('Status:'));
+      if (statusP) {
+        orderData.status = statusP.textContent.replace('Status:', '').trim();
+      }
+
+      // Get tracking link
+      const trackingP = Array.from(area.querySelectorAll('p')).find(p => p.innerHTML.includes('Track:'));
+      if (trackingP) {
+        const link = trackingP.querySelector('a');
+        if (link) {
+          orderData.trackingLink = link.href;
+          orderData.tracking = 'Available (see link below)';
+        } else {
+          orderData.tracking = trackingP.textContent.replace('Track:', '').trim();
+        }
+      }
+
+      // Build Pi payment section if exists
+      let piSection = '';
+      if (orderData.piAmount) {
+        piSection = `
+Pi Payment Details:
+π ${orderData.piAmount} Pi
+Exchange Rate: 1 Pi = RM ${orderData.piRate}
+`;
+      }
+
+      // Build tracking section
+      let trackingSection = '';
+      if (orderData.tracking) {
+        trackingSection = `Tracking: ${orderData.tracking}`;
+        if (orderData.trackingLink) {
+          trackingSection += `\nTracking Link: ${orderData.trackingLink}`;
+        }
+      } else {
+        trackingSection = 'Tracking: Not available yet';
+      }
+
+      // Format the text properly
+      const formattedText = `
+CEO Health & Wellness - Order Receipt
+=====================================
+
+Date: ${orderData.date}
+
+Order ID: ${orderData.id}
+Customer: ${orderData.name}
+Phone: ${phone}
+
+Delivery Address:
+${orderData.address}
+
+Shipping Method: ${orderData.shipping}
+
+Products:
+${orderData.products}
+
+-------------------------------------
+Sub-total: ${orderData.subtotal}
+Shipping: ${orderData.shippingCost}
+TOTAL: ${orderData.total}
+-------------------------------------
+${piSection}
+Status: ${orderData.status}
+${trackingSection}
+
+=====================================
+Thank you for your order!
+CEO Health & Wellness
+https://ceo-9xi.pages.dev
+      `.trim();
       
       try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(formattedText);
         showToast("✅ Order details copied!");
       } catch (err) {
         showToast("❌ Failed to copy");
