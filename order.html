@@ -615,9 +615,8 @@ Exchange Rate: 1 Pi = RM ${orderData.piRate}
         trackingSection = 'Tracking: Not available yet';
       }
 
-      // Format the text properly
-      const formattedText = `
-CEO Health & Wellness - Order Receipt
+// Format the text properly with proper indentation
+      const formattedText = `CEO Health & Wellness - Order Receipt
 =====================================
 
 Date: ${orderData.date}
@@ -627,27 +626,25 @@ Customer: ${orderData.name}
 Phone: ${phone}
 
 Delivery Address:
-${orderData.address}
+  ${orderData.address.replace(/\n/g, '\n  ')}
 
 Shipping Method: ${orderData.shipping}
 
 Products:
-${orderData.products}
+  ${orderData.products}
 
 -------------------------------------
 Sub-total: ${orderData.subtotal}
 Shipping: ${orderData.shippingCost}
 TOTAL: ${orderData.total}
 -------------------------------------
-${piSection}
-Status: ${orderData.status}
+${piSection}Status: ${orderData.status}
 ${trackingSection}
 
 =====================================
 Thank you for your order!
 CEO Health & Wellness
-https://ceo-9xi.pages.dev
-      `.trim();
+https://ceo-9xi.pages.dev`;
       
       try {
         await navigator.clipboard.writeText(formattedText);
