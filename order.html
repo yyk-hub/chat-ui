@@ -615,36 +615,36 @@ Exchange Rate: 1 Pi = RM ${orderData.piRate}
         trackingSection = 'Tracking: Not available yet';
       }
 
-      // Format the text properly with left margin (4 spaces)
-      const formattedText = `    CEO Health & Wellness - Order Receipt
-    =====================================
-    
-    Date: ${orderData.date}
-    
-    Order ID: ${orderData.id}
-    Customer: ${orderData.name}
-    Phone: ${phone}
-    
-    Delivery Address:
-      ${orderData.address.replace(/\n/g, '\n      ')}
-    
-    Shipping Method: ${orderData.shipping}
-    
-    Products:
-      ${orderData.products}
-    
-    -------------------------------------
-    Sub-total: ${orderData.subtotal}
-    Shipping: ${orderData.shippingCost}
-    TOTAL: ${orderData.total}
-    -------------------------------------
-    ${piSection ? piSection.split('\n').map(line => '    ' + line).join('\n') + '\n    ' : '    '}Status: ${orderData.status}
-    ${trackingSection.split('\n').map(line => '    ' + line).join('\n')}
-    
-    =====================================
-    Thank you for your order!
-    CEO Health & Wellness
-    https://ceo-9xi.pages.dev`;
+      // Format the text properly with consistent left margin
+      const formattedText = `CEO Health & Wellness - Order Receipt
+=====================================
+
+Date: ${orderData.date}
+
+Order ID: ${orderData.id}
+Customer: ${orderData.name}
+Phone: ${phone}
+
+Delivery Address:
+  ${orderData.address.replace(/\n/g, '\n  ')}
+
+Shipping Method: ${orderData.shipping}
+
+Products:
+  ${orderData.products}
+
+-------------------------------------
+Sub-total: ${orderData.subtotal}
+Shipping: ${orderData.shippingCost}
+TOTAL: ${orderData.total}
+-------------------------------------
+${piSection}Status: ${orderData.status}
+${trackingSection}
+
+=====================================
+Thank you for your order!
+CEO Health & Wellness
+https://ceo-9xi.pages.dev`;
       
       try {
         await navigator.clipboard.writeText(formattedText);
