@@ -818,41 +818,25 @@ function createOrderActionButtons(orderData) {
   btnContainer.className = "order-actions";
 
 const orderText = `
-    CEO Health & Wellness - Order Receipt
-
-    ═══════════════════════════════════
-
-    Order ID     : ${orderData.order_id}
-    Customer     : ${orderData.cus_name}
-    Phone        : ${orderData.phone}
-
-    Delivery Address:
-    ${orderData.cus_address}
-    ${orderData.postcode}, ${orderData.state_to}
-    Malaysia
-
-    Shipping     : ${orderData.shipping_method}
-    Est. Delivery: ${orderData.delivery_eta}
-
-    Products     : ${orderData.prod_name}
-    Quantity     : ${orderData.quantity} items
-    Weight       : ${orderData.shipping_wt?.toFixed(2)} kg
-
-    ────────────────────────────────
-
-    Sub-total    : RM ${(orderData.total_amt - orderData.shipping_cost).toFixed(2)}
-    Shipping     : RM ${orderData.shipping_cost?.toFixed(2)}
-    TOTAL        : RM ${orderData.total_amt?.toFixed(2)}
-
-    Status       : ${orderData.order_status}
-    ${orderData.tracking_link ? 'Tracking     : ' + orderData.tracking_link : 'Tracking     : Not available yet'}
-
-    ═══════════════════════════════════
-
-    Thank you for shopping with us! 🌿
-
-    CEO Health & Wellness
-    https://ceo-9xi.pages.dev
+CEO Health & Wellness - Order Receipt
+=====================================
+Order ID: ${orderData.order_id}
+Customer: ${orderData.cus_name}
+Phone: ${orderData.phone}
+Delivery: ${orderData.cus_address}, ${orderData.postcode}, ${orderData.state_to}
+Shipping: ${orderData.shipping_method} • ${orderData.delivery_eta}
+Products: ${orderData.prod_name}
+Quantity: ${orderData.quantity}
+Weight: ${orderData.shipping_wt?.toFixed(2)} kg
+Sub-total: RM ${(orderData.total_amt - orderData.shipping_cost).toFixed(2)}
+Shipping: RM ${orderData.shipping_cost?.toFixed(2)}
+TOTAL: RM ${orderData.total_amt?.toFixed(2)}
+Status: ${orderData.order_status}
+${orderData.tracking_link ? 'Tracking: ' + orderData.tracking_link : 'Tracking: Not available'}
+=====================================
+Thank you for shopping with us! 🌿
+CEO Health & Wellness
+https://ceo-9xi.pages.dev
 `.trim();
 
   // === 1. COPY BUTTON ===
