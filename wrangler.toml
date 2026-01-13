@@ -7,8 +7,3 @@ binding = "DB"
 database_name = "ceo_orders"
 database_id = "fdc684fb-d1c5-426c-b6c4-a00402afea12"
 
-# ✅ NEW - KV for maintenance notices
-[[kv_namespaces]]
-binding = "MAINTENANCE_KV"
-id = "c10da595a2204dac8e35fb87a757e0fe"
-preview_id = "5ff737d6327e4f37b1b8c3976a9210d1"
