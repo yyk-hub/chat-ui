@@ -289,12 +289,41 @@ input:checked + .toggle-slider:before {
   function setToken(t){ sessionStorage.setItem('ADMIN_TOKEN', t); }
   function clearToken(){ sessionStorage.removeItem('ADMIN_TOKEN'); }
 
+  // Maintenance DOM refs (declared once)
+let noticeEnabled;
+let noticeStatusText;
+let noticeType;
+let noticeIcon;
+let noticeTitle;
+let noticeMessage;
+let noticePreview;
+let btnUpdateNotice;
+let noticeUpdateMsg;
+
 document.addEventListener('DOMContentLoaded', () => {
   const ORDERS_API = '/api/admin/orders';
   const PRODUCTS_API = '/api/admin/products';
   const EXCHANGE_RATE_API = '/api/admin/exchange-rate'; // ✅ NEW
+  
+  noticeEnabled     = document.getElementById('noticeEnabled');
+  noticeStatusText  = document.getElementById('noticeStatusText');
+  noticeType        = document.getElementById('noticeType');
+  noticeIcon        = document.getElementById('noticeIcon');
+  noticeTitle       = document.getElementById('noticeTitle');
+  noticeMessage     = document.getElementById('noticeMessage');
+  noticePreview     = document.getElementById('noticePreview');
+  btnUpdateNotice   = document.getElementById('btnUpdateNotice');
+  noticeUpdateMsg   = document.getElementById('noticeUpdateMsg');
 
+  // bind listeners here
+  noticeEnabled.addEventListener('change', updateNoticePreview);
+  btnUpdateNotice.addEventListener('click', updateMaintenanceNotice);
+
+  loadMaintenanceNotice();
+  
   // elements
+  const maintenanceSection = document.getElementById('maintenanceSection');
+  
   const btnLogin = document.getElementById('btnLogin');
   const btnLogout = document.getElementById('btnLogout');
   const admTokenInput = document.getElementById('admToken');
@@ -767,21 +796,8 @@ orders.forEach(o => {
     showPanel();
   }
 });
-
-  const MAINTENANCE_API = '/api/admin/maintenance-notice';
-
-// Elements
-const maintenanceSection = document.getElementById('maintenanceSection');
-const noticeEnabled = document.getElementById('noticeEnabled');
-const noticeStatusText = document.getElementById('noticeStatusText');
-const noticeType = document.getElementById('noticeType');
-const noticeIcon = document.getElementById('noticeIcon');
-const noticeTitle = document.getElementById('noticeTitle');
-const noticeMessage = document.getElementById('noticeMessage');
-const btnUpdateNotice = document.getElementById('btnUpdateNotice');
-const noticeUpdateMsg = document.getElementById('noticeUpdateMsg');
-const noticePreview = document.getElementById('noticePreview');
-
+  
+ const MAINTENANCE_API = '/api/admin/maintenance-notice';
 // Load maintenance notice settings
 async function loadMaintenanceNotice() {
   try {
