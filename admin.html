@@ -361,6 +361,8 @@ input:checked + .toggle-slider:before {
 
     // Show admin panel
     function showPanel(){
+  console.log('showPanel() called');
+  console.log('maintenanceSection element:', maintenanceSection);
       maintenanceSection.style.display = 'block';
       adminPanel.style.display = 'block';
       updateProductSection.style.display = 'block';
@@ -369,12 +371,13 @@ input:checked + .toggle-slider:before {
       btnLogin.style.display = 'none';
       admTokenInput.style.display = 'none';
       loginMsg.textContent = '';
-      
+  console.log('maintenanceSection display after setting:', maintenanceSection.style.display);
       orderOffset = 0;
       loadOrders(true);
       loadProducts();
       loadExchangeRate();
       loadRateHistory();
+  console.log('About to call loadMaintenanceNotice()');
       loadMaintenanceNotice();
     }
 
@@ -784,18 +787,21 @@ input:checked + .toggle-slider:before {
 
   // Maintenance notice functions (outside DOMContentLoaded)
   async function loadMaintenanceNotice() {
+  console.log('loadMaintenanceNotice() called');
+  console.log('noticeEnabled element:', noticeEnabled);
+  console.log('MAINTENANCE_API:', MAINTENANCE_API);
     try {
       const res = await fetch(MAINTENANCE_API, {
         headers: { 'x-admin-token': token() }
       });
-      
+  console.log('API response status:', res.status);
       if (res.status === 403) {
         console.error('Unauthorized to load maintenance notice');
         return;
       }
 
       const data = await res.json();
-      
+  console.log('API response data:', data);
       if (data.success) {
         const notice = data.notice || {};
         noticeEnabled.checked = notice.enabled || false;
