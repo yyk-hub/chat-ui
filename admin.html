@@ -289,627 +289,598 @@ input:checked + .toggle-slider:before {
   function setToken(t){ sessionStorage.setItem('ADMIN_TOKEN', t); }
   function clearToken(){ sessionStorage.removeItem('ADMIN_TOKEN'); }
 
-  // Maintenance DOM refs (declared once)
-let noticeEnabled;
-let noticeStatusText;
-let noticeType;
-let noticeIcon;
-let noticeTitle;
-let noticeMessage;
-let noticePreview;
-let btnUpdateNotice;
-let noticeUpdateMsg;
-
-document.addEventListener('DOMContentLoaded', () => {
-  const ORDERS_API = '/api/admin/orders';
-  const PRODUCTS_API = '/api/admin/products';
-  const EXCHANGE_RATE_API = '/api/admin/exchange-rate'; // ✅ NEW
+  const MAINTENANCE_API = '/api/admin/maintenance-notice';
   
-  noticeEnabled     = document.getElementById('noticeEnabled');
-  noticeStatusText  = document.getElementById('noticeStatusText');
-  noticeType        = document.getElementById('noticeType');
-  noticeIcon        = document.getElementById('noticeIcon');
-  noticeTitle       = document.getElementById('noticeTitle');
-  noticeMessage     = document.getElementById('noticeMessage');
-  noticePreview     = document.getElementById('noticePreview');
-  btnUpdateNotice   = document.getElementById('btnUpdateNotice');
-  noticeUpdateMsg   = document.getElementById('noticeUpdateMsg');
+  // Maintenance DOM refs
+  let noticeEnabled;
+  let noticeStatusText;
+  let noticeType;
+  let noticeIcon;
+  let noticeTitle;
+  let noticeMessage;
+  let noticePreview;
+  let btnUpdateNotice;
+  let noticeUpdateMsg;
 
-  // bind listeners here
-  noticeEnabled.addEventListener('change', updateNoticePreview);
-  btnUpdateNotice.addEventListener('click', updateMaintenanceNotice);
-
-  loadMaintenanceNotice();
-  
-  // elements
-  const maintenanceSection = document.getElementById('maintenanceSection');
-  
-  const btnLogin = document.getElementById('btnLogin');
-  const btnLogout = document.getElementById('btnLogout');
-  const admTokenInput = document.getElementById('admToken');
-  const loginMsg = document.getElementById('loginMsg');
-
-  const adminPanel = document.getElementById('adminPanel');
-  const updateProductSection = document.getElementById('updateProductSection');
-  const exchangeRateSection = document.getElementById('exchangeRateSection'); // ✅ NEW
-  const btnLoad = document.getElementById('btnLoad');
-  const ordersHolder = document.getElementById('ordersHolder');
-  const filterPhone = document.getElementById('filterPhone');
-  const loadMoreBtn = document.getElementById('loadMoreBtn');
-
-  const prodSelect = document.getElementById('prodSelect');
-  const currPrice = document.getElementById('currPrice');
-  const currStock = document.getElementById('currStock');
-  const newPrice = document.getElementById('newPrice');
-  const newStock = document.getElementById('newStock');
-  const btnUpdateProduct = document.getElementById('btnUpdateProduct');
-  const updateResult = document.getElementById('updateResult');
-
-  // ✅ NEW: Exchange rate elements
-  const currentRate = document.getElementById('currentRate');
-  const newExchangeRate = document.getElementById('newExchangeRate');
-  const btnUpdateRate = document.getElementById('btnUpdateRate');
-  const rateUpdateMsg = document.getElementById('rateUpdateMsg');
-  const rateHistory = document.getElementById('rateHistory');
-
-  let orderOffset = 0;
-  const ORDERS_LIMIT = 10;
-
-  // Basic login check
-  async function validateTokenAndShow(t) {
-    try {
-      const r = await fetch(ORDERS_API, { headers: { 'x-admin-token': t }});
-      if (r.status === 403) throw new Error('Unauthorized');
-      await r.json();
-      setToken(t);
-      showPanel();
-    } catch (err) {
-      console.error('Token validation failed', err);
-      loginMsg.textContent = 'Invalid token or server error';
-      loginMsg.style.color = '#a00';
-    }
-  }
-
-  // show admin UI
-  function showPanel(){
-    adminPanel.style.display = 'block';
-    maintenanceSection.style.display = 'block';
-    updateProductSection.style.display = 'block';
-    exchangeRateSection.style.display = 'block'; // ✅ NEW
-    btnLogout.style.display = 'inline-block';
-    btnLogin.style.display = 'none';
-    admTokenInput.style.display = 'none';
-    loginMsg.textContent = '';
+  document.addEventListener('DOMContentLoaded', () => {
+    const ORDERS_API = '/api/admin/orders';
+    const PRODUCTS_API = '/api/admin/products';
+    const EXCHANGE_RATE_API = '/api/admin/exchange-rate';
     
-    orderOffset = 0;
-    loadOrders(true);
-    loadProducts();
-    loadExchangeRate(); // ✅ NEW
-    loadRateHistory(); // ✅ NEW
-    loadMaintenanceNotice();
-  }
+    // Get maintenance elements
+    noticeEnabled     = document.getElementById('noticeEnabled');
+    noticeStatusText  = document.getElementById('noticeStatusText');
+    noticeType        = document.getElementById('noticeType');
+    noticeIcon        = document.getElementById('noticeIcon');
+    noticeTitle       = document.getElementById('noticeTitle');
+    noticeMessage     = document.getElementById('noticeMessage');
+    noticePreview     = document.getElementById('noticePreview');
+    btnUpdateNotice   = document.getElementById('btnUpdateNotice');
+    noticeUpdateMsg   = document.getElementById('noticeUpdateMsg');
 
-  // login / logout
-  btnLogin.addEventListener('click', () => {
-    const v = admTokenInput.value.trim();
-    if (!v) { alert('Enter token'); return; }
-    validateTokenAndShow(v);
-  });
+    // Bind maintenance listeners
+    noticeEnabled.addEventListener('change', () => {
+      noticeStatusText.textContent = noticeEnabled.checked ? 'Active' : 'Disabled';
+      noticeStatusText.style.color = noticeEnabled.checked ? '#2e7d32' : '#666';
+    });
+    
+    [noticeType, noticeIcon, noticeTitle, noticeMessage].forEach(el => {
+      el.addEventListener('input', updateNoticePreview);
+    });
+    
+    btnUpdateNotice.addEventListener('click', saveMaintenanceNotice);
+    
+    // Other elements
+    const maintenanceSection = document.getElementById('maintenanceSection');
+    const btnLogin = document.getElementById('btnLogin');
+    const btnLogout = document.getElementById('btnLogout');
+    const admTokenInput = document.getElementById('admToken');
+    const loginMsg = document.getElementById('loginMsg');
+    const adminPanel = document.getElementById('adminPanel');
+    const updateProductSection = document.getElementById('updateProductSection');
+    const exchangeRateSection = document.getElementById('exchangeRateSection');
+    const btnLoad = document.getElementById('btnLoad');
+    const ordersHolder = document.getElementById('ordersHolder');
+    const filterPhone = document.getElementById('filterPhone');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const prodSelect = document.getElementById('prodSelect');
+    const currPrice = document.getElementById('currPrice');
+    const currStock = document.getElementById('currStock');
+    const newPrice = document.getElementById('newPrice');
+    const newStock = document.getElementById('newStock');
+    const btnUpdateProduct = document.getElementById('btnUpdateProduct');
+    const updateResult = document.getElementById('updateResult');
+    const currentRate = document.getElementById('currentRate');
+    const newExchangeRate = document.getElementById('newExchangeRate');
+    const btnUpdateRate = document.getElementById('btnUpdateRate');
+    const rateUpdateMsg = document.getElementById('rateUpdateMsg');
+    const rateHistory = document.getElementById('rateHistory');
 
-  btnLogout.addEventListener('click', () => {
-    clearToken();
-    location.reload();
-  });
- // FIXED: Add click handler for Load button
-  btnLoad.addEventListener('click', () => {
-    orderOffset = 0;
-    loadOrders(true); // Reset and load with filter
-  });
+    let orderOffset = 0;
+    const ORDERS_LIMIT = 10;
 
-  loadMoreBtn.addEventListener('click', () => {
-    loadOrders(false); // Append more orders
-  });
-
-  // ============================================
-  // ✅ NEW: Exchange Rate Functions
-  // ============================================
-  
-  window.loadExchangeRate = async function() {
-    currentRate.innerHTML = 'Loading...';
-    try {
-      const res = await fetch(EXCHANGE_RATE_API, {
-        headers: { 'x-admin-token': token() }
-      });
+    // Show admin panel
+    function showPanel(){
+      maintenanceSection.style.display = 'block';
+      adminPanel.style.display = 'block';
+      updateProductSection.style.display = 'block';
+      exchangeRateSection.style.display = 'block';
+      btnLogout.style.display = 'inline-block';
+      btnLogin.style.display = 'none';
+      admTokenInput.style.display = 'none';
+      loginMsg.textContent = '';
       
-      if (res.status === 403) {
-        currentRate.innerHTML = '<span style="color:#c62828">Unauthorized</span>';
+      orderOffset = 0;
+      loadOrders(true);
+      loadProducts();
+      loadExchangeRate();
+      loadRateHistory();
+      loadMaintenanceNotice();
+    }
+
+    // Login validation
+    async function validateTokenAndShow(t) {
+      try {
+        const r = await fetch(ORDERS_API, { headers: { 'x-admin-token': t }});
+        if (r.status === 403) throw new Error('Unauthorized');
+        await r.json();
+        setToken(t);
+        showPanel();
+      } catch (err) {
+        console.error('Token validation failed', err);
+        loginMsg.textContent = 'Invalid token or server error';
+        loginMsg.style.color = '#a00';
+      }
+    }
+
+    // Login/logout
+    btnLogin.addEventListener('click', () => {
+      const v = admTokenInput.value.trim();
+      if (!v) { alert('Enter token'); return; }
+      validateTokenAndShow(v);
+    });
+
+    btnLogout.addEventListener('click', () => {
+      clearToken();
+      location.reload();
+    });
+
+    btnLoad.addEventListener('click', () => {
+      orderOffset = 0;
+      loadOrders(true);
+    });
+
+    loadMoreBtn.addEventListener('click', () => {
+      loadOrders(false);
+    });
+
+    // Exchange rate functions
+    window.loadExchangeRate = async function() {
+      currentRate.innerHTML = 'Loading...';
+      try {
+        const res = await fetch(EXCHANGE_RATE_API, {
+          headers: { 'x-admin-token': token() }
+        });
+        
+        if (res.status === 403) {
+          currentRate.innerHTML = '<span style="color:#c62828">Unauthorized</span>';
+          return;
+        }
+
+        const data = await res.json();
+        
+        if (data.success) {
+          currentRate.innerHTML = `
+            1 Pi = RM ${data.rate}<br>
+            <small style="color:#666;font-weight:normal;">
+              (1 MYR = π ${data.pi_per_myr})<br>
+              Updated: ${new Date(data.updated_at).toLocaleString()}
+            </small>
+          `;
+        } else {
+          currentRate.innerHTML = `<span style="color:#c62828">${data.error}</span>`;
+        }
+      } catch (err) {
+        console.error('Load rate error:', err);
+        currentRate.innerHTML = '<span style="color:#c62828">Failed to load</span>';
+      }
+    };
+
+    async function loadRateHistory() {
+      try {
+        const res = await fetch(EXCHANGE_RATE_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-token': token()
+          },
+          body: JSON.stringify({ action: 'history', limit: 20 })
+        });
+
+        if (res.status === 403) {
+          rateHistory.innerHTML = 'Unauthorized';
+          return;
+        }
+
+        const data = await res.json();
+        
+        if (data.success && data.history && data.history.length > 0) {
+          rateHistory.innerHTML = data.history.map(r => `
+            <div class="rate-item">
+              <strong>1 Pi = RM ${r.rate}</strong>
+              <span style="color:#666;"> (1 MYR = π ${r.pi_per_myr})</span><br>
+              <small style="color:#999;">${new Date(r.updated_at).toLocaleString()}</small>
+            </div>
+          `).join('');
+        } else {
+          rateHistory.innerHTML = 'No history available';
+        }
+      } catch (err) {
+        console.error('Load history error:', err);
+        rateHistory.innerHTML = 'Failed to load history';
+      }
+    }
+
+    btnUpdateRate && btnUpdateRate.addEventListener('click', async () => {
+      const rate = parseFloat(newExchangeRate.value);
+      
+      if (!rate || rate <= 0) {
+        rateUpdateMsg.innerHTML = '<div class="error-msg">Please enter a valid rate</div>';
         return;
       }
 
-      const data = await res.json();
+      const confirmed = confirm(
+        `Update exchange rate to:\n\n` +
+        `1 Pi = RM ${rate}\n` +
+        `1 MYR = π ${(1/rate).toFixed(8)}\n\n` +
+        `This will affect all new orders. Continue?`
+      );
       
-      if (data.success) {
-        currentRate.innerHTML = `
-          1 Pi = RM ${data.rate}<br>
-          <small style="color:#666;font-weight:normal;">
-            (1 MYR = π ${data.pi_per_myr})<br>
-            Updated: ${new Date(data.updated_at).toLocaleString()}
-          </small>
-        `;
-      } else {
-        currentRate.innerHTML = `<span style="color:#c62828">${data.error}</span>`;
+      if (!confirmed) return;
+
+      btnUpdateRate.disabled = true;
+      btnUpdateRate.textContent = 'Updating...';
+
+      try {
+        const res = await fetch(EXCHANGE_RATE_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-token': token()
+          },
+          body: JSON.stringify({ action: 'update', rate: rate })
+        });
+
+        if (res.status === 403) {
+          rateUpdateMsg.innerHTML = '<div class="error-msg">Unauthorized</div>';
+          return;
+        }
+
+        const data = await res.json();
+        
+        if (data.success) {
+          rateUpdateMsg.innerHTML = `
+            <div class="success-msg">
+              ✅ ${data.message}<br>
+              Old: ${data.old_rate || 'N/A'} → New: ${data.new_rate}
+            </div>
+          `;
+          newExchangeRate.value = '';
+          loadExchangeRate();
+          loadRateHistory();
+          setTimeout(() => rateUpdateMsg.innerHTML = '', 5000);
+        } else {
+          rateUpdateMsg.innerHTML = `<div class="error-msg">Error: ${data.error}</div>`;
+        }
+      } catch (err) {
+        console.error('Update rate error:', err);
+        rateUpdateMsg.innerHTML = '<div class="error-msg">Failed to update rate</div>';
+      } finally {
+        btnUpdateRate.disabled = false;
+        btnUpdateRate.textContent = '💾 Update Rate';
       }
-    } catch (err) {
-      console.error('Load rate error:', err);
-      currentRate.innerHTML = '<span style="color:#c62828">Failed to load</span>';
+    });
+
+    // Orders functions
+    async function loadOrders(reset = false){
+      const phone = filterPhone.value.trim();
+      const hdrs = { 'x-admin-token': token() };
+
+      if (reset) orderOffset = 0;
+
+      const q = phone 
+        ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
+        : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
+
+      try {
+        const res = await fetch(ORDERS_API + q, { headers: hdrs });
+        if (res.status === 403) { 
+          alert('Unauthorized - please login again'); 
+          clearToken(); 
+          return; 
+        }
+
+        const orders = await res.json();
+        
+        if (reset) {
+          renderOrders(orders, true);
+        } else {
+          renderOrders(orders, false);
+        }
+
+        if (orders.length >= ORDERS_LIMIT) {
+          loadMoreBtn.style.display = 'inline-block';
+        } else {
+          loadMoreBtn.style.display = 'none';
+        }
+
+        orderOffset += orders.length;
+      } catch (err) {
+        console.error('Load orders error:', err);
+        ordersHolder.innerHTML = '<p style="color:#a00">Failed to load orders</p>';
+      }
     }
-  };
 
-  async function loadRateHistory() {
-    try {
-      const res = await fetch(EXCHANGE_RATE_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': token()
-        },
-        body: JSON.stringify({ action: 'history', limit: 20 })
-      });
-
-      if (res.status === 403) {
-        rateHistory.innerHTML = 'Unauthorized';
-        return;
-      }
-
-      const data = await res.json();
-      
-      if (data.success && data.history && data.history.length > 0) {
-        rateHistory.innerHTML = data.history.map(r => `
-          <div class="rate-item">
-            <strong>1 Pi = RM ${r.rate}</strong>
-            <span style="color:#666;"> (1 MYR = π ${r.pi_per_myr})</span><br>
-            <small style="color:#999;">${new Date(r.updated_at).toLocaleString()}</small>
-          </div>
-        `).join('');
-      } else {
-        rateHistory.innerHTML = 'No history available';
-      }
-    } catch (err) {
-      console.error('Load history error:', err);
-      rateHistory.innerHTML = 'Failed to load history';
-    }
-  }
-
-  btnUpdateRate && btnUpdateRate.addEventListener('click', async () => {
-    const rate = parseFloat(newExchangeRate.value);
-    
-    if (!rate || rate <= 0) {
-      rateUpdateMsg.innerHTML = '<div class="error-msg">Please enter a valid rate</div>';
-      return;
-    }
-
-    const confirmed = confirm(
-      `Update exchange rate to:\n\n` +
-      `1 Pi = RM ${rate}\n` +
-      `1 MYR = π ${(1/rate).toFixed(8)}\n\n` +
-      `This will affect all new orders. Continue?`
-    );
-    
-    if (!confirmed) return;
-
-    btnUpdateRate.disabled = true;
-    btnUpdateRate.textContent = 'Updating...';
-
-    try {
-      const res = await fetch(EXCHANGE_RATE_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': token()
-        },
-        body: JSON.stringify({ action: 'update', rate: rate })
-      });
-
-      if (res.status === 403) {
-        rateUpdateMsg.innerHTML = '<div class="error-msg">Unauthorized</div>';
-        return;
-      }
-
-      const data = await res.json();
-      
-      if (data.success) {
-        rateUpdateMsg.innerHTML = `
-          <div class="success-msg">
-            ✅ ${data.message}<br>
-            Old: ${data.old_rate || 'N/A'} → New: ${data.new_rate}
-          </div>
-        `;
-        newExchangeRate.value = '';
-        loadExchangeRate();
-        loadRateHistory();
-        setTimeout(() => rateUpdateMsg.innerHTML = '', 5000);
-      } else {
-        rateUpdateMsg.innerHTML = `<div class="error-msg">Error: ${data.error}</div>`;
-      }
-    } catch (err) {
-      console.error('Update rate error:', err);
-      rateUpdateMsg.innerHTML = '<div class="error-msg">Failed to update rate</div>';
-    } finally {
-      btnUpdateRate.disabled = false;
-      btnUpdateRate.textContent = '💾 Update Rate';
-    }
-  });
-
-  // ============================================
-  // Existing Functions (Orders, Products)
-  // ============================================
-
-  async function loadOrders(reset = false){
-    const phone = filterPhone.value.trim();
-    const hdrs = { 'x-admin-token': token() };
-
-    if (reset) orderOffset = 0;
-
-    const q = phone 
-      ? `?phone=${encodeURIComponent(phone)}&limit=${ORDERS_LIMIT}&offset=${orderOffset}`
-      : `?limit=${ORDERS_LIMIT}&offset=${orderOffset}`;
-
-    try {
-      const res = await fetch(ORDERS_API + q, { headers: hdrs });
-      if (res.status === 403) { 
-        alert('Unauthorized - please login again'); 
-        clearToken(); 
+    function renderOrders(orders, replace = true){
+      if(!orders || orders.length === 0) { 
+        if (replace) {
+          ordersHolder.innerHTML = '<p>No orders found</p>'; 
+        }
         return; 
       }
 
-      const orders = await res.json();
-      
-      if (reset) {
-        renderOrders(orders, true); // Replace table
-      } else {
-        renderOrders(orders, false); // Append to table
-      }
-     // Show/hide Load More button
-      if (orders.length >= ORDERS_LIMIT) {
-        loadMoreBtn.style.display = 'inline-block';
-      } else {
-        loadMoreBtn.style.display = 'none';
-      }
-
-      orderOffset += orders.length;
-    } catch (err) {
-      console.error('Load orders error:', err);
-      ordersHolder.innerHTML = '<p style="color:#a00">Failed to load orders</p>';
-    }
-  }
- // FIXED: Render orders (append or replace)
-  function renderOrders(orders, replace = true){
-    if(!orders || orders.length === 0) { 
+      let html = '';
       if (replace) {
-        ordersHolder.innerHTML = '<p>No orders found</p>'; 
+        html = '<table id="ordersTable"><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
       }
-      return; 
-    }
 
-    let html = '';
-    // If replacing, create new table
-    if (replace) {
-      html = '<table id="ordersTable"><thead><tr><th>Order</th><th>Products</th><th>Total</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-    }
+      orders.forEach(o => {
+        const safeProd = (o.prod_name || '').replace(/,/g, '<br/>');
+        const oid = o.order_id;
 
-orders.forEach(o => {
-  const safeProd = (o.prod_name || '').replace(/,/g, '<br/>');
-  const oid = o.order_id;
-
-  html += `
-    <tr>
-      <td>
-        <strong>${oid}</strong><br/>
-        <small>${o.created_at || ''}</small>
-      </td>
-
-      <td style="max-width:300px">${safeProd}</td>
-
-      <td>RM ${parseFloat(o.total_amt || 0).toFixed(2)}</td>
-
-      <td>${o.phone || ''}</td>
-
-      <td id="status-${oid}">
-        ${o.order_status || o.pymt_status || '—'}
-      </td>
-
-      <td>
-        <!-- Order Status -->
-        <label for="s-${oid}" class="sr-only">Order Status</label>
-        <select id="s-${oid}" name="status">
-          <option value="Pending Payment">Pending Payment</option>
-          <option value="Paid">Paid</option>
-          <option value="Shipped">Shipped</option>
-          <option value="Completed">Completed</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
-
-        <br/>
-
-        <!-- Courier -->
-        <label for="courier-${oid}" class="sr-only">Courier Name</label>
-        <input
-          id="courier-${oid}"
-          name="courier_name"
-          placeholder="Courier"
-          style="width:140px;margin-top:6px"
-          value="${o.courier_name || ''}"
-        />
-
-        <!-- Tracking -->
-        <label for="track-${oid}" class="sr-only">Tracking Link</label>
-        <input
-          id="track-${oid}"
-          name="tracking_link"
-          placeholder="Tracking link"
-          style="width:220px;margin-top:6px"
-          value="${o.tracking_link || ''}"
-        />
-
-        <br/>
-
-        <button
-          type="button"
-          class="btn"
-          data-order="${oid}">
-          Save
-        </button>
-      </td>
-    </tr>
-  `;
-});
-
-    if (replace) {
-      html += '</tbody></table>';
-      ordersHolder.innerHTML = html;
-    } else {
-      const tbody = document.querySelector('#ordersTable tbody');
-      if (tbody) {
-        tbody.insertAdjacentHTML('beforeend', html);
-      }
-    }
-   // Set selects and attach handlers
-    orders.forEach(o=>{
-      const sel = document.getElementById('s-'+o.order_id);
-      if(sel && (o.order_status || o.pymt_status)) {
-        try { sel.value = o.order_status || o.pymt_status; } catch(e){}
-      }
-      const btn = document.querySelector(`button[data-order="${o.order_id}"]`);
-      if(btn) btn.addEventListener('click', () => updateOrder(o.order_id));
-    });
-  }
- // update order (PUT)
-  async function updateOrder(order_id){
-    const status = document.getElementById('s-'+order_id).value;
-    const courier = document.getElementById('courier-'+order_id).value;
-    const track = document.getElementById('track-'+order_id).value;
-    const body = { order_id, order_status: status, courier_name: courier, tracking_link: track };
-    try {
-      const res = await fetch(ORDERS_API + '/' + encodeURIComponent(order_id), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
-        body: JSON.stringify(body)
+        html += `
+          <tr>
+            <td>
+              <strong>${oid}</strong><br/>
+              <small>${o.created_at || ''}</small>
+            </td>
+            <td style="max-width:300px">${safeProd}</td>
+            <td>RM ${parseFloat(o.total_amt || 0).toFixed(2)}</td>
+            <td>${o.phone || ''}</td>
+            <td id="status-${oid}">
+              ${o.order_status || o.pymt_status || '—'}
+            </td>
+            <td>
+              <label for="s-${oid}" class="sr-only">Order Status</label>
+              <select id="s-${oid}" name="status">
+                <option value="Pending Payment">Pending Payment</option>
+                <option value="Paid">Paid</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <br/>
+              <label for="courier-${oid}" class="sr-only">Courier Name</label>
+              <input
+                id="courier-${oid}"
+                name="courier_name"
+                placeholder="Courier"
+                style="width:140px;margin-top:6px"
+                value="${o.courier_name || ''}"
+              />
+              <label for="track-${oid}" class="sr-only">Tracking Link</label>
+              <input
+                id="track-${oid}"
+                name="tracking_link"
+                placeholder="Tracking link"
+                style="width:220px;margin-top:6px"
+                value="${o.tracking_link || ''}"
+              />
+              <br/>
+              <button
+                type="button"
+                class="btn"
+                data-order="${oid}">
+                Save
+              </button>
+            </td>
+          </tr>
+        `;
       });
-      if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
-      const data = await res.json();
-      if (data.success || data.result) {
-        document.getElementById('status-'+order_id).textContent = status;
-        alert('Order updated');
+
+      if (replace) {
+        html += '</tbody></table>';
+        ordersHolder.innerHTML = html;
       } else {
-        alert('Update failed: ' + (data.error || JSON.stringify(data)));
+        const tbody = document.querySelector('#ordersTable tbody');
+        if (tbody) {
+          tbody.insertAdjacentHTML('beforeend', html);
+        }
       }
-    } catch (err) {
-      console.error('Update order failed', err);
-      alert('Failed to update order (see console)');
-    }
-  }
- // Load products
-  async function loadProducts() {
-    try {
-      const res = await fetch(PRODUCTS_API, { headers: { 'x-admin-token': token() }});
-      if (res.status === 403) { console.warn('Unauthorized loading products'); return; }
-      const products = await res.json();
-      if (!Array.isArray(products)) { console.error('Products response not array', products); return; }
-      if (!prodSelect) return;
-      prodSelect.innerHTML = '<option value="">— Select Product —</option>';
-      products.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.prod_id;
-        opt.textContent = `${p.prod_id} — ${p.prod_name}`;
-        prodSelect.appendChild(opt);
+
+      orders.forEach(o=>{
+        const sel = document.getElementById('s-'+o.order_id);
+        if(sel && (o.order_status || o.pymt_status)) {
+          try { sel.value = o.order_status || o.pymt_status; } catch(e){}
+        }
+        const btn = document.querySelector(`button[data-order="${o.order_id}"]`);
+        if(btn) btn.addEventListener('click', () => updateOrder(o.order_id));
       });
-    } catch (err) {
-      console.error('Error loading products:', err);
     }
-  }
- // Product selection handler
-  prodSelect && prodSelect.addEventListener('change', async () => {
-    const id = prodSelect.value;
-    if (!id) {
-      currPrice.value = '';
-      currStock.value = '';
-      newPrice.value = '';
-      newStock.value = '';
-      return;
+
+    async function updateOrder(order_id){
+      const status = document.getElementById('s-'+order_id).value;
+      const courier = document.getElementById('courier-'+order_id).value;
+      const track = document.getElementById('track-'+order_id).value;
+      const body = { order_id, order_status: status, courier_name: courier, tracking_link: track };
+      try {
+        const res = await fetch(ORDERS_API + '/' + encodeURIComponent(order_id), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
+          body: JSON.stringify(body)
+        });
+        if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
+        const data = await res.json();
+        if (data.success || data.result) {
+          document.getElementById('status-'+order_id).textContent = status;
+          alert('Order updated');
+        } else {
+          alert('Update failed: ' + (data.error || JSON.stringify(data)));
+        }
+      } catch (err) {
+        console.error('Update order failed', err);
+        alert('Failed to update order (see console)');
+      }
     }
-    try {
-      const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(id)}`, {
-        headers: { 'x-admin-token': token() }
-      });
-      if (res.status === 403) { alert('Unauthorized'); return; }
-      const data = await res.json();
-      if (!data || !data.prod_id) {
-        alert('Product not found');
+
+    // Products
+    async function loadProducts() {
+      try {
+        const res = await fetch(PRODUCTS_API, { headers: { 'x-admin-token': token() }});
+        if (res.status === 403) { console.warn('Unauthorized loading products'); return; }
+        const products = await res.json();
+        if (!Array.isArray(products)) { console.error('Products response not array', products); return; }
+        if (!prodSelect) return;
+        prodSelect.innerHTML = '<option value="">— Select Product —</option>';
+        products.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.prod_id;
+          opt.textContent = `${p.prod_id} — ${p.prod_name}`;
+          prodSelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    prodSelect && prodSelect.addEventListener('change', async () => {
+      const id = prodSelect.value;
+      if (!id) {
+        currPrice.value = '';
+        currStock.value = '';
+        newPrice.value = '';
+        newStock.value = '';
         return;
       }
-      currPrice.value = data.price ?? '';
-      currStock.value = data.stock ?? '';
-      newPrice.value = '';
-      newStock.value = '';
-    } catch (err) {
-      console.error('Error fetching product detail:', err);
+      try {
+        const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(id)}`, {
+          headers: { 'x-admin-token': token() }
+        });
+        if (res.status === 403) { alert('Unauthorized'); return; }
+        const data = await res.json();
+        if (!data || !data.prod_id) {
+          alert('Product not found');
+          return;
+        }
+        currPrice.value = data.price ?? '';
+        currStock.value = data.stock ?? '';
+        newPrice.value = '';
+        newStock.value = '';
+      } catch (err) {
+        console.error('Error fetching product detail:', err);
+      }
+    });
+
+    btnUpdateProduct && btnUpdateProduct.addEventListener('click', async () => {
+      const prodId = prodSelect.value;
+      if (!prodId) { alert('Select a product first'); return; }
+      const body = {};
+      if (newPrice.value.trim() !== '') body.price = parseFloat(newPrice.value);
+      if (newStock.value.trim() !== '') body.stock = parseInt(newStock.value, 10);
+      if (Object.keys(body).length === 0) { alert('Enter new price and/or new stock'); return; }
+
+      try {
+        const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(prodId)}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-token': token()
+          },
+          body: JSON.stringify(body)
+        });
+        if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
+        const data = await res.json();
+        if (data.success) {
+          updateResult.textContent = `✅ ${prodId} updated successfully`;
+          updateResult.style.color = '#006600';
+          if (body.price !== undefined) currPrice.value = parseFloat(body.price).toFixed(2);
+          if (body.stock !== undefined) currStock.value = body.stock;
+        } else {
+          updateResult.textContent = '❌ Update failed: ' + (data.error || 'Unknown');
+          updateResult.style.color = '#a00';
+        }
+      } catch (err) {
+        console.error('Error updating product:', err);
+        updateResult.textContent = '❌ Update failed (see console)';
+        updateResult.style.color = '#a00';
+      }
+    });
+
+    // Auto show panel if already logged in
+    if (sessionStorage.getItem('ADMIN_TOKEN')) {
+      showPanel();
     }
   });
- // Update product handler
-  btnUpdateProduct && btnUpdateProduct.addEventListener('click', async () => {
-    const prodId = prodSelect.value;
-    if (!prodId) { alert('Select a product first'); return; }
-    const body = {};
-    if (newPrice.value.trim() !== '') body.price = parseFloat(newPrice.value);
-    if (newStock.value.trim() !== '') body.stock = parseInt(newStock.value, 10);
-    if (Object.keys(body).length === 0) { alert('Enter new price and/or new stock'); return; }
+
+  // Maintenance notice functions (outside DOMContentLoaded)
+  async function loadMaintenanceNotice() {
+    try {
+      const res = await fetch(MAINTENANCE_API, {
+        headers: { 'x-admin-token': token() }
+      });
+      
+      if (res.status === 403) {
+        console.error('Unauthorized to load maintenance notice');
+        return;
+      }
+
+      const data = await res.json();
+      
+      if (data.success) {
+        const notice = data.notice || {};
+        noticeEnabled.checked = notice.enabled || false;
+        noticeStatusText.textContent = notice.enabled ? 'Active' : 'Disabled';
+        noticeStatusText.style.color = notice.enabled ? '#2e7d32' : '#666';
+        noticeType.value = notice.type || 'info';
+        noticeIcon.value = notice.icon || '🔧';
+        noticeTitle.value = notice.title || '';
+        noticeMessage.value = notice.message || '';
+        updateNoticePreview();
+      }
+    } catch (err) {
+      console.error('Load maintenance notice error:', err);
+    }
+  }
+
+  function updateNoticePreview() {
+    const type = noticeType.value;
+    const icon = noticeIcon.value || '🔧';
+    const title = noticeTitle.value || 'Title';
+    const message = noticeMessage.value || 'Message';
+    
+    noticePreview.className = `notice-preview ${type}`;
+    noticePreview.innerHTML = `
+      <span class="icon">${icon}</span>
+      <div>
+        <strong>${title}</strong><br>
+        <span>${message}</span>
+      </div>
+    `;
+  }
+
+  async function saveMaintenanceNotice() {
+    const data = {
+      enabled: noticeEnabled.checked,
+      type: noticeType.value,
+      icon: noticeIcon.value || '🔧',
+      title: noticeTitle.value.trim() || 'Notice',
+      message: noticeMessage.value.trim() || 'Please check back later.'
+    };
+
+    if (!data.message) {
+      noticeUpdateMsg.innerHTML = '<div class="error-msg">Please enter a message</div>';
+      return;
+    }
+
+    btnUpdateNotice.disabled = true;
+    btnUpdateNotice.textContent = 'Saving...';
 
     try {
-      const res = await fetch(`${PRODUCTS_API}/${encodeURIComponent(prodId)}`, {
-        method: 'PUT',
+      const res = await fetch(MAINTENANCE_API, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-admin-token': token()
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(data)
       });
-      if (res.status === 403) { alert('Unauthorized'); clearToken(); return; }
-      const data = await res.json();
-      if (data.success) {
-        updateResult.textContent = `✅ ${prodId} updated successfully`;
-        updateResult.style.color = '#006600';
-        if (body.price !== undefined) currPrice.value = parseFloat(body.price).toFixed(2);
-        if (body.stock !== undefined) currStock.value = body.stock;
+
+      if (res.status === 403) {
+        noticeUpdateMsg.innerHTML = '<div class="error-msg">Unauthorized</div>';
+        return;
+      }
+
+      const result = await res.json();
+      
+      if (result.success) {
+        noticeUpdateMsg.innerHTML = `
+          <div class="success-msg">
+            ✅ ${result.message}<br>
+            <small>Notice is now ${data.enabled ? 'ACTIVE' : 'DISABLED'} across all pages</small>
+          </div>
+        `;
+        setTimeout(() => noticeUpdateMsg.innerHTML = '', 5000);
       } else {
-        updateResult.textContent = '❌ Update failed: ' + (data.error || 'Unknown');
-        updateResult.style.color = '#a00';
+        noticeUpdateMsg.innerHTML = `<div class="error-msg">Error: ${result.error}</div>`;
       }
     } catch (err) {
-      console.error('Error updating product:', err);
-      updateResult.textContent = '❌ Update failed (see console)';
-      updateResult.style.color = '#a00';
+      console.error('Update maintenance notice error:', err);
+      noticeUpdateMsg.innerHTML = '<div class="error-msg">Failed to update notice</div>';
+    } finally {
+      btnUpdateNotice.disabled = false;
+      btnUpdateNotice.textContent = '💾 Save Notice Settings';
     }
-  });
-
-  // Auto show panel if already logged in
-  if (sessionStorage.getItem('ADMIN_TOKEN')) {
-    showPanel();
   }
-});
-  
- const MAINTENANCE_API = '/api/admin/maintenance-notice';
-// Load maintenance notice settings
-async function loadMaintenanceNotice() {
-  try {
-    const res = await fetch(MAINTENANCE_API, {
-      headers: { 'x-admin-token': token() }
-    });
-    
-    if (res.status === 403) {
-      console.error('Unauthorized to load maintenance notice');
-      return;
-    }
-
-    const data = await res.json();
-    
-    if (data.success) {
-      const notice = data.notice || {};
-      noticeEnabled.checked = notice.enabled || false;
-      noticeStatusText.textContent = notice.enabled ? 'Active' : 'Disabled';
-      noticeStatusText.style.color = notice.enabled ? '#2e7d32' : '#666';
-      noticeType.value = notice.type || 'info';
-      noticeIcon.value = notice.icon || '🔧';
-      noticeTitle.value = notice.title || '';
-      noticeMessage.value = notice.message || '';
-      updateNoticePreview();
-    }
-  } catch (err) {
-    console.error('Load maintenance notice error:', err);
-  }
-}
-
-// Update preview
-function updateNoticePreview() {
-  const type = noticeType.value;
-  const icon = noticeIcon.value || '🔧';
-  const title = noticeTitle.value || 'Title';
-  const message = noticeMessage.value || 'Message';
-  
-  noticePreview.className = `notice-preview ${type}`;
-  noticePreview.innerHTML = `
-    <span class="icon">${icon}</span>
-    <div>
-      <strong>${title}</strong><br>
-      <span>${message}</span>
-    </div>
-  `;
-}
-
-// Update preview on input change
-[noticeType, noticeIcon, noticeTitle, noticeMessage].forEach(el => {
-  el.addEventListener('input', updateNoticePreview);
-});
-
-// Toggle status text
-noticeEnabled.addEventListener('change', () => {
-  noticeStatusText.textContent = noticeEnabled.checked ? 'Active' : 'Disabled';
-  noticeStatusText.style.color = noticeEnabled.checked ? '#2e7d32' : '#666';
-});
-
-// Save maintenance notice
-btnUpdateNotice && btnUpdateNotice.addEventListener('click', async () => {
-  const data = {
-    enabled: noticeEnabled.checked,
-    type: noticeType.value,
-    icon: noticeIcon.value || '🔧',
-    title: noticeTitle.value.trim() || 'Notice',
-    message: noticeMessage.value.trim() || 'Please check back later.'
-  };
-
-  if (!data.message) {
-    noticeUpdateMsg.innerHTML = '<div class="error-msg">Please enter a message</div>';
-    return;
-  }
-
-  btnUpdateNotice.disabled = true;
-  btnUpdateNotice.textContent = 'Saving...';
-
-  try {
-    const res = await fetch(MAINTENANCE_API, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-token': token()
-      },
-      body: JSON.stringify(data)
-    });
-
-    if (res.status === 403) {
-      noticeUpdateMsg.innerHTML = '<div class="error-msg">Unauthorized</div>';
-      return;
-    }
-
-    const result = await res.json();
-    
-    if (result.success) {
-      noticeUpdateMsg.innerHTML = `
-        <div class="success-msg">
-          ✅ ${result.message}<br>
-          <small>Notice is now ${data.enabled ? 'ACTIVE' : 'DISABLED'} across all pages</small>
-        </div>
-      `;
-      setTimeout(() => noticeUpdateMsg.innerHTML = '', 5000);
-    } else {
-      noticeUpdateMsg.innerHTML = `<div class="error-msg">Error: ${result.error}</div>`;
-    }
-  } catch (err) {
-    console.error('Update maintenance notice error:', err);
-    noticeUpdateMsg.innerHTML = '<div class="error-msg">Failed to update notice</div>';
-  } finally {
-    btnUpdateNotice.disabled = false;
-    btnUpdateNotice.textContent = '💾 Save Notice Settings';
-  }
-});
 </script>
 </body>
 </html>
