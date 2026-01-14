@@ -50,49 +50,8 @@
       align-items: center;
       gap: 8px 10px;
     }
-    .current-rate {
-      font-size: 20px;
-      color: #996600;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-    .rate-history {
-      max-height: 300px;
-      overflow-y: auto;
-      margin-top: 10px;
-    }
-    .rate-item {
-      padding: 10px;
-      background: #f9f9f9;
-      margin: 5px 0;
-      border-radius: 6px;
-      border-left: 3px solid #14b47e;
-    }
-    .success-msg {
-      background: #e8f5e9;
-      color: #2e7d32;
-      padding: 10px;
-      border-radius: 6px;
-      margin: 10px 0;
-    }
-    .error-msg {
-      background: #ffebee;
-      color: #c62828;
-      padding: 10px;
-      border-radius: 6px;
-      margin: 10px 0;
-    }
-    @media (max-width: 720px) {
-      table th, table td { font-size: 13px; padding: 6px; }
-      h3 { font-size: 15px; }
-      .btn-back { font-size: 15px; }
-      input, select, button { font-size: 13px; padding: 6px; }
-    }
-    @media (max-width: 600px) {
-      .form-grid { grid-template-columns: 1fr; }
-    }
 
-    .notice-preview {
+  .notice-preview {
   margin: 15px 0;
   padding: 12px 20px;
   border-radius: 8px;
@@ -146,6 +105,48 @@ input:checked + .toggle-slider {
 input:checked + .toggle-slider:before {
   transform: translateX(26px);
 }
+    .current-rate {
+      font-size: 20px;
+      color: #996600;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .rate-history {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .rate-item {
+      padding: 10px;
+      background: #f9f9f9;
+      margin: 5px 0;
+      border-radius: 6px;
+      border-left: 3px solid #14b47e;
+    }
+    .success-msg {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .error-msg {
+      background: #ffebee;
+      color: #c62828;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    @media (max-width: 720px) {
+      table th, table td { font-size: 13px; padding: 6px; }
+      h3 { font-size: 15px; }
+      .btn-back { font-size: 15px; }
+      input, select, button { font-size: 13px; padding: 6px; }
+    }
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
   </style>
 </head>
 <body>
@@ -153,7 +154,19 @@ input:checked + .toggle-slider:before {
     <button class="btn-back" onclick="window.location.href='index.html'">← Home</button>
     <h2>Admin Panel</h2>
   </div>
-
+  
+  <div class="wrap">
+    <div class="card">
+      <h3>Admin Login 🔐 🛠️ </h3>
+      <p>Enter your admin token (keeps in session only):</p>
+      <div class="row">
+        <input id="admToken" placeholder="admin token" style="flex:1" />
+        <button id="btnLogin" class="btn">Login</button>
+        <button id="btnLogout" style="display:none" class="btn">Logout</button>
+      </div>
+      <p id="loginMsg" style="color:#a00"></p>
+    </div>
+    
   <!-- Maintenance Notice Management Card -->
 <div class="card" id="maintenanceSection" style="display:none">
   <h3>🔔 Maintenance Notice Management</h3>
@@ -204,18 +217,6 @@ input:checked + .toggle-slider:before {
     </div>
   </div>
 </div>
-
-  <div class="wrap">
-    <div class="card">
-      <h3>Admin Login 🔐 🛠️ </h3>
-      <p>Enter your admin token (keeps in session only):</p>
-      <div class="row">
-        <input id="admToken" placeholder="admin token" style="flex:1" />
-        <button id="btnLogin" class="btn">Login</button>
-        <button id="btnLogout" style="display:none" class="btn">Logout</button>
-      </div>
-      <p id="loginMsg" style="color:#a00"></p>
-    </div>
 
     <!-- ✅ NEW: Exchange Rate Section -->
     <div class="card" id="exchangeRateSection" style="display:none">
@@ -343,6 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // show admin UI
   function showPanel(){
     adminPanel.style.display = 'block';
+    maintenanceSection.style.display = 'block';
     updateProductSection.style.display = 'block';
     exchangeRateSection.style.display = 'block'; // ✅ NEW
     btnLogout.style.display = 'inline-block';
@@ -355,6 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
     loadExchangeRate(); // ✅ NEW
     loadRateHistory(); // ✅ NEW
+    loadMaintenanceNotice();
   }
 
   // login / logout
