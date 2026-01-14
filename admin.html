@@ -284,15 +284,15 @@ input:checked + .toggle-slider:before {
   </div>
 
 <script>
+  // GLOBAL token helpers
+  function token(){ return sessionStorage.getItem('ADMIN_TOKEN') || ''; }
+  function setToken(t){ sessionStorage.setItem('ADMIN_TOKEN', t); }
+  function clearToken(){ sessionStorage.removeItem('ADMIN_TOKEN'); }
+
 document.addEventListener('DOMContentLoaded', () => {
   const ORDERS_API = '/api/admin/orders';
   const PRODUCTS_API = '/api/admin/products';
   const EXCHANGE_RATE_API = '/api/admin/exchange-rate'; // ✅ NEW
-
-  // util token helpers
-  function token(){ return sessionStorage.getItem('ADMIN_TOKEN') || ''; }
-  function setToken(t){ sessionStorage.setItem('ADMIN_TOKEN', t); }
-  function clearToken(){ sessionStorage.removeItem('ADMIN_TOKEN'); }
 
   // elements
   const btnLogin = document.getElementById('btnLogin');
@@ -634,7 +634,6 @@ orders.forEach(o => {
     </tr>
   `;
 });
-
 
     if (replace) {
       html += '</tbody></table>';
