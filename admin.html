@@ -91,6 +91,61 @@
     @media (max-width: 600px) {
       .form-grid { grid-template-columns: 1fr; }
     }
+
+    .notice-preview {
+  margin: 15px 0;
+  padding: 12px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.notice-preview.info { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+.notice-preview.warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+.notice-preview.error { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+.notice-preview.success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+.notice-preview .icon { font-size: 20px; }
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .3s;
+  border-radius: 24px;
+}
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+input:checked + .toggle-slider {
+  background-color: #2e7d32;
+}
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
   </style>
 </head>
 <body>
@@ -98,6 +153,57 @@
     <button class="btn-back" onclick="window.location.href='index.html'">← Home</button>
     <h2>Admin Panel</h2>
   </div>
+
+  <!-- Maintenance Notice Management Card -->
+<div class="card" id="maintenanceSection" style="display:none">
+  <h3>🔔 Maintenance Notice Management</h3>
+  
+  <div style="margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+      <strong>Notice Status:</strong>
+      <label class="toggle-switch">
+        <input type="checkbox" id="noticeEnabled">
+        <span class="toggle-slider"></span>
+      </label>
+      <span id="noticeStatusText" style="color: #666;">Disabled</span>
+    </div>
+  </div>
+
+  <div class="form-grid" style="max-width: 600px;">
+    <label for="noticeType">Notice Type:</label>
+    <select id="noticeType">
+      <option value="info">Info (Blue)</option>
+      <option value="warning">Warning (Orange)</option>
+      <option value="error">Error (Red)</option>
+      <option value="success">Success (Green)</option>
+    </select>
+
+    <label for="noticeIcon">Icon:</label>
+    <input type="text" id="noticeIcon" placeholder="🔧" maxlength="2" style="width: 80px;" />
+
+    <label for="noticeTitle">Title:</label>
+    <input type="text" id="noticeTitle" placeholder="Scheduled Maintenance" />
+
+    <label for="noticeMessage">Message:</label>
+    <textarea id="noticeMessage" placeholder="System will be under maintenance..."></textarea>
+
+    <div></div>
+    <button id="btnUpdateNotice" class="btn">💾 Save Notice Settings</button>
+  </div>
+
+  <div id="noticeUpdateMsg"></div>
+
+  <div style="margin-top: 20px;">
+    <strong>Preview:</strong>
+    <div id="noticePreview" class="notice-preview info">
+      <span class="icon">🔧</span>
+      <div>
+        <strong>Scheduled Maintenance</strong><br>
+        <span>System will be under maintenance...</span>
+      </div>
+    </div>
+  </div>
+</div>
 
   <div class="wrap">
     <div class="card">
@@ -657,6 +763,133 @@ orders.forEach(o => {
   // Auto show panel if already logged in
   if (sessionStorage.getItem('ADMIN_TOKEN')) {
     showPanel();
+  }
+});
+
+  const MAINTENANCE_API = '/api/admin/maintenance-notice';
+
+// Elements
+const maintenanceSection = document.getElementById('maintenanceSection');
+const noticeEnabled = document.getElementById('noticeEnabled');
+const noticeStatusText = document.getElementById('noticeStatusText');
+const noticeType = document.getElementById('noticeType');
+const noticeIcon = document.getElementById('noticeIcon');
+const noticeTitle = document.getElementById('noticeTitle');
+const noticeMessage = document.getElementById('noticeMessage');
+const btnUpdateNotice = document.getElementById('btnUpdateNotice');
+const noticeUpdateMsg = document.getElementById('noticeUpdateMsg');
+const noticePreview = document.getElementById('noticePreview');
+
+// Load maintenance notice settings
+async function loadMaintenanceNotice() {
+  try {
+    const res = await fetch(MAINTENANCE_API, {
+      headers: { 'x-admin-token': token() }
+    });
+    
+    if (res.status === 403) {
+      console.error('Unauthorized to load maintenance notice');
+      return;
+    }
+
+    const data = await res.json();
+    
+    if (data.success) {
+      const notice = data.notice || {};
+      noticeEnabled.checked = notice.enabled || false;
+      noticeStatusText.textContent = notice.enabled ? 'Active' : 'Disabled';
+      noticeStatusText.style.color = notice.enabled ? '#2e7d32' : '#666';
+      noticeType.value = notice.type || 'info';
+      noticeIcon.value = notice.icon || '🔧';
+      noticeTitle.value = notice.title || '';
+      noticeMessage.value = notice.message || '';
+      updateNoticePreview();
+    }
+  } catch (err) {
+    console.error('Load maintenance notice error:', err);
+  }
+}
+
+// Update preview
+function updateNoticePreview() {
+  const type = noticeType.value;
+  const icon = noticeIcon.value || '🔧';
+  const title = noticeTitle.value || 'Title';
+  const message = noticeMessage.value || 'Message';
+  
+  noticePreview.className = `notice-preview ${type}`;
+  noticePreview.innerHTML = `
+    <span class="icon">${icon}</span>
+    <div>
+      <strong>${title}</strong><br>
+      <span>${message}</span>
+    </div>
+  `;
+}
+
+// Update preview on input change
+[noticeType, noticeIcon, noticeTitle, noticeMessage].forEach(el => {
+  el.addEventListener('input', updateNoticePreview);
+});
+
+// Toggle status text
+noticeEnabled.addEventListener('change', () => {
+  noticeStatusText.textContent = noticeEnabled.checked ? 'Active' : 'Disabled';
+  noticeStatusText.style.color = noticeEnabled.checked ? '#2e7d32' : '#666';
+});
+
+// Save maintenance notice
+btnUpdateNotice && btnUpdateNotice.addEventListener('click', async () => {
+  const data = {
+    enabled: noticeEnabled.checked,
+    type: noticeType.value,
+    icon: noticeIcon.value || '🔧',
+    title: noticeTitle.value.trim() || 'Notice',
+    message: noticeMessage.value.trim() || 'Please check back later.'
+  };
+
+  if (!data.message) {
+    noticeUpdateMsg.innerHTML = '<div class="error-msg">Please enter a message</div>';
+    return;
+  }
+
+  btnUpdateNotice.disabled = true;
+  btnUpdateNotice.textContent = 'Saving...';
+
+  try {
+    const res = await fetch(MAINTENANCE_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': token()
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (res.status === 403) {
+      noticeUpdateMsg.innerHTML = '<div class="error-msg">Unauthorized</div>';
+      return;
+    }
+
+    const result = await res.json();
+    
+    if (result.success) {
+      noticeUpdateMsg.innerHTML = `
+        <div class="success-msg">
+          ✅ ${result.message}<br>
+          <small>Notice is now ${data.enabled ? 'ACTIVE' : 'DISABLED'} across all pages</small>
+        </div>
+      `;
+      setTimeout(() => noticeUpdateMsg.innerHTML = '', 5000);
+    } else {
+      noticeUpdateMsg.innerHTML = `<div class="error-msg">Error: ${result.error}</div>`;
+    }
+  } catch (err) {
+    console.error('Update maintenance notice error:', err);
+    noticeUpdateMsg.innerHTML = '<div class="error-msg">Failed to update notice</div>';
+  } finally {
+    btnUpdateNotice.disabled = false;
+    btnUpdateNotice.textContent = '💾 Save Notice Settings';
   }
 });
 </script>
