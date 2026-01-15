@@ -363,10 +363,11 @@ input:checked + .toggle-slider:before {
     function showPanel(){
   console.log('showPanel() called');
   console.log('maintenanceSection element:', maintenanceSection);
-      maintenanceSection.style.display = 'block';
+      maintenanceSection.style.display = 'block'; // ✅ ADD THIS LINE!
       adminPanel.style.display = 'block';
       updateProductSection.style.display = 'block';
       exchangeRateSection.style.display = 'block';
+      
       btnLogout.style.display = 'inline-block';
       btnLogin.style.display = 'none';
       admTokenInput.style.display = 'none';
@@ -378,7 +379,7 @@ input:checked + .toggle-slider:before {
       loadExchangeRate();
       loadRateHistory();
   console.log('About to call loadMaintenanceNotice()');
-      loadMaintenanceNotice();
+      loadMaintenanceNotice(); // ✅ KEEP THIS TOO
     }
 
     // Login validation
