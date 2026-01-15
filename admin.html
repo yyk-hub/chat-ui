@@ -584,7 +584,8 @@ input:checked + .toggle-slider:before {
         ordersHolder.innerHTML = '<p style="color:#a00">Failed to load orders</p>';
       }
     }
-
+    window.loadOrders = loadOrders;
+    
     function renderOrders(orders, replace = true){
       if(!orders || orders.length === 0) { 
         if (replace) {
