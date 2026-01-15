@@ -79,7 +79,9 @@ async function handlePost(request, env, corsHeaders) {
   try {
     // Check admin token
     const adminToken = request.headers.get('x-admin-token');
-    
+    console.log('Received token from header:', adminToken || '[missing]');
+    console.log('Expected env.ADMIN_TOKEN value:', env.ADMIN_TOKEN ? '[set]' : '[undefined or empty]');
+    console.log('Token match result:', adminToken === env.ADMIN_TOKEN ? 'MATCH' : 'NO MATCH');
     if (!adminToken || adminToken !== env.ADMIN_TOKEN) {
       return new Response(JSON.stringify({
         success: false,
