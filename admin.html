@@ -167,57 +167,6 @@ input:checked + .toggle-slider:before {
       <p id="loginMsg" style="color:#a00"></p>
     </div>
     
-  <!-- Maintenance Notice Management Card -->
-<div class="card" id="maintenanceSection" style="display:none">
-  <h3>🔔 Maintenance Notice Management</h3>
-  
-  <div style="margin-bottom: 20px;">
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-      <strong>Notice Status:</strong>
-      <label class="toggle-switch">
-        <input type="checkbox" id="noticeEnabled">
-        <span class="toggle-slider"></span>
-      </label>
-      <span id="noticeStatusText" style="color: #666;">Disabled</span>
-    </div>
-  </div>
-
-  <div class="form-grid" style="max-width: 600px;">
-    <label for="noticeType">Notice Type:</label>
-    <select id="noticeType">
-      <option value="info">Info (Blue)</option>
-      <option value="warning">Warning (Orange)</option>
-      <option value="error">Error (Red)</option>
-      <option value="success">Success (Green)</option>
-    </select>
-
-    <label for="noticeIcon">Icon:</label>
-    <input type="text" id="noticeIcon" placeholder="🔧" maxlength="2" style="width: 80px;" />
-
-    <label for="noticeTitle">Title:</label>
-    <input type="text" id="noticeTitle" placeholder="Scheduled Maintenance" />
-
-    <label for="noticeMessage">Message:</label>
-    <textarea id="noticeMessage" placeholder="System will be under maintenance..."></textarea>
-
-    <div></div>
-    <button id="btnUpdateNotice" class="btn">💾 Save Notice Settings</button>
-  </div>
-
-  <div id="noticeUpdateMsg"></div>
-
-  <div style="margin-top: 20px;">
-    <strong>Preview:</strong>
-    <div id="noticePreview" class="notice-preview info">
-      <span class="icon">🔧</span>
-      <div>
-        <strong>Scheduled Maintenance</strong><br>
-        <span>System will be under maintenance...</span>
-      </div>
-    </div>
-  </div>
-</div>
-
     <!-- ✅ NEW: Exchange Rate Section -->
     <div class="card" id="exchangeRateSection" style="display:none">
       <h3>💰 Pi Exchange Rate Management</h3>
@@ -229,7 +178,7 @@ input:checked + .toggle-slider:before {
       </div>
 
       <div class="form-grid" style="max-width: 500px;">
-        <label for="newExchangeRate">New Rate (1 Pi = X MYR):</label>
+        <label for="newExchangeRate">New Rate (1 Pi = MYR):</label>
         <input type="number" id="newExchangeRate" placeholder="1.00" step="0.01" min="0.01" />
         <div></div>
         <button id="btnUpdateRate" class="btn">💾 Update Rate</button>
@@ -281,6 +230,56 @@ input:checked + .toggle-slider:before {
   <div id="updateResult" style="margin-top:8px;font-size:13px"></div>
 </div>
 
+      <!-- Maintenance Notice Management Card -->
+<div class="card" id="maintenanceSection" style="display:none">
+  <h3>🔔 Maintenance Notice Management</h3>
+  
+  <div style="margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+      <strong>Notice Status:</strong>
+      <label class="toggle-switch">
+        <input type="checkbox" id="noticeEnabled">
+        <span class="toggle-slider"></span>
+      </label>
+      <span id="noticeStatusText" style="color: #666;">Disabled</span>
+    </div>
+  </div>
+
+  <div class="form-grid" style="max-width: 600px;">
+    <label for="noticeType">Notice Type:</label>
+    <select id="noticeType">
+      <option value="info">Info (Blue)</option>
+      <option value="warning">Warning (Orange)</option>
+      <option value="error">Error (Red)</option>
+      <option value="success">Success (Green)</option>
+    </select>
+
+    <label for="noticeIcon">Icon:</label>
+    <input type="text" id="noticeIcon" placeholder="🔧" maxlength="2" style="width: 80px;" />
+
+    <label for="noticeTitle">Title:</label>
+    <input type="text" id="noticeTitle" placeholder="Scheduled Maintenance" />
+
+    <label for="noticeMessage">Message:</label>
+    <textarea id="noticeMessage" placeholder="System will be under maintenance..."></textarea>
+
+    <div></div>
+    <button id="btnUpdateNotice" class="btn">💾 Save Notice Settings</button>
+  </div>
+
+  <div id="noticeUpdateMsg"></div>
+
+  <div style="margin-top: 20px;">
+    <strong>Preview:</strong>
+    <div id="noticePreview" class="notice-preview info">
+      <span class="icon">🔧</span>
+      <div>
+        <strong>Scheduled Maintenance</strong><br>
+        <span>System will be under maintenance...</span>
+      </div>
+    </div>
+  </div>
+</div>
   </div>
 
 <script>
@@ -584,7 +583,6 @@ input:checked + .toggle-slider:before {
         ordersHolder.innerHTML = '<p style="color:#a00">Failed to load orders</p>';
       }
     }
-    window.loadOrders = loadOrders;
     
     function renderOrders(orders, replace = true){
       if(!orders || orders.length === 0) { 
