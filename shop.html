@@ -26,29 +26,18 @@
       color:#3b2f2f;
     }
 
-    /* Fixed header (frozen) — always visible while products scroll */
-    .header{
-      position:fixed;
-      top:48px;
-      left:0;
-      right:0;
-      z-index:1000;
-      background:var(--bg);
-      padding:6px 0;
-      border-bottom:2px solid #d1c4a1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      height:var(--header-h);
-      box-sizing:border-box;
-      -webkit-backdrop-filter: blur(2px);
-      backdrop-filter: blur(2px);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+   /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      background: #f4ecd6;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 2px solid #d1c4a1;
     }
-
-    /* Make room for the fixed header so content doesn't hide behind it */
-    body { padding-top: calc(var(--header-h) + 48px); }
-
     .header .home-btn,
     .header .cart-btn{
       position:absolute;
