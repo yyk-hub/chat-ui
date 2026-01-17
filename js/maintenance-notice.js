@@ -73,9 +73,14 @@
       border-radius: 50%;
       cursor: pointer;
       font-size: 18px;
-      line-height: 1;
+      line-height: 28px;          /* ✅ ADD THIS - match height */
+      text-align: center;         /* ✅ ADD THIS */
+      padding: 0;                 /* ✅ ADD THIS - remove default padding */
       flex-shrink: 0;
       transition: background 0.2s ease;
+      display: flex;              /* ✅ ADD THIS */
+      align-items: center;        /* ✅ ADD THIS */
+      justify-content: center;    /* ✅ ADD THIS */
     }
     
     .notice-close:hover {
