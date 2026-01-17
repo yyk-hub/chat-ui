@@ -1,6 +1,6 @@
 // Update js/pi-payment.js
-// Pi Network Payment Handler - Version 14 - Cancel Fix
-// Last Updated: 2025-01-04
+// Pi Network Payment Handler - Version 15 - Redirect Fix
+// Last Updated: 2025-01-18
 
 const PiPayment = {
   PI_EXCHANGE_RATE: 1.0, // Fallback default
@@ -241,7 +241,7 @@ const PiPayment = {
       });
 
       // Create payment
-      Pi.createPayment({
+      const payment = await Pi.createPayment({
         amount: piAmount,
         memo: `Order ${orderData.order_id} - ${orderData.prod_name.substring(0, 50)}`,
         metadata: {
@@ -286,12 +286,23 @@ const PiPayment = {
                 timestamp: Date.now()
               }));
               
-              console.log('🔄 Redirecting to order page...');
+              console.log('✅ Payment completed! Closing wallet and redirecting...');
               
-              // ✅ Direct redirect - no overlay in wallet
+              // ✅ CRITICAL FIX: Close wallet first, THEN redirect
+              if (typeof Pi !== 'undefined' && Pi.closePayment) {
+                try {
+                  Pi.closePayment();
+                  console.log('🔒 Wallet closed');
+                } catch (err) {
+                  console.warn('⚠️ Could not close wallet:', err);
+                }
+              }
+              
+              // Redirect after brief delay to ensure wallet closes
               setTimeout(() => {
+                console.log('🔄 Redirecting to order page...');
                 window.location.href = `/order.html?success=1&order_id=${orderData.order_id}`;
-              }, 1000);
+              }, 500);
             })
             .catch(err => {
               console.error('❌ Completion error:', err);
@@ -321,6 +332,15 @@ const PiPayment = {
             console.error('Cancel notification failed:', err);
           });
           
+          // ✅ Close wallet before showing alert
+          if (typeof Pi !== 'undefined' && Pi.closePayment) {
+            try {
+              Pi.closePayment();
+            } catch (err) {
+              console.warn('⚠️ Could not close wallet:', err);
+            }
+          }
+          
           // ✅ Reset button
           this.resetButton();
           
@@ -339,6 +359,15 @@ const PiPayment = {
             msg = '💰 Insufficient Pi balance.';
           } else if (msg.includes('payment scope')) {
             msg = '🔐 Authentication required.\n\nRefresh page.';
+          }
+          
+          // ✅ Close wallet before showing error
+          if (typeof Pi !== 'undefined' && Pi.closePayment) {
+            try {
+              Pi.closePayment();
+            } catch (err) {
+              console.warn('⚠️ Could not close wallet:', err);
+            }
           }
           
           alert(`Payment Failed\n\n${msg}`);
