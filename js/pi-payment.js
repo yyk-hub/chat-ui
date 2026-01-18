@@ -1,6 +1,6 @@
-// Update js/pi-payment.js
-// Pi Network Payment Handler - Version 15 - Redirect Fix
+// Pi Network Payment Handler - Version 17 - Proper SDK Flow
 // Last Updated: 2025-01-18
+// Follows official Pi SDK payment flow documentation
 
 const PiPayment = {
   PI_EXCHANGE_RATE: 1.0, // Fallback default
@@ -9,7 +9,6 @@ const PiPayment = {
   isInitialized: false,
   isAuthenticated: false,
 
-  // NEW: Method to set exchange rate
   setExchangeRate(rate) {
     if (rate && rate > 0) {
       this.PI_EXCHANGE_RATE = rate;
@@ -17,31 +16,21 @@ const PiPayment = {
     }
   },
 
-  // Convert RM to Pi (8 decimal places for precision)
   rmToPi(rmAmount) {
     return (rmAmount / this.PI_EXCHANGE_RATE).toFixed(8);
   },
 
-  // ✅ NEW: Reset confirm button
   resetButton() {
     const btn = document.getElementById('confirmBtn');
-    if (!btn) {
-      console.warn('⚠️ Confirm button not found');
-      return;
-    }
+    if (!btn) return;
     
     console.log('🔄 Resetting confirm button...');
-    
-    // Re-enable button
     btn.disabled = false;
     btn.textContent = '☑️ Confirm Pi Order';
     btn.style.opacity = '1';
     btn.style.cursor = 'pointer';
     btn.style.background = '#14b47e';
-    
-    console.log('✅ Button reset complete');
   },
-
   // Initialize Pi SDK - Sandbox detection is REQUIRED
   async initialize() {
     if (this.isInitialized) {
@@ -51,8 +40,7 @@ const PiPayment = {
 
     try {
       console.log('🔄 Initializing Pi Payment System...');
-      
-      // Detect sandbox vs production based on hostname
+  // Detect sandbox vs production based on hostname
       const isSandbox = window.location.hostname === 'chat-ui-30l.pages.dev' ||
                         window.location.hostname === 'localhost' ||
                         window.location.hostname.includes('127.0.0.1') ||
@@ -68,15 +56,12 @@ const PiPayment = {
         return false;
       }
 
-      // Initialize Pi SDK with explicit sandbox mode
       await Pi.init({
         version: "2.0",
         sandbox: isSandbox
       });
 
       console.log(`✅ Pi SDK initialized in ${isSandbox ? 'SANDBOX' : 'PRODUCTION'} mode`);
-      console.log('⏳ Authentication will happen when user initiates payment');
-
       this.isInitialized = true;
       return true;
 
@@ -98,7 +83,6 @@ const PiPayment = {
     }
   },
 
-  // Authenticate with payments scope - ONLY WHEN NEEDED
   async authenticateWithPayments() {
     if (this.isAuthenticated) {
       console.log('✅ Already authenticated');
@@ -110,7 +94,6 @@ const PiPayment = {
 
       const scopes = ['payments'];
 
-      // Callback for incomplete payments
       function onIncompletePaymentFound(payment) {
         console.log('⚠️ Incomplete payment found:', payment);
         PiPayment.incompletePayment = payment;
@@ -126,12 +109,11 @@ const PiPayment = {
 
     } catch (error) {
       console.error('❌ Authentication failed:', error);
-      this.resetButton(); // ✅ Reset on auth failure
+      this.resetButton();
       throw error;
     }
   },
 
-  // Prompt user about incomplete payment
   async promptIncompletePayment() {
     if (!this.incompletePayment) return;
 
@@ -183,8 +165,7 @@ const PiPayment = {
       alert('📱 Complete in Pi Mobile App:\nWallet → Payments');
     }
   },
-
-  // Complete incomplete payment
+// Complete incomplete payment
   async completeIncompletePayment(paymentId, txid, orderId) {
     try {
       await this.approvePayment(paymentId, orderId).catch(() => {});
@@ -200,8 +181,7 @@ const PiPayment = {
       alert(`❌ Failed: ${error.message}`);
     }
   },
-
-  // Cancel pending payment
+// Cancel pending payment
   async cancelPendingPayment(paymentId, orderId) {
     try {
       const response = await fetch(`${this.API_BASE_URL}/api/pi/cancel`, {
@@ -221,13 +201,11 @@ const PiPayment = {
       alert(`Failed to cancel: ${error.message}`);
     }
   },
-
-  // Create new Pi payment
+// Create new Pi payment
   async createPayment(orderData) {
     try {
       console.log('🔄 Creating Pi payment for order:', orderData.order_id);
 
-      // Authenticate ONLY when creating payment (not on page load)
       if (!this.isAuthenticated) {
         console.log('🔐 Authenticating now...');
         await this.authenticateWithPayments();
@@ -240,8 +218,8 @@ const PiPayment = {
         order_id: orderData.order_id
       });
 
-      // Create payment
-      const payment = await Pi.createPayment({
+      // PHASE I: Payment Creation and Server-Side Approval
+      Pi.createPayment({
         amount: piAmount,
         memo: `Order ${orderData.order_id} - ${orderData.prod_name.substring(0, 50)}`,
         metadata: {
@@ -250,18 +228,36 @@ const PiPayment = {
           total_rm: orderData.total_amt
         }
       }, {
+        // PHASE I - Step 2: SDK passes PaymentID to app for server approval
         onReadyForServerApproval: (paymentId) => {
-          console.log('📝 Approving:', paymentId);
+          console.log('📝 PHASE I: onReadyForServerApproval - PaymentID:', paymentId);
+          
+          // PHASE I - Step 3: Send PaymentID to our server
+          // PHASE I - Step 4: Our server calls Pi /approve API
           this.approvePayment(paymentId, orderData.order_id)
-            .then(() => console.log('✅ Approved'))
-            .catch(err => console.error('❌ Approval failed:', err));
+            .then(() => {
+              console.log('✅ PHASE I Complete: Payment approved by server');
+              // PHASE II now happens automatically (user interaction + blockchain tx)
+            })
+            .catch(err => {
+              console.error('❌ Server approval failed:', err);
+            });
         },
 
+        // PHASE III - Step 1: SDK passes TxID to app for server completion
         onReadyForServerCompletion: (paymentId, txid) => {
-          console.log('✅ Completing:', paymentId, txid);
+          console.log('🎯 PHASE III: onReadyForServerCompletion - TxID:', txid);
+          
+          // PHASE III - Step 2: Send TxID to our server
+          // PHASE III - Step 3: Our server calls Pi /complete API
           this.completePayment(paymentId, txid, orderData.order_id)
             .then(() => {
-              console.log('💾 Clearing cart...');
+              console.log('✅ PHASE III Complete: Payment acknowledged by server');
+              
+              // PHASE III - Step 4: Payment flow will close automatically
+              // After /complete returns 200, Pi SDK closes the wallet
+              
+              // Prepare order data for the next page
               localStorage.removeItem('cartItems');
               localStorage.setItem('orderPlaced', `${orderData.order_id}_${Date.now()}`);
               localStorage.setItem('lastOrderPhone', orderData.phone);
@@ -279,36 +275,28 @@ const PiPayment = {
                 `Products:\n${orderData.prod_name}\n\n` +
                 `✅ Payment verified on Pi Blockchain`;
               
-              // ✅ Store message in sessionStorage for next page
               sessionStorage.setItem('piPaymentSuccess', JSON.stringify({
                 order_id: orderData.order_id,
                 whatsapp_message: whatsappMessage,
                 timestamp: Date.now()
               }));
               
-              console.log('✅ Payment completed successfully!');
+              // Store redirect target - will be handled after wallet closes
+              sessionStorage.setItem('piPaymentComplete', orderData.order_id);
               
-              // ✅ CRITICAL: Mark payment complete, let Pi SDK finish
-              // The redirect will happen when wallet closes naturally
-              // Store a flag so we redirect after wallet closes
-              sessionStorage.setItem('piPaymentRedirect', orderData.order_id);
-              
-              console.log('💡 Payment complete. Wallet will close automatically.');
-              // No manual redirect here - let onReadyForServerCompletion return normally
-              // Pi SDK will close the wallet, then we redirect on page visibility
+              console.log('💡 Data saved. Pi SDK will close wallet automatically.');
+              console.log('🔜 Redirect will happen when wallet closes and page becomes visible.');
             })
             .catch(err => {
-              console.error('❌ Completion error:', err);
+              console.error('❌ Server completion failed:', err);
               alert('Payment completion failed: ' + err.message);
               this.resetButton();
             });
         },
 
-        // ✅ UPDATED: Cancel handler with button reset
         onCancel: (paymentId) => {
           console.log('❌ Payment cancelled by user:', paymentId);
           
-          // Notify backend
           fetch(`${this.API_BASE_URL}/api/pi/cancel`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -318,21 +306,13 @@ const PiPayment = {
             })
           })
           .then(res => res.json())
-          .then(data => {
-            console.log('Cancel response:', data);
-          })
-          .catch(err => {
-            console.error('Cancel notification failed:', err);
-          });
+          .then(data => console.log('Cancel response:', data))
+          .catch(err => console.error('Cancel notification failed:', err));
           
-          // ✅ Reset button
           this.resetButton();
-          
-          // Show user-friendly message
           alert('Payment cancelled.\n\nYou can try again.');
         },
 
-        // ✅ UPDATED: Error handler with button reset
         onError: (error, payment) => {
           console.error('❌ Payment error:', error);
           
@@ -346,20 +326,17 @@ const PiPayment = {
           }
           
           alert(`Payment Failed\n\n${msg}`);
-          
-          // ✅ Reset button
           this.resetButton();
         }
       });
 
     } catch (error) {
       console.error('❌ Create payment error:', error);
-      this.resetButton(); // ✅ Reset on creation error
+      this.resetButton();
       throw error;
     }
   },
 
-  // Approve payment on backend
   async approvePayment(paymentId, orderId) {
     const response = await fetch(`${this.API_BASE_URL}/api/pi/approve`, {
       method: 'POST',
@@ -372,7 +349,6 @@ const PiPayment = {
     return result;
   },
 
-  // Complete payment on backend
   async completePayment(paymentId, txid, orderId) {
     const response = await fetch(`${this.API_BASE_URL}/api/pi/complete`, {
       method: 'POST',
@@ -388,7 +364,7 @@ const PiPayment = {
 
 // Auto-initialize with delay
 if (typeof Pi !== 'undefined') {
-  const initDelay = 1500; // Wait for checkout.html to finish
+  const initDelay = 1500;
   
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -399,34 +375,44 @@ if (typeof Pi !== 'undefined') {
   }
 }
 
-// ✅ NEW: Listen for when wallet closes and redirect if payment completed
+// ✅ CRITICAL: Handle navigation after Pi SDK closes the wallet
+// According to Pi docs: "The payment flow closes. Your app is now visible to the user again."
+// This happens AFTER /complete returns 200
 if (typeof document !== 'undefined') {
-  // Check when page becomes visible again (wallet closed)
+  // Listen for when the page becomes visible (wallet closed)
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-      const redirectOrderId = sessionStorage.getItem('piPaymentRedirect');
-      if (redirectOrderId) {
-        console.log('🔄 Wallet closed, redirecting to order page...');
-        sessionStorage.removeItem('piPaymentRedirect');
+      const completedOrderId = sessionStorage.getItem('piPaymentComplete');
+      if (completedOrderId) {
+        console.log('👁️ Page visible again - wallet closed by Pi SDK');
+        console.log('🔄 Navigating to order page...');
         
-        // Short delay to ensure wallet is fully closed
+        sessionStorage.removeItem('piPaymentComplete');
+        
+        // Give a moment for any Pi SDK cleanup, then navigate
         setTimeout(() => {
-          window.location.href = `/order.html?success=1&order_id=${redirectOrderId}`;
-        }, 300);
+          window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
+        }, 500);
       }
     }
   });
   
-  // Also check on page focus (backup mechanism)
+  // Backup: Also check on window focus
+  let focusHandled = false;
   window.addEventListener('focus', () => {
-    const redirectOrderId = sessionStorage.getItem('piPaymentRedirect');
-    if (redirectOrderId) {
-      console.log('🔄 Page focused, redirecting to order page...');
-      sessionStorage.removeItem('piPaymentRedirect');
+    if (focusHandled) return;
+    
+    const completedOrderId = sessionStorage.getItem('piPaymentComplete');
+    if (completedOrderId) {
+      console.log('🎯 Window focused - wallet closed');
+      console.log('🔄 Navigating to order page...');
+      
+      focusHandled = true;
+      sessionStorage.removeItem('piPaymentComplete');
       
       setTimeout(() => {
-        window.location.href = `/order.html?success=1&order_id=${redirectOrderId}`;
-      }, 300);
+        window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
+      }, 500);
     }
   });
 }
