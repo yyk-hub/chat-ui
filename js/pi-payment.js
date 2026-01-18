@@ -288,12 +288,14 @@ const PiPayment = {
               
               console.log('✅ Payment completed successfully!');
               
-              // ✅ CRITICAL: Use window.location.replace() instead of href
-              // This forces a full page reload and exits the Pi wallet context
-              console.log('🔄 Redirecting to order page...');
-              setTimeout(() => {
-                window.location.replace(`/order.html?success=1&order_id=${orderData.order_id}`);
-              }, 1000);
+              // ✅ CRITICAL: Mark payment complete, let Pi SDK finish
+              // The redirect will happen when wallet closes naturally
+              // Store a flag so we redirect after wallet closes
+              sessionStorage.setItem('piPaymentRedirect', orderData.order_id);
+              
+              console.log('💡 Payment complete. Wallet will close automatically.');
+              // No manual redirect here - let onReadyForServerCompletion return normally
+              // Pi SDK will close the wallet, then we redirect on page visibility
             })
             .catch(err => {
               console.error('❌ Completion error:', err);
@@ -395,6 +397,38 @@ if (typeof Pi !== 'undefined') {
   } else {
     setTimeout(() => PiPayment.initialize(), initDelay);
   }
+}
+
+// ✅ NEW: Listen for when wallet closes and redirect if payment completed
+if (typeof document !== 'undefined') {
+  // Check when page becomes visible again (wallet closed)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      const redirectOrderId = sessionStorage.getItem('piPaymentRedirect');
+      if (redirectOrderId) {
+        console.log('🔄 Wallet closed, redirecting to order page...');
+        sessionStorage.removeItem('piPaymentRedirect');
+        
+        // Short delay to ensure wallet is fully closed
+        setTimeout(() => {
+          window.location.href = `/order.html?success=1&order_id=${redirectOrderId}`;
+        }, 300);
+      }
+    }
+  });
+  
+  // Also check on page focus (backup mechanism)
+  window.addEventListener('focus', () => {
+    const redirectOrderId = sessionStorage.getItem('piPaymentRedirect');
+    if (redirectOrderId) {
+      console.log('🔄 Page focused, redirecting to order page...');
+      sessionStorage.removeItem('piPaymentRedirect');
+      
+      setTimeout(() => {
+        window.location.href = `/order.html?success=1&order_id=${redirectOrderId}`;
+      }, 300);
+    }
+  });
 }
 
 // Export globally
