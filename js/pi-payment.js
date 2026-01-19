@@ -375,47 +375,5 @@ if (typeof Pi !== 'undefined') {
   }
 }
 
-// ✅ CRITICAL: Handle navigation after Pi SDK closes the wallet
-// According to Pi docs: "The payment flow closes. Your app is now visible to the user again."
-// This happens AFTER /complete returns 200
-if (typeof document !== 'undefined') {
-  // Listen for when the page becomes visible (wallet closed)
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      const completedOrderId = sessionStorage.getItem('piPaymentComplete');
-      if (completedOrderId) {
-        console.log('👁️ Page visible again - wallet closed by Pi SDK');
-        console.log('🔄 Navigating to order page...');
-        
-        sessionStorage.removeItem('piPaymentComplete');
-        
-        // Give a moment for any Pi SDK cleanup, then navigate
-        setTimeout(() => {
-          window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
-        }, 500);
-      }
-    }
-  });
-  
-  // Backup: Also check on window focus
-  let focusHandled = false;
-  window.addEventListener('focus', () => {
-    if (focusHandled) return;
-    
-    const completedOrderId = sessionStorage.getItem('piPaymentComplete');
-    if (completedOrderId) {
-      console.log('🎯 Window focused - wallet closed');
-      console.log('🔄 Navigating to order page...');
-      
-      focusHandled = true;
-      sessionStorage.removeItem('piPaymentComplete');
-      
-      setTimeout(() => {
-        window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
-      }, 500);
-    }
-  });
-}
-
 // Export globally
 window.PiPayment = PiPayment;
