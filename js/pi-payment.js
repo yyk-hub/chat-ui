@@ -411,9 +411,32 @@ const PiPayment = {
               
               // Close button handler
               document.getElementById('closeOverlayBtn').addEventListener('click', () => {
+                console.log('🔒 Closing success overlay');
                 overlay.remove();
-                // Optionally redirect to home
-                // window.location.href = '/index.html';
+                
+                // ✅ Reset the button in case user wants to make another order
+                const btn = document.getElementById('confirmBtn');
+                if (btn) {
+                  btn.style.display = 'none'; // Hide it since order is already placed
+                }
+                
+                // Optionally show "View Order History" button instead
+                const historyBtn = document.getElementById('viewHistoryBtn');
+                if (!historyBtn) {
+                  const newHistoryBtn = document.createElement('a');
+                  newHistoryBtn.id = 'viewHistoryBtn';
+                  newHistoryBtn.href = 'order.html';
+                  newHistoryBtn.className = 'confirm-btn';
+                  newHistoryBtn.style.background = '#996600';
+                  newHistoryBtn.style.textDecoration = 'none';
+                  newHistoryBtn.style.textAlign = 'center';
+                  newHistoryBtn.innerHTML = '📋 View Order History';
+                  
+                  const confirmBtn = document.getElementById('confirmBtn');
+                  if (confirmBtn && confirmBtn.parentNode) {
+                    confirmBtn.parentNode.insertBefore(newHistoryBtn, confirmBtn.nextSibling);
+                  }
+                }
               });
               
               console.log('✅ Success overlay displayed');
