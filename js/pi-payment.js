@@ -381,45 +381,53 @@ if (typeof Pi !== 'undefined') {
 if (typeof document !== 'undefined') {
   console.log('🔧 Setting up Pi payment completion handlers...');
   
+  let redirecting = false; // Prevent duplicate redirects
+  
   // Listen for when the page becomes visible (wallet closed)
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      const completedOrderId = sessionStorage.getItem('piPaymentComplete');
-      if (completedOrderId) {
-        console.log('👁️ Page visible again - wallet closed by Pi SDK');
-        console.log('🔄 Navigating to order page...');
-        
-        sessionStorage.removeItem('piPaymentComplete');
-        
-        // Reset button in case we're still on checkout page
-        const btn = document.getElementById('confirmBtn');
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = '☑️ Confirm Pi Order';
-          btn.style.opacity = '1';
-          btn.style.cursor = 'pointer';
-          btn.style.background = '#14b47e';
-        }
-        
-        // Give a moment for any Pi SDK cleanup, then navigate
-        setTimeout(() => {
-          window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
-        }, 500);
+    if (document.hidden || redirecting) return;
+    
+    const completedOrderId = sessionStorage.getItem('piPaymentComplete');
+    if (completedOrderId) {
+      console.log('👁️ Page visible again - wallet closed by Pi SDK');
+      console.log('🔄 Preparing to redirect...');
+      
+      redirecting = true;
+      sessionStorage.removeItem('piPaymentComplete');
+      
+      // Reset button IMMEDIATELY
+      const btn = document.getElementById('confirmBtn');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '☑️ Confirm Pi Order';
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.style.background = '#14b47e';
+        console.log('✅ Button reset');
       }
+      
+      // Show loading message
+      if (typeof showToast === 'function') {
+        showToast('✅ Payment successful! Loading order...', 'success', 2000);
+      }
+      
+      // Navigate immediately (don't wait)
+      console.log('🔄 Redirecting to order page NOW...');
+      window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
     }
   });
   
-  // Backup: Also check on window focus
+  // Backup: Also check on window focus (some browsers don't fire visibilitychange)
   let focusHandled = false;
   window.addEventListener('focus', () => {
-    if (focusHandled) return;
+    if (focusHandled || redirecting) return;
     
     const completedOrderId = sessionStorage.getItem('piPaymentComplete');
     if (completedOrderId) {
       console.log('🎯 Window focused - wallet closed');
-      console.log('🔄 Navigating to order page...');
       
       focusHandled = true;
+      redirecting = true;
       sessionStorage.removeItem('piPaymentComplete');
       
       // Reset button
@@ -430,12 +438,29 @@ if (typeof document !== 'undefined') {
         btn.style.opacity = '1';
         btn.style.cursor = 'pointer';
         btn.style.background = '#14b47e';
+        console.log('✅ Button reset (focus)');
       }
       
-      setTimeout(() => {
-        window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
-      }, 500);
+      console.log('🔄 Redirecting to order page NOW (focus)...');
+      window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
     }
+  });
+  
+  // Additional safety: Check for stuck payment on page load
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      if (redirecting) return;
+      
+      const completedOrderId = sessionStorage.getItem('piPaymentComplete');
+      if (completedOrderId) {
+        console.log('⚠️ Found completed payment on page load - redirecting...');
+        
+        redirecting = true;
+        sessionStorage.removeItem('piPaymentComplete');
+        
+        window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
+      }
+    }, 1000);
   });
 }
 
