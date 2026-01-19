@@ -680,7 +680,6 @@ async function confirmOrder() {
 
   if (!cart.length) {
     showToast('🛒 Your cart is empty', 'error', 3000);
-    alert("Cart is empty!");
     btn.disabled = false;
     btn.innerText = isPiBrowser ? "☑️ Confirm Pi Order" : "✅ Confirm Order";
     return;
