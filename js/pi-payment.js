@@ -1,6 +1,6 @@
-// Pi Network Payment Handler - Version 17 - Proper SDK Flow
-// Last Updated: 2025-01-18
-// Follows official Pi SDK payment flow documentation
+// Pi Network Payment Handler - Version 18 - Copy Overlay Fix
+// Last Updated: 2025-01-19
+// Based on working Version 13 with improvements
 
 const PiPayment = {
   PI_EXCHANGE_RATE: 1.0, // Fallback default
@@ -20,18 +20,6 @@ const PiPayment = {
     return (rmAmount / this.PI_EXCHANGE_RATE).toFixed(8);
   },
 
-  resetButton() {
-    const btn = document.getElementById('confirmBtn');
-    if (!btn) return;
-    
-    console.log('🔄 Resetting confirm button...');
-    btn.disabled = false;
-    btn.textContent = '☑️ Confirm Pi Order';
-    btn.style.opacity = '1';
-    btn.style.cursor = 'pointer';
-    btn.style.background = '#14b47e';
-  },
-// Initialize Pi SDK - Sandbox detection is REQUIRED
   async initialize() {
     if (this.isInitialized) {
       console.log('⏭️ Already initialized');
@@ -40,7 +28,7 @@ const PiPayment = {
 
     try {
       console.log('🔄 Initializing Pi Payment System...');
-  // Detect sandbox vs production based on hostname
+      // Detect sandbox vs production based on hostname
       const isSandbox = window.location.hostname === 'chat-ui-30l.pages.dev' ||
                         window.location.hostname === 'localhost' ||
                         window.location.hostname.includes('127.0.0.1') ||
@@ -109,7 +97,6 @@ const PiPayment = {
 
     } catch (error) {
       console.error('❌ Authentication failed:', error);
-      this.resetButton();
       throw error;
     }
   },
@@ -175,7 +162,7 @@ const PiPayment = {
       alert(`✅ Payment completed!\n\nOrder: ${orderId}`);
       
       setTimeout(() => {
-        window.location.href = `/order-success.html?order_id=${orderId}`;
+        window.location.href = `/order.html?success=1&order_id=${orderId}`;
       }, 2000);
     } catch (error) {
       alert(`❌ Failed: ${error.message}`);
@@ -218,7 +205,6 @@ const PiPayment = {
         order_id: orderData.order_id
       });
 
-      // PHASE I: Payment Creation and Server-Side Approval
       Pi.createPayment({
         amount: piAmount,
         memo: `Order ${orderData.order_id} - ${orderData.prod_name.substring(0, 50)}`,
@@ -228,36 +214,23 @@ const PiPayment = {
           total_rm: orderData.total_amt
         }
       }, {
-        // PHASE I - Step 2: SDK passes PaymentID to app for server approval
         onReadyForServerApproval: (paymentId) => {
-          console.log('📝 PHASE I: onReadyForServerApproval - PaymentID:', paymentId);
-          
-          // PHASE I - Step 3: Send PaymentID to our server
-          // PHASE I - Step 4: Our server calls Pi /approve API
+          console.log('📝 PHASE I: Approving payment:', paymentId);
           this.approvePayment(paymentId, orderData.order_id)
-            .then(() => {
-              console.log('✅ PHASE I Complete: Payment approved by server');
-              // PHASE II now happens automatically (user interaction + blockchain tx)
-            })
-            .catch(err => {
-              console.error('❌ Server approval failed:', err);
-            });
+            .then(() => console.log('✅ PHASE I Complete: Approved'))
+            // PHASE II now happens automatically (user interaction + blockchain tx)
+            .catch(err => console.error('❌ Approval failed:', err));
         },
 
-        // PHASE III - Step 1: SDK passes TxID to app for server completion
         onReadyForServerCompletion: (paymentId, txid) => {
-          console.log('🎯 PHASE III: onReadyForServerCompletion - TxID:', txid);
-          
+          console.log('✅ PHASE III: Completing payment:', paymentId, txid);
           // PHASE III - Step 2: Send TxID to our server
           // PHASE III - Step 3: Our server calls Pi /complete API
           this.completePayment(paymentId, txid, orderData.order_id)
             .then(() => {
-              console.log('✅ PHASE III Complete: Payment acknowledged by server');
+              console.log('✅ PHASE III Complete: Payment verified on blockchain');
               
-              // PHASE III - Step 4: Payment flow will close automatically
-              // After /complete returns 200, Pi SDK closes the wallet
-              
-              // Prepare order data for the next page
+              // Clear cart
               localStorage.removeItem('cartItems');
               localStorage.setItem('orderPlaced', `${orderData.order_id}_${Date.now()}`);
               localStorage.setItem('lastOrderPhone', orderData.phone);
@@ -275,27 +248,168 @@ const PiPayment = {
                 `Products:\n${orderData.prod_name}\n\n` +
                 `✅ Payment verified on Pi Blockchain`;
               
-              sessionStorage.setItem('piPaymentSuccess', JSON.stringify({
-                order_id: orderData.order_id,
-                whatsapp_message: whatsappMessage,
-                timestamp: Date.now()
-              }));
+              // ✅ SHOW OVERLAY IMMEDIATELY - This is what works!
+              const overlay = document.createElement('div');
+              overlay.id = 'pi-success-overlay';
+              overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 99999;
+                padding: 20px;
+                box-sizing: border-box;
+              `;
               
-              // Store redirect target - will be handled after wallet closes
-              sessionStorage.setItem('piPaymentComplete', orderData.order_id);
+              overlay.innerHTML = `
+                <div style="
+                  background: white;
+                  padding: 24px;
+                  border-radius: 16px;
+                  text-align: center;
+                  max-width: 420px;
+                  width: 100%;
+                  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                ">
+                  <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                  <h2 style="color: #1c994a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Payment Successful!</h2>
+                  <p style="color: #666; margin: 8px 0 20px 0; font-size: 14px;">
+                    Order ID: <strong style="color: #333;">${orderData.order_id}</strong>
+                  </p>
+                  
+                  <div style="
+                    background: #f5f5f5;
+                    padding: 16px;
+                    border-radius: 10px;
+                    margin-bottom: 16px;
+                    text-align: left;
+                    max-height: 220px;
+                    overflow-y: auto;
+                    font-size: 13px;
+                    line-height: 1.6;
+                  ">
+                    <pre style="
+                      white-space: pre-wrap;
+                      word-wrap: break-word;
+                      margin: 0;
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                      color: #333;
+                    ">${whatsappMessage}</pre>
+                  </div>
+                  
+                  <button id="copyOrderBtn" style="
+                    display: block;
+                    background: linear-gradient(135deg, #1c994a 0%, #14b47e 100%);
+                    color: white;
+                    padding: 16px 28px;
+                    border: none;
+                    border-radius: 10px;
+                    font-weight: 700;
+                    font-size: 16px;
+                    margin-bottom: 12px;
+                    cursor: pointer;
+                    width: 100%;
+                    box-shadow: 0 4px 12px rgba(28, 153, 74, 0.3);
+                  ">
+                    📋 Copy Order Details
+                  </button>
+                  
+                  <a href="https://wa.me/60168101358?text=${encodeURIComponent('Hi! I just completed a Pi payment.\n\nOrder ID: ' + orderData.order_id)}" 
+                     target="_blank" 
+                     style="
+                    display: block;
+                    background: #25D366;
+                    color: white;
+                    padding: 14px 24px;
+                    border: none;
+                    border-radius: 10px;
+                    font-weight: 600;
+                    font-size: 15px;
+                    margin-bottom: 12px;
+                    cursor: pointer;
+                    text-decoration: none;
+                    width: 100%;
+                    box-sizing: border-box;
+                    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+                  ">
+                    💬 Send via WhatsApp
+                  </a>
+                  
+                  <button id="viewOrderBtn" style="
+                    background: #996600;
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    width: 100%;
+                  ">
+                    📦 View My Order
+                  </button>
+                  
+                  <button id="closeOverlayBtn" style="
+                    background: transparent;
+                    color: #999;
+                    border: none;
+                    padding: 10px;
+                    font-size: 13px;
+                    cursor: pointer;
+                    margin-top: 8px;
+                    width: 100%;
+                  ">
+                    Close
+                  </button>
+                </div>
+              `;
               
-              console.log('💡 Data saved. Pi SDK will close wallet automatically.');
-              console.log('🔜 Redirect will happen when wallet closes and page becomes visible.');
+              document.body.appendChild(overlay);
+              
+              // Copy button handler
+              document.getElementById('copyOrderBtn').addEventListener('click', async () => {
+                const btn = document.getElementById('copyOrderBtn');
+                try {
+                  await navigator.clipboard.writeText(whatsappMessage);
+                  btn.textContent = '✅ Copied to Clipboard!';
+                  btn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+                  setTimeout(() => {
+                    btn.textContent = '📋 Copy Order Details';
+                    btn.style.background = 'linear-gradient(135deg, #1c994a 0%, #14b47e 100%)';
+                  }, 2000);
+                } catch (err) {
+                  console.error('Copy failed:', err);
+                  btn.textContent = '⚠️ Copy failed - try manually';
+                }
+              });
+              
+              // View Order button handler
+              document.getElementById('viewOrderBtn').addEventListener('click', () => {
+                window.location.href = `/order.html?success=1&order_id=${orderData.order_id}`;
+              });
+              
+              // Close button handler
+              document.getElementById('closeOverlayBtn').addEventListener('click', () => {
+                overlay.remove();
+                // Optionally redirect to home
+                // window.location.href = '/index.html';
+              });
+              
+              console.log('✅ Success overlay displayed');
             })
             .catch(err => {
-              console.error('❌ Server completion failed:', err);
+              console.error('❌ Completion error:', err);
               alert('Payment completion failed: ' + err.message);
-              this.resetButton();
             });
         },
 
         onCancel: (paymentId) => {
-          console.log('❌ Payment cancelled by user:', paymentId);
+          console.log('❌ Payment cancelled:', paymentId);
           
           fetch(`${this.API_BASE_URL}/api/pi/cancel`, {
             method: 'POST',
@@ -309,7 +423,6 @@ const PiPayment = {
           .then(data => console.log('Cancel response:', data))
           .catch(err => console.error('Cancel notification failed:', err));
           
-          this.resetButton();
           alert('Payment cancelled.\n\nYou can try again.');
         },
 
@@ -326,13 +439,11 @@ const PiPayment = {
           }
           
           alert(`Payment Failed\n\n${msg}`);
-          this.resetButton();
         }
       });
 
     } catch (error) {
       console.error('❌ Create payment error:', error);
-      this.resetButton();
       throw error;
     }
   },
@@ -362,7 +473,7 @@ const PiPayment = {
   }
 };
 
-// Auto-initialize with delay
+// Auto-initialize
 if (typeof Pi !== 'undefined') {
   const initDelay = 1500;
   
