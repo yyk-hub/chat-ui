@@ -31,7 +31,7 @@ const PiPayment = {
     btn.style.cursor = 'pointer';
     btn.style.background = '#14b47e';
   },
-  // Initialize Pi SDK - Sandbox detection is REQUIRED
+// Initialize Pi SDK - Sandbox detection is REQUIRED
   async initialize() {
     if (this.isInitialized) {
       console.log('⏭️ Already initialized');
@@ -373,6 +373,70 @@ if (typeof Pi !== 'undefined') {
   } else {
     setTimeout(() => PiPayment.initialize(), initDelay);
   }
+}
+
+// ✅ CRITICAL: Handle navigation after Pi SDK closes the wallet
+// According to Pi docs: "The payment flow closes. Your app is now visible to the user again."
+// This happens AFTER /complete returns 200
+if (typeof document !== 'undefined') {
+  console.log('🔧 Setting up Pi payment completion handlers...');
+  
+  // Listen for when the page becomes visible (wallet closed)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      const completedOrderId = sessionStorage.getItem('piPaymentComplete');
+      if (completedOrderId) {
+        console.log('👁️ Page visible again - wallet closed by Pi SDK');
+        console.log('🔄 Navigating to order page...');
+        
+        sessionStorage.removeItem('piPaymentComplete');
+        
+        // Reset button in case we're still on checkout page
+        const btn = document.getElementById('confirmBtn');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '☑️ Confirm Pi Order';
+          btn.style.opacity = '1';
+          btn.style.cursor = 'pointer';
+          btn.style.background = '#14b47e';
+        }
+        
+        // Give a moment for any Pi SDK cleanup, then navigate
+        setTimeout(() => {
+          window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
+        }, 500);
+      }
+    }
+  });
+  
+  // Backup: Also check on window focus
+  let focusHandled = false;
+  window.addEventListener('focus', () => {
+    if (focusHandled) return;
+    
+    const completedOrderId = sessionStorage.getItem('piPaymentComplete');
+    if (completedOrderId) {
+      console.log('🎯 Window focused - wallet closed');
+      console.log('🔄 Navigating to order page...');
+      
+      focusHandled = true;
+      sessionStorage.removeItem('piPaymentComplete');
+      
+      // Reset button
+      const btn = document.getElementById('confirmBtn');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '☑️ Confirm Pi Order';
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.style.background = '#14b47e';
+      }
+      
+      setTimeout(() => {
+        window.location.href = `/order.html?success=1&order_id=${completedOrderId}`;
+      }, 500);
+    }
+  });
 }
 
 // Export globally
