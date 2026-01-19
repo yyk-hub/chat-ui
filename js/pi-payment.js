@@ -20,6 +20,22 @@ const PiPayment = {
     return (rmAmount / this.PI_EXCHANGE_RATE).toFixed(8);
   },
 
+  // ✅ Reset button to initial state
+  resetButton() {
+    const btn = document.getElementById('confirmBtn');
+    if (!btn) {
+      console.warn('⚠️ Confirm button not found');
+      return;
+    }
+    
+    console.log('🔄 Resetting confirm button...');
+    btn.disabled = false;
+    btn.textContent = '☑️ Confirm Pi Order';
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+    btn.style.background = '#14b47e';
+  },
+
   async initialize() {
     if (this.isInitialized) {
       console.log('⏭️ Already initialized');
@@ -411,6 +427,7 @@ const PiPayment = {
         onCancel: (paymentId) => {
           console.log('❌ Payment cancelled:', paymentId);
           
+          // Notify backend
           fetch(`${this.API_BASE_URL}/api/pi/cancel`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -422,6 +439,9 @@ const PiPayment = {
           .then(res => res.json())
           .then(data => console.log('Cancel response:', data))
           .catch(err => console.error('Cancel notification failed:', err));
+          
+          // ✅ Reset button to allow retry
+          this.resetButton();
           
           alert('Payment cancelled.\n\nYou can try again.');
         },
@@ -438,12 +458,19 @@ const PiPayment = {
             msg = '🔐 Authentication required.\n\nRefresh page.';
           }
           
+          // ✅ Reset button on error
+          this.resetButton();
+          
           alert(`Payment Failed\n\n${msg}`);
         }
       });
 
     } catch (error) {
       console.error('❌ Create payment error:', error);
+      
+      // ✅ Reset button if payment creation fails
+      this.resetButton();
+      
       throw error;
     }
   },
