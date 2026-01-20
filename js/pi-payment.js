@@ -387,57 +387,86 @@ const PiPayment = {
               
               document.body.appendChild(overlay);
               
-              // Copy button handler
-              document.getElementById('copyOrderBtn').addEventListener('click', async () => {
-                const btn = document.getElementById('copyOrderBtn');
-                try {
-                  await navigator.clipboard.writeText(whatsappMessage);
-                  btn.textContent = '✅ Copied to Clipboard!';
-                  btn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
-                  setTimeout(() => {
-                    btn.textContent = '📋 Copy Order Details';
-                    btn.style.background = 'linear-gradient(135deg, #1c994a 0%, #14b47e 100%)';
-                  }, 2000);
-                } catch (err) {
-                  console.error('Copy failed:', err);
-                  btn.textContent = '⚠️ Copy failed - try manually';
-                }
-              });
-              
-              // View Order button handler
-              document.getElementById('viewOrderBtn').addEventListener('click', () => {
-                window.location.href = `/order.html?success=1&order_id=${orderData.order_id}`;
-              });
-              
-              // Close button handler
-              document.getElementById('closeOverlayBtn').addEventListener('click', () => {
-                console.log('🔒 Closing success overlay');
-                overlay.remove();
-                
-                // ✅ Reset the button in case user wants to make another order
-                const btn = document.getElementById('confirmBtn');
-                if (btn) {
-                  btn.style.display = 'none'; // Hide it since order is already placed
+              // ✅ CRITICAL: Wait for DOM to be ready before attaching listeners
+              // Use setTimeout to ensure overlay is fully rendered
+              setTimeout(() => {
+                // Copy button handler
+                const copyBtn = document.getElementById('copyOrderBtn');
+                if (copyBtn) {
+                  copyBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('📋 Copy button clicked');
+                    
+                    try {
+                      await navigator.clipboard.writeText(whatsappMessage);
+                      copyBtn.textContent = '✅ Copied to Clipboard!';
+                      copyBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+                      setTimeout(() => {
+                        copyBtn.textContent = '📋 Copy Order Details';
+                        copyBtn.style.background = 'linear-gradient(135deg, #1c994a 0%, #14b47e 100%)';
+                      }, 2000);
+                    } catch (err) {
+                      console.error('Copy failed:', err);
+                      copyBtn.textContent = '⚠️ Copy failed - try manually';
+                    }
+                  });
+                } else {
+                  console.error('❌ Copy button not found');
                 }
                 
-                // Optionally show "View Order History" button instead
-                const historyBtn = document.getElementById('viewHistoryBtn');
-                if (!historyBtn) {
-                  const newHistoryBtn = document.createElement('a');
-                  newHistoryBtn.id = 'viewHistoryBtn';
-                  newHistoryBtn.href = 'order.html';
-                  newHistoryBtn.className = 'confirm-btn';
-                  newHistoryBtn.style.background = '#996600';
-                  newHistoryBtn.style.textDecoration = 'none';
-                  newHistoryBtn.style.textAlign = 'center';
-                  newHistoryBtn.innerHTML = '📋 View Order History';
-                  
-                  const confirmBtn = document.getElementById('confirmBtn');
-                  if (confirmBtn && confirmBtn.parentNode) {
-                    confirmBtn.parentNode.insertBefore(newHistoryBtn, confirmBtn.nextSibling);
-                  }
+                // View Order button handler
+                const viewBtn = document.getElementById('viewOrderBtn');
+                if (viewBtn) {
+                  viewBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('📦 View order clicked');
+                    window.location.href = `/order.html?success=1&order_id=${orderData.order_id}`;
+                  });
+                } else {
+                  console.error('❌ View order button not found');
                 }
-              });
+                
+                // Close button handler
+                const closeBtn = document.getElementById('closeOverlayBtn');
+                if (closeBtn) {
+                  closeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔒 Closing success overlay');
+                    overlay.remove();
+                    
+                    // ✅ Reset the button in case user wants to make another order
+                    const btn = document.getElementById('confirmBtn');
+                    if (btn) {
+                      btn.style.display = 'none'; // Hide it since order is already placed
+                    }
+                    
+                    // Optionally show "View Order History" button instead
+                    const historyBtn = document.getElementById('viewHistoryBtn');
+                    if (!historyBtn) {
+                      const newHistoryBtn = document.createElement('a');
+                      newHistoryBtn.id = 'viewHistoryBtn';
+                      newHistoryBtn.href = 'order.html';
+                      newHistoryBtn.className = 'confirm-btn';
+                      newHistoryBtn.style.background = '#996600';
+                      newHistoryBtn.style.textDecoration = 'none';
+                      newHistoryBtn.style.textAlign = 'center';
+                      newHistoryBtn.innerHTML = '📋 View Order History';
+                      
+                      const confirmBtn = document.getElementById('confirmBtn');
+                      if (confirmBtn && confirmBtn.parentNode) {
+                        confirmBtn.parentNode.insertBefore(newHistoryBtn, confirmBtn.nextSibling);
+                      }
+                    }
+                  });
+                } else {
+                  console.error('❌ Close button not found');
+                }
+                
+                console.log('✅ All overlay button listeners attached');
+              }, 100); // Small delay to ensure DOM is ready
               
               console.log('✅ Success overlay displayed');
             })
