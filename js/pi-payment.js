@@ -548,6 +548,13 @@ const PiPayment = {
 
     const result = await response.json();
     if (!result.success) throw new Error(result.error || 'Completion failed');
+
+    // ✅ NEW: Log user_uid if returned
+  if (result.user_uid) {
+    console.log('✅ User UID captured for refunds:', result.user_uid);
+  } else {
+    console.warn('⚠️ No user_uid returned from backend');
+  }
     return result;
   }
 };
