@@ -1,5 +1,5 @@
 // functions/api/pi/complete.js
-// Pi Payment Completion Handler - WITH USER_UID EXTRACTION
+// Pi Payment Completion Handler - FIXED: Handles undefined user_uid
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -75,7 +75,7 @@ export async function onRequestPost(context) {
           order_id: order.order_id,
           payment_id,
           txid,
-          user_uid: order.user_uid
+          user_uid: order.user_uid || null
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -99,25 +99,25 @@ export async function onRequestPost(context) {
     }
 
     const paymentData = await verifyResponse.json();
+    
+    // ✅ CRITICAL FIX: Extract user_uid with fallback to null
+    const userUid = paymentData.user?.uid || null;
+    const piUsername = paymentData.user?.username || null;
+    
     console.log('✅ Payment data from Pi:', {
       identifier: paymentData.identifier,
       amount: paymentData.amount,
       status: paymentData.status,
       has_transaction: !!paymentData.transaction,
-      has_user: !!paymentData.user
+      has_user: !!paymentData.user,
+      user_uid: userUid,
+      username: piUsername
     });
-
-    // ✅ CRITICAL: Extract user_uid from payment data
-    const userUid = paymentData.user?.uid;
-    const piUsername = paymentData.user?.username;
     
     if (userUid) {
-      console.log('✅ User UID extracted:', {
-        uid: userUid,
-        username: piUsername || 'N/A'
-      });
+      console.log('✅ User UID extracted:', userUid);
     } else {
-      console.warn('⚠️ No user UID in payment data!');
+      console.warn('⚠️ No user UID in payment data - will save as NULL');
     }
 
     // STEP 3: Complete payment on Pi Network if not already done
@@ -158,21 +158,36 @@ export async function onRequestPost(context) {
     if (order) {
       console.log('🔄 Updating order in database...');
       
-      // ✅ UPDATED: Include user_uid in the update
-      const updateResult = await env.DB.prepare(`
-        UPDATE ceo_orders
-        SET order_status = 'Paid',
-            pi_payment_id = ?,
-            pi_txid = ?,
-            pymt_method = 'Pi Network',
-            user_uid = ?
-        WHERE order_id = ?
-      `).bind(payment_id, txid, userUid, order.order_id).run();
+      // ✅ FIX: Use conditional SQL based on whether user_uid exists
+      let updateResult;
+      
+      if (userUid) {
+        // If we have user_uid, update it
+        updateResult = await env.DB.prepare(`
+          UPDATE ceo_orders
+          SET order_status = 'Paid',
+              pi_payment_id = ?,
+              pi_txid = ?,
+              pymt_method = 'Pi Network',
+              user_uid = ?
+          WHERE order_id = ?
+        `).bind(payment_id, txid, userUid, order.order_id).run();
+      } else {
+        // If no user_uid, don't try to update it (avoid undefined error)
+        updateResult = await env.DB.prepare(`
+          UPDATE ceo_orders
+          SET order_status = 'Paid',
+              pi_payment_id = ?,
+              pi_txid = ?,
+              pymt_method = 'Pi Network'
+          WHERE order_id = ?
+        `).bind(payment_id, txid, order.order_id).run();
+      }
 
       console.log('✅ Database update result:', {
         success: updateResult.success,
         changes: updateResult.meta?.changes,
-        user_uid_saved: userUid
+        user_uid_saved: userUid || 'not saved (null)'
       });
 
       // Verify update worked
@@ -189,7 +204,7 @@ export async function onRequestPost(context) {
         order_id: updatedOrder.order_id,
         status: updatedOrder.order_status,
         txid: updatedOrder.pi_txid,
-        user_uid: updatedOrder.user_uid
+        user_uid: updatedOrder.user_uid || 'NULL'
       });
 
       return new Response(JSON.stringify({
@@ -199,7 +214,7 @@ export async function onRequestPost(context) {
         payment_id,
         txid,
         order_status: updatedOrder.order_status,
-        user_uid: updatedOrder.user_uid
+        user_uid: updatedOrder.user_uid || null
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -213,7 +228,7 @@ export async function onRequestPost(context) {
         message: 'Payment completed on Pi Network (no order found)',
         payment_id,
         txid,
-        user_uid: userUid,
+        user_uid: userUid || null,
         note: 'Payment was completed but no matching order was found in database'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
