@@ -1,5 +1,6 @@
 // functions/api/pi/complete.js
-// DEBUG VERSION - See what Pi API actually returns
+// Pi Payment Completion Handler - PRODUCTION READY
+// Tries multiple locations for user_uid
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -29,31 +30,41 @@ export async function onRequestPost(context) {
     const APP_WALLET_SECRET = env.APP_WALLET_SECRET;
 
     if (!PI_API_KEY || !APP_WALLET_SECRET) {
-      console.error('❌ Missing env vars');
+      console.error('❌ Missing env vars:', { 
+        has_api_key: !!PI_API_KEY, 
+        has_wallet_secret: !!APP_WALLET_SECRET 
+      });
       throw new Error('PI_API_KEY or APP_WALLET_SECRET not configured');
     }
 
-    // Find order
+    // STEP 1: Find order
     let order = null;
     
     if (order_id) {
+      console.log('🔍 Looking for order:', order_id);
       order = await env.DB.prepare(
         'SELECT * FROM ceo_orders WHERE order_id = ?'
       ).bind(order_id).first();
     }
     
     if (!order) {
+      console.log('🔍 Order not found by order_id, searching by payment_id...');
       order = await env.DB.prepare(
         'SELECT * FROM ceo_orders WHERE pi_payment_id = ?'
       ).bind(payment_id).first();
     }
 
     if (!order) {
-      console.error('❌ No order found');
+      console.error('❌ No order found for payment_id:', payment_id);
+      console.log('⚠️ Will complete on Pi Network but cannot update order');
     } else {
-      console.log('✅ Order found:', order.order_id);
+      console.log('✅ Order found:', {
+        order_id: order.order_id,
+        status: order.order_status
+      });
       
       if (order.order_status === 'Paid') {
+        console.log('ℹ️ Order already marked as Paid');
         return new Response(JSON.stringify({
           success: true,
           message: 'Payment already completed',
@@ -67,10 +78,8 @@ export async function onRequestPost(context) {
       }
     }
 
-    // ====================================================================
-    // 🔍 DEBUG: Verify payment - LOG FULL RESPONSE
-    // ====================================================================
-    console.log('🔍 Calling Pi API: GET /v2/payments/' + payment_id);
+    // STEP 2: Verify payment with Pi Network
+    console.log('🔍 Verifying payment with Pi Network...');
     
     const verifyResponse = await fetch(
       `https://api.minepi.com/v2/payments/${payment_id}`,
@@ -82,52 +91,57 @@ export async function onRequestPost(context) {
     if (!verifyResponse.ok) {
       const errorText = await verifyResponse.text();
       console.error('❌ Pi verification failed:', errorText);
-      throw new Error(`Pi verification failed: ${verifyResponse.status}`);
+      throw new Error(`Pi verification failed: ${verifyResponse.status} - ${errorText}`);
     }
 
     const paymentData = await verifyResponse.json();
     
     // ====================================================================
-    // 🔍 DEBUG: Log FULL payment data structure
+    // 🎯 ROBUST user_uid EXTRACTION - Tries multiple locations
     // ====================================================================
-    console.log('====================================');
-    console.log('📦 FULL PAYMENT DATA FROM Pi API:');
-    console.log(JSON.stringify(paymentData, null, 2));
-    console.log('====================================');
-    
-    // Check if user data exists
-    console.log('🔍 Checking user data:');
-    console.log('  - paymentData.user exists?', !!paymentData.user);
-    console.log('  - paymentData.user:', paymentData.user);
-    console.log('  - paymentData.from_address exists?', !!paymentData.from_address);
-    console.log('  - paymentData.from_address:', paymentData.from_address);
-    
-    // Try multiple possible locations for user_uid
     let userUid = null;
-    let source = 'not found';
+    let uidSource = 'not_found';
     
+    // Try location 1: paymentData.user.uid (standard U2A location)
     if (paymentData.user?.uid) {
       userUid = paymentData.user.uid;
-      source = 'paymentData.user.uid';
-    } else if (paymentData.user_uid) {
+      uidSource = 'user.uid';
+    }
+    // Try location 2: paymentData.user_uid (alternative format)
+    else if (paymentData.user_uid) {
       userUid = paymentData.user_uid;
-      source = 'paymentData.user_uid';
-    } else if (paymentData.uid) {
+      uidSource = 'user_uid';
+    }
+    // Try location 3: paymentData.uid (short format)
+    else if (paymentData.uid) {
       userUid = paymentData.uid;
-      source = 'paymentData.uid';
-    } else if (paymentData.from_address) {
-      // For U2A payments, from_address might be the user identifier
+      uidSource = 'uid';
+    }
+    // Try location 4: paymentData.from_address (blockchain address)
+    else if (paymentData.from_address) {
       userUid = paymentData.from_address;
-      source = 'paymentData.from_address (blockchain address)';
+      uidSource = 'from_address';
+    }
+    // Try location 5: paymentData.metadata.user_uid (metadata field)
+    else if (paymentData.metadata?.user_uid) {
+      userUid = paymentData.metadata.user_uid;
+      uidSource = 'metadata.user_uid';
     }
     
-    console.log('====================================');
-    console.log('✅ User UID extraction result:');
-    console.log('  - user_uid:', userUid);
-    console.log('  - source:', source);
-    console.log('====================================');
+    console.log('✅ Payment verified:', {
+      identifier: paymentData.identifier,
+      amount: paymentData.amount,
+      has_user_uid: !!userUid,
+      uid_source: uidSource
+    });
+    
+    if (userUid) {
+      console.log('✅ User UID extracted:', userUid, `(from: ${uidSource})`);
+    } else {
+      console.warn('⚠️ No user UID found in payment data');
+    }
 
-    // Complete payment on Pi Network
+    // STEP 3: Complete payment on Pi Network if not already done
     if (!paymentData.status?.developer_completed) {
       console.log('🔄 Completing payment on Pi Network...');
       
@@ -148,23 +162,27 @@ export async function onRequestPost(context) {
 
       if (!completeResponse.ok) {
         const errorText = await completeResponse.text();
-        console.error('❌ Pi complete failed:', errorText);
-        throw new Error(`Pi complete failed: ${completeResponse.status}`);
+        console.error('❌ Pi complete failed:', {
+          status: completeResponse.status,
+          error: errorText
+        });
+        throw new Error(`Pi complete failed: ${completeResponse.status} - ${errorText}`);
       }
 
       const completeData = await completeResponse.json();
-      console.log('✅ Payment completed:', completeData);
+      console.log('✅ Payment completed on Pi Network');
     } else {
-      console.log('ℹ️ Payment already completed on Pi');
+      console.log('ℹ️ Payment already completed on Pi Network');
     }
 
-    // Update order in D1
+    // STEP 4: Update order in D1 (if order exists)
     if (order) {
       console.log('🔄 Updating order in database...');
       
       let updateResult;
       
       if (userUid) {
+        // Update WITH user_uid
         updateResult = await env.DB.prepare(`
           UPDATE ceo_orders
           SET order_status = 'Paid',
@@ -175,8 +193,9 @@ export async function onRequestPost(context) {
           WHERE order_id = ?
         `).bind(payment_id, txid, userUid, order.order_id).run();
         
-        console.log('✅ Updated WITH user_uid:', userUid);
+        console.log('✅ Updated order with user_uid:', userUid);
       } else {
+        // Update WITHOUT user_uid
         updateResult = await env.DB.prepare(`
           UPDATE ceo_orders
           SET order_status = 'Paid',
@@ -186,10 +205,10 @@ export async function onRequestPost(context) {
           WHERE order_id = ?
         `).bind(payment_id, txid, order.order_id).run();
         
-        console.log('⚠️ Updated WITHOUT user_uid (not found in Pi response)');
+        console.log('⚠️ Updated order WITHOUT user_uid (not available)');
       }
 
-      console.log('Database update result:', {
+      console.log('✅ Database update:', {
         success: updateResult.success,
         changes: updateResult.meta?.changes
       });
@@ -199,10 +218,10 @@ export async function onRequestPost(context) {
         'SELECT * FROM ceo_orders WHERE order_id = ?'
       ).bind(order.order_id).first();
 
-      console.log('✅ Order updated:', {
+      console.log('✅ Order status:', {
         order_id: updatedOrder.order_id,
         status: updatedOrder.order_status,
-        user_uid: updatedOrder.user_uid || 'NULL'
+        has_user_uid: !!updatedOrder.user_uid
       });
 
       return new Response(JSON.stringify({
@@ -212,35 +231,28 @@ export async function onRequestPost(context) {
         payment_id,
         txid,
         order_status: updatedOrder.order_status,
-        user_uid: updatedOrder.user_uid || null,
-        debug: {
-          user_uid_source: source,
-          had_user_data: !!paymentData.user
-        }
+        user_uid: updatedOrder.user_uid || null
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
       
     } else {
-      console.log('✅ Payment completed (no order to update)');
+      // No order found, but payment completed on Pi
+      console.log('✅ Payment completed on Pi (no order to update)');
       
       return new Response(JSON.stringify({
         success: true,
         message: 'Payment completed on Pi Network (no order found)',
         payment_id,
         txid,
-        user_uid: userUid || null,
-        debug: {
-          user_uid_source: source,
-          had_user_data: !!paymentData.user
-        }
+        user_uid: userUid || null
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
   } catch (err) {
-    console.error('❌ Error:', err);
+    console.error('❌ Error:', err.message);
     console.error('Stack:', err.stack);
     
     return new Response(JSON.stringify({ 
