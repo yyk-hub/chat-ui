@@ -1,5 +1,5 @@
 // functions/api/pi/complete.js
-// Pi Payment Completion Handler - Enhanced for Incomplete Payments
+// Pi Payment Completion Handler - WITH USER_UID EXTRACTION
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -58,9 +58,6 @@ export async function onRequestPost(context) {
 
     if (!order) {
       console.error('❌ No order found for payment_id:', payment_id);
-      
-      // For incomplete payments without order, we still need to complete on Pi
-      // but we can't update D1
       console.log('⚠️ Will complete on Pi Network but cannot update order');
     } else {
       console.log('✅ Order found:', {
@@ -77,7 +74,8 @@ export async function onRequestPost(context) {
           message: 'Payment already completed',
           order_id: order.order_id,
           payment_id,
-          txid
+          txid,
+          user_uid: order.user_uid
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -105,8 +103,22 @@ export async function onRequestPost(context) {
       identifier: paymentData.identifier,
       amount: paymentData.amount,
       status: paymentData.status,
-      has_transaction: !!paymentData.transaction
+      has_transaction: !!paymentData.transaction,
+      has_user: !!paymentData.user
     });
+
+    // ✅ CRITICAL: Extract user_uid from payment data
+    const userUid = paymentData.user?.uid;
+    const piUsername = paymentData.user?.username;
+    
+    if (userUid) {
+      console.log('✅ User UID extracted:', {
+        uid: userUid,
+        username: piUsername || 'N/A'
+      });
+    } else {
+      console.warn('⚠️ No user UID in payment data!');
+    }
 
     // STEP 3: Complete payment on Pi Network if not already done
     if (!paymentData.status?.developer_completed) {
@@ -146,24 +158,26 @@ export async function onRequestPost(context) {
     if (order) {
       console.log('🔄 Updating order in database...');
       
+      // ✅ UPDATED: Include user_uid in the update
       const updateResult = await env.DB.prepare(`
         UPDATE ceo_orders
         SET order_status = 'Paid',
             pi_payment_id = ?,
             pi_txid = ?,
-            pymt_method = 'Pi Network'
+            pymt_method = 'Pi Network',
+            user_uid = ?
         WHERE order_id = ?
-      `).bind(payment_id, txid, order.order_id).run();
+      `).bind(payment_id, txid, userUid, order.order_id).run();
 
       console.log('✅ Database update result:', {
         success: updateResult.success,
-        changes: updateResult.meta?.changes
+        changes: updateResult.meta?.changes,
+        user_uid_saved: userUid
       });
 
       // Verify update worked
       if (!updateResult.success || updateResult.meta?.changes === 0) {
         console.error('⚠️ Database update did not change any rows');
-        // Don't throw - payment is complete on Pi side, which is most important
       }
 
       // Fetch updated order
@@ -174,7 +188,8 @@ export async function onRequestPost(context) {
       console.log('✅ Order after update:', {
         order_id: updatedOrder.order_id,
         status: updatedOrder.order_status,
-        txid: updatedOrder.pi_txid
+        txid: updatedOrder.pi_txid,
+        user_uid: updatedOrder.user_uid
       });
 
       return new Response(JSON.stringify({
@@ -183,7 +198,8 @@ export async function onRequestPost(context) {
         order_id: updatedOrder.order_id,
         payment_id,
         txid,
-        order_status: updatedOrder.order_status
+        order_status: updatedOrder.order_status,
+        user_uid: updatedOrder.user_uid
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -197,6 +213,7 @@ export async function onRequestPost(context) {
         message: 'Payment completed on Pi Network (no order found)',
         payment_id,
         txid,
+        user_uid: userUid,
         note: 'Payment was completed but no matching order was found in database'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -226,4 +243,4 @@ export async function onRequestOptions() {
       'Access-Control-Allow-Headers': 'Content-Type',
     },
   });
-      }
+}
