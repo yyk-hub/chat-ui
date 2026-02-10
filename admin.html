@@ -872,8 +872,8 @@ input:checked + .toggle-slider:before {
     
     try {
       const res = await fetch(`${REFUND_API_BASE}/list?status=${status}&limit=100`, {
-        headers: { 'Authorization': `Bearer ${token()}` }
-      });
+  headers: { 'x-admin-token': token() }  // ✅ CORRECT!
+});
       
       if (res.status === 401 || res.status === 403) {
         refundsHolder.innerHTML = '<p style="color:#a00;">Unauthorized</p>';
@@ -966,7 +966,7 @@ input:checked + .toggle-slider:before {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token()}`
+         'x-admin-token': token()  // ✅ Change this
         },
         body: JSON.stringify({ refund_id })
       });
@@ -989,7 +989,7 @@ input:checked + .toggle-slider:before {
   window.viewRefund = async function(refund_id) {
     try {
       const res = await fetch(`${REFUND_API_BASE}/status?refund_id=${refund_id}`, {
-        headers: { 'Authorization': `Bearer ${token()}` }
+        headers: { 'x-admin-token': token() }  // ✅ Change this
       });
       
       const data = await res.json();
@@ -1040,7 +1040,7 @@ input:checked + .toggle-slider:before {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token()}`
+          'x-admin-token': token()  // ✅ Change this
         },
         body: JSON.stringify({ order_id, amount_rm, reason, admin_id })
       });
