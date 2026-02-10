@@ -1,5 +1,5 @@
 // functions/api/refund/process.js
-// Process refund - Execute A2U payment via Pi Platform
+// FIXED: Use x-admin-token authentication
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -7,18 +7,18 @@ export async function onRequestPost(context) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, x-admin-token',
   };
 
   try {
-    // Admin authentication
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || authHeader.replace('Bearer ', '') !== env.ADMIN_TOKEN) {
+    // ✅ FIXED: Use x-admin-token
+    const adminToken = request.headers.get('x-admin-token');
+    if (!adminToken || adminToken !== env.ADMIN_TOKEN) {
       return Response.json({ 
         success: false, 
         error: 'Unauthorized' 
       }, { 
-        status: 401, 
+        status: 403, 
         headers: corsHeaders 
       });
     }
@@ -226,7 +226,7 @@ export async function onRequestOptions() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, x-admin-token',
     },
   });
 }
