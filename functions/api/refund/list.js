@@ -1,5 +1,5 @@
 // functions/api/refund/list.js
-// List refunds with filtering
+// FIXED: Use x-admin-token instead of Bearer token
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -7,18 +7,18 @@ export async function onRequestGet(context) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, x-admin-token',
   };
 
   try {
-    // Admin authentication
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || authHeader.replace('Bearer ', '') !== env.ADMIN_TOKEN) {
+    // ✅ FIXED: Use x-admin-token (matches your other admin endpoints)
+    const adminToken = request.headers.get('x-admin-token');
+    if (!adminToken || adminToken !== env.ADMIN_TOKEN) {
       return Response.json({ 
         success: false, 
         error: 'Unauthorized' 
       }, { 
-        status: 401, 
+        status: 403, 
         headers: corsHeaders 
       });
     }
@@ -125,7 +125,7 @@ export async function onRequestOptions() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, x-admin-token',
     },
   });
 }
