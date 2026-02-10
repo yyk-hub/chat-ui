@@ -280,6 +280,74 @@ input:checked + .toggle-slider:before {
     </div>
   </div>
 </div>
+    <!-- Refund Management Section -->
+<div class="card" id="refundSection" style="display:none">
+  <h3>🔄 Pi Refund Management (A2U)</h3>
+  
+  <!-- Stats -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:20px;">
+    <div style="background:#fff3cd; padding:12px; border-radius:8px; text-align:center;">
+      <strong style="color:#996600;">Pending</strong>
+      <div style="font-size:24px; font-weight:bold; color:#996600;" id="refundStatPending">0</div>
+    </div>
+    <div style="background:#cce5ff; padding:12px; border-radius:8px; text-align:center;">
+      <strong style="color:#2196F3;">Processing</strong>
+      <div style="font-size:24px; font-weight:bold; color:#2196F3;" id="refundStatProcessing">0</div>
+    </div>
+    <div style="background:#d4edda; padding:12px; border-radius:8px; text-align:center;">
+      <strong style="color:#4CAF50;">Completed</strong>
+      <div style="font-size:24px; font-weight:bold; color:#4CAF50;" id="refundStatCompleted">0</div>
+    </div>
+    <div style="background:#f8d7da; padding:12px; border-radius:8px; text-align:center;">
+      <strong style="color:#d32f2f;">Failed</strong>
+      <div style="font-size:24px; font-weight:bold; color:#d32f2f;" id="refundStatFailed">0</div>
+    </div>
+  </div>
+
+  <!-- Create Refund -->
+  <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:20px;">
+    <strong style="display:block; margin-bottom:10px;">➕ Create New Refund</strong>
+    
+    <div class="form-grid" style="max-width:600px;">
+      <label for="refundOrderId">Order ID:</label>
+      <input type="text" id="refundOrderId" placeholder="ORD1738924567890" />
+      
+      <label for="refundAmount">Amount (RM):</label>
+      <input type="number" id="refundAmount" step="0.01" placeholder="0.00" />
+      
+      <label for="refundReason">Reason:</label>
+      <textarea id="refundReason" rows="2" placeholder="Product damaged, customer request, etc."></textarea>
+      
+      <label for="refundAdminId">Admin ID:</label>
+      <input type="text" id="refundAdminId" placeholder="Your username (optional)" />
+      
+      <div></div>
+      <button id="btnCreateRefund" class="btn">Create Refund</button>
+    </div>
+    <div id="createRefundMsg" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- Refunds List -->
+  <div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <strong>📋 Refunds</strong>
+      <div style="display:flex; gap:10px;">
+        <select id="refundFilterStatus" style="padding:6px;">
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="processing">Processing</option>
+          <option value="completed">Completed</option>
+          <option value="failed">Failed</option>
+        </select>
+        <button id="btnLoadRefunds" class="btn">🔄 Refresh</button>
+      </div>
+    </div>
+    
+    <div class="table-wrapper">
+      <div id="refundsHolder">Loading...</div>
+    </div>
+  </div>
+</div>
   </div>
 
 <script>
@@ -305,6 +373,7 @@ input:checked + .toggle-slider:before {
     const ORDERS_API = '/api/admin/orders';
     const PRODUCTS_API = '/api/admin/products';
     const EXCHANGE_RATE_API = '/api/admin/exchange-rate';
+    const REFUND_API_BASE = '/api/refund';
     
     // Get maintenance elements
     noticeEnabled     = document.getElementById('noticeEnabled');
@@ -354,18 +423,30 @@ input:checked + .toggle-slider:before {
     const btnUpdateRate = document.getElementById('btnUpdateRate');
     const rateUpdateMsg = document.getElementById('rateUpdateMsg');
     const rateHistory = document.getElementById('rateHistory');
-
+     // REFUND MANAGEMENT CODE
+    const refundSection = document.getElementById('refundSection');
+    const btnLoadRefunds = document.getElementById('btnLoadRefunds');
+    const btnCreateRefund = document.getElementById('btnCreateRefund');
+    const refundsHolder = document.getElementById('refundsHolder');
+    const refundFilterStatus = document.getElementById('refundFilterStatus');
+    const refundOrderId = document.getElementById('refundOrderId');
+    const refundAmount = document.getElementById('refundAmount');
+    const refundReason = document.getElementById('refundReason');
+    const refundAdminId = document.getElementById('refundAdminId');
+    const createRefundMsg = document.getElementById('createRefundMsg');
+    
     let orderOffset = 0;
     const ORDERS_LIMIT = 10;
-
+    
     // Show admin panel
     function showPanel(){
   console.log('showPanel() called');
   console.log('maintenanceSection element:', maintenanceSection);
-      maintenanceSection.style.display = 'block'; // ✅ ADD THIS LINE!
+      maintenanceSection.style.display = 'block'; 
       adminPanel.style.display = 'block';
       updateProductSection.style.display = 'block';
       exchangeRateSection.style.display = 'block';
+      refundSection.style.display = 'block'; // ✅ ADD THIS LINE!
       
       btnLogout.style.display = 'inline-block';
       btnLogin.style.display = 'none';
@@ -379,6 +460,7 @@ input:checked + .toggle-slider:before {
       loadRateHistory();
   console.log('About to call loadMaintenanceNotice()');
       loadMaintenanceNotice(); // ✅ KEEP THIS TOO
+      loadRefunds();
     }
 
     // Login validation
@@ -779,6 +861,219 @@ input:checked + .toggle-slider:before {
       }
     });
 
+  // ============================================================
+  // REFUND FUNCTIONS - MOVE ALL INSIDE DOMContentLoaded
+  // ============================================================
+  
+  // Load refunds
+  async function loadRefunds() {
+    const status = refundFilterStatus.value;
+    refundsHolder.innerHTML = '<p style="text-align:center; color:#999;">Loading...</p>';
+    
+    try {
+      const res = await fetch(`${REFUND_API_BASE}/list?status=${status}&limit=100`, {
+        headers: { 'Authorization': `Bearer ${token()}` }
+      });
+      
+      if (res.status === 401 || res.status === 403) {
+        refundsHolder.innerHTML = '<p style="color:#a00;">Unauthorized</p>';
+        return;
+      }
+      
+      const data = await res.json();
+      
+      if (!data.success || !data.refunds || data.refunds.length === 0) {
+        refundsHolder.innerHTML = '<p style="text-align:center; color:#999;">No refunds found</p>';
+        updateRefundStats([]);
+        return;
+      }
+      
+      renderRefunds(data.refunds);
+      updateRefundStats(data.refunds);
+      
+    } catch (err) {
+      console.error('Load refunds error:', err);
+      refundsHolder.innerHTML = '<p style="color:#a00;">Failed to load refunds</p>';
+    }
+  }
+  
+  // Render refunds table
+  function renderRefunds(refunds) {
+    let html = '<table><thead><tr>';
+    html += '<th>Refund ID</th><th>Order ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Created</th><th>Actions</th>';
+    html += '</tr></thead><tbody>';
+    
+    refunds.forEach(r => {
+      const statusClass = r.refund_status;
+      const statusColors = {
+        'pending': '#996600',
+        'processing': '#2196F3',
+        'completed': '#4CAF50',
+        'failed': '#d32f2f'
+      };
+      const statusColor = statusColors[statusClass] || '#666';
+      const createdDate = new Date(r.created_at * 1000).toLocaleString();
+      
+      html += '<tr>';
+      html += `<td><code style="font-size:11px;">${r.refund_id}</code></td>`;
+      html += `<td style="font-size:12px;">${r.order_id}</td>`;
+      html += `<td>${r.customer_name || 'N/A'}</td>`;
+      html += `<td>π ${parseFloat(r.amount_pi).toFixed(4)}<br><small>RM ${r.amount_rm.toFixed(2)}</small></td>`;
+      html += `<td><span style="color:${statusColor}; font-weight:600;">${r.refund_status}</span></td>`;
+      html += `<td style="font-size:12px;">${createdDate}</td>`;
+      html += '<td>';
+      
+      if (r.refund_status === 'pending') {
+        html += `<button class="btn" onclick="processRefund('${r.refund_id}')" style="padding:6px 10px; font-size:12px;">Process</button>`;
+      } else if (r.refund_status === 'completed') {
+        html += `<button class="btn" onclick="viewRefund('${r.refund_id}')" style="padding:6px 10px; font-size:12px; background:#666;">View</button>`;
+      } else if (r.refund_status === 'failed') {
+        html += `<span style="color:#d32f2f; font-size:12px;">❌ Failed</span>`;
+      } else {
+        html += `<span style="color:#2196F3; font-size:12px;">⏳ Processing...</span>`;
+      }
+      
+      html += '</td></tr>';
+    });
+    
+    html += '</tbody></table>';
+    refundsHolder.innerHTML = html;
+  }
+  
+  // Update stats
+  function updateRefundStats(refunds) {
+    const stats = { pending: 0, processing: 0, completed: 0, failed: 0 };
+    refunds.forEach(r => {
+      if (stats[r.refund_status] !== undefined) {
+        stats[r.refund_status]++;
+      }
+    });
+    
+    document.getElementById('refundStatPending').textContent = stats.pending;
+    document.getElementById('refundStatProcessing').textContent = stats.processing;
+    document.getElementById('refundStatCompleted').textContent = stats.completed;
+    document.getElementById('refundStatFailed').textContent = stats.failed;
+  }
+  
+  // Process refund - Make it window function so onclick works
+  window.processRefund = async function(refund_id) {
+    if (!confirm(`⚠️ Process refund ${refund_id}?\n\nThis will send Pi to the customer.\n\nClick OK to proceed.`)) {
+      return;
+    }
+    
+    try {
+      const res = await fetch(`${REFUND_API_BASE}/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token()}`
+        },
+        body: JSON.stringify({ refund_id })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        alert('✅ Refund processed successfully!' + (data.txid ? '\n\nTxID: ' + data.txid : ''));
+        loadRefunds();
+      } else {
+        alert('❌ Failed: ' + data.error);
+      }
+    } catch (err) {
+      console.error('Process refund error:', err);
+      alert('❌ Failed to process refund');
+    }
+  };
+  
+  // View refund - Make it window function so onclick works
+  window.viewRefund = async function(refund_id) {
+    try {
+      const res = await fetch(`${REFUND_API_BASE}/status?refund_id=${refund_id}`, {
+        headers: { 'Authorization': `Bearer ${token()}` }
+      });
+      
+      const data = await res.json();
+      
+      if (data.success && data.refund) {
+        const r = data.refund;
+        const orderInfo = r.order ? `Customer: ${r.order.customer_name}\nProduct: ${r.order.product}\n` : '';
+        
+        alert(
+          `📋 Refund Details\n\n` +
+          `ID: ${r.refund_id}\n` +
+          `Order: ${r.order_id}\n` +
+          orderInfo +
+          `Amount: π ${parseFloat(r.amount_pi).toFixed(4)} (RM ${r.amount_rm})\n` +
+          `Status: ${r.refund_status}\n` +
+          `Reason: ${r.memo}\n\n` +
+          `TxID: ${r.txid || 'Not available'}\n\n` +
+          `Created: ${new Date(r.created_at * 1000).toLocaleString()}\n` +
+          `Completed: ${r.completed_at ? new Date(r.completed_at * 1000).toLocaleString() : 'Pending'}`
+        );
+      } else {
+        alert('❌ ' + (data.error || 'Failed to load refund'));
+      }
+    } catch (err) {
+      console.error('View refund error:', err);
+      alert('❌ Failed to load refund details');
+    }
+  };
+  
+  // Event listeners for refund section
+  btnCreateRefund && btnCreateRefund.addEventListener('click', async () => {
+    const order_id = refundOrderId.value.trim();
+    const amount_rm = parseFloat(refundAmount.value);
+    const reason = refundReason.value.trim();
+    const admin_id = refundAdminId.value.trim() || 'admin';
+    
+    if (!order_id || !amount_rm || !reason) {
+      createRefundMsg.innerHTML = '<div class="error-msg">⚠️ Please fill in all required fields</div>';
+      return;
+    }
+    
+    btnCreateRefund.disabled = true;
+    btnCreateRefund.textContent = 'Creating...';
+    createRefundMsg.innerHTML = '';
+    
+    try {
+      const res = await fetch(`${REFUND_API_BASE}/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token()}`
+        },
+        body: JSON.stringify({ order_id, amount_rm, reason, admin_id })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        createRefundMsg.innerHTML = `<div class="success-msg">✅ Refund created: ${data.refund_id}</div>`;
+        refundOrderId.value = '';
+        refundAmount.value = '';
+        refundReason.value = '';
+        refundAdminId.value = '';
+        loadRefunds();
+        setTimeout(() => createRefundMsg.innerHTML = '', 5000);
+      } else {
+        createRefundMsg.innerHTML = `<div class="error-msg">❌ ${data.error}</div>`;
+      }
+    } catch (err) {
+      console.error('Create refund error:', err);
+      createRefundMsg.innerHTML = '<div class="error-msg">❌ Failed to create refund</div>';
+    } finally {
+      btnCreateRefund.disabled = false;
+      btnCreateRefund.textContent = 'Create Refund';
+    }
+  });
+  
+  btnLoadRefunds && btnLoadRefunds.addEventListener('click', loadRefunds);
+  refundFilterStatus && refundFilterStatus.addEventListener('change', loadRefunds);
+  
+  // ============================================================
+  // END OF REFUND MANAGEMENT CODE
+  // ============================================================
+  
     // Auto show panel if already logged in
     if (sessionStorage.getItem('ADMIN_TOKEN')) {
       showPanel();
@@ -887,6 +1182,7 @@ input:checked + .toggle-slider:before {
       btnUpdateNotice.textContent = '💾 Save Notice Settings';
     }
   }
+
 </script>
 </body>
 </html>
