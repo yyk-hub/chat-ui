@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CEO Admin - Refund Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: #f4ecd6;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      background: #996600;
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .btn-primary {
+      background: #14b47e;
+      color: white;
+    }
+    
+    .btn-danger {
+      background: #d32f2f;
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: #666;
+      color: white;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    th {
+      background: #f5f5f5;
+      font-weight: 600;
+    }
+    
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-processing { background: #cce5ff; color: #004085; }
+    .status-completed { background: #d4edda; color: #155724; }
+    .status-failed { background: #f8d7da; color: #721c24; }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .toast.success { background: #14b47e; }
+    .toast.error { background: #d32f2f; }
+    .toast.show { display: block; }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    
+    .modal-content {
+      background: white;
+      margin: 50px auto;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .close-btn {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #999;
+    }
+    
+    .close-btn:hover {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>🔄 A2U Refund Manager</h1>
+    <p>Process Pi Network refunds for customer orders</p>
+  </div>
+
+  <!-- Auth Section -->
+  <div class="card" id="authSection">
+    <h2>🔐 Admin Login</h2>
+    <div class="form-group">
+      <label>Admin Token</label>
+      <input type="password" id="adminToken" placeholder="Enter admin token">
+    </div>
+    <button class="btn btn-primary" onclick="authenticate()">Login</button>
+  </div>
+
+  <!-- Main Dashboard (hidden until authenticated) -->
+  <div id="dashboard" style="display:none;">
+    
+    <!-- Stats Cards -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:20px;">
+      <div class="card" style="text-align:center;">
+        <h3 style="margin:0; color:#996600;">Pending</h3>
+        <p style="font-size:32px; font-weight:bold; margin:10px 0;" id="statPending">0</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <h3 style="margin:0; color:#2196F3;">Processing</h3>
+        <p style="font-size:32px; font-weight:bold; margin:10px 0;" id="statProcessing">0</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <h3 style="margin:0; color:#4CAF50;">Completed</h3>
+        <p style="font-size:32px; font-weight:bold; margin:10px 0;" id="statCompleted">0</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <h3 style="margin:0; color:#d32f2f;">Failed</h3>
+        <p style="font-size:32px; font-weight:bold; margin:10px 0;" id="statFailed">0</p>
+      </div>
+    </div>
+
+    <!-- Create New Refund -->
+    <div class="card">
+      <h2>➕ Create New Refund</h2>
+      <button class="btn btn-primary" onclick="openCreateModal()">Create Refund</button>
+    </div>
+
+    <!-- Refunds List -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h2 style="margin:0;">📋 Refunds</h2>
+        <div>
+          <select id="filterStatus" onchange="loadRefunds()" style="padding:8px; border-radius:6px; border:1px solid #ccc;">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
+          </select>
+          <button class="btn btn-secondary" onclick="loadRefunds()" style="margin-left:10px;">🔄 Refresh</button>
+        </div>
+      </div>
+      
+      <div id="refundsTable">
+        <p style="text-align:center; color:#999;">Loading...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Refund Modal -->
+<div id="createModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeCreateModal()">&times;</span>
+    <h2>Create Refund</h2>
+    
+    <div class="form-group">
+      <label>Order ID</label>
+      <input type="text" id="createOrderId" placeholder="ORD123456">
+    </div>
+    
+    <div class="form-group">
+      <label>Refund Amount (RM)</label>
+      <input type="number" id="createAmount" step="0.01" placeholder="0.00">
+    </div>
+    
+    <div class="form-group">
+      <label>Reason</label>
+      <textarea id="createReason" rows="3" placeholder="Product damaged, customer request, etc."></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label>Admin ID (optional)</label>
+      <input type="text" id="createAdminId" placeholder="Your admin username">
+    </div>
+    
+    <button class="btn btn-primary" onclick="createRefund()">Create Refund</button>
+    <button class="btn btn-secondary" onclick="closeCreateModal()" style="margin-left:10px;">Cancel</button>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<script>
+let ADMIN_TOKEN = '';
+
+// ============================================================
+// AUTH
+// ============================================================
+
+function authenticate() {
+  ADMIN_TOKEN = document.getElementById('adminToken').value.trim();
+  
+  if (!ADMIN_TOKEN) {
+    showToast('Please enter admin token', 'error');
+    return;
+  }
+  
+  document.getElementById('authSection').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  
+  loadRefunds();
+  loadStats();
+}
+
+// ============================================================
+// API HELPERS
+// ============================================================
+
+async function apiCall(endpoint, method = 'GET', body = null) {
+  const options = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${ADMIN_TOKEN}`,
+      'Content-Type': 'application/json'
+    }
+  };
+  
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+  
+  const response = await fetch(endpoint, options);
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error || 'API request failed');
+  }
+  
+  return data;
+}
+
+// ============================================================
+// LOAD REFUNDS
+// ============================================================
+
+async function loadRefunds() {
+  const status = document.getElementById('filterStatus').value;
+  const table = document.getElementById('refundsTable');
+  
+  table.innerHTML = '<p style="text-align:center; color:#999;">Loading...</p>';
+  
+  try {
+    const data = await apiCall(`/api/refund/list?status=${status}&limit=100`);
+    
+    if (!data.refunds || data.refunds.length === 0) {
+      table.innerHTML = '<p style="text-align:center; color:#999;">No refunds found</p>';
+      return;
+    }
+    
+    let html = '<table><thead><tr>';
+    html += '<th>Refund ID</th>';
+    html += '<th>Order ID</th>';
+    html += '<th>Customer</th>';
+    html += '<th>Amount</th>';
+    html += '<th>Status</th>';
+    html += '<th>Created</th>';
+    html += '<th>Actions</th>';
+    html += '</tr></thead><tbody>';
+    
+    data.refunds.forEach(refund => {
+      const statusClass = `status-${refund.refund_status}`;
+      const createdDate = new Date(refund.created_at * 1000).toLocaleString();
+      
+      html += '<tr>';
+      html += `<td><code>${refund.refund_id}</code></td>`;
+      html += `<td>${refund.order_id}</td>`;
+      html += `<td>${refund.cus_name || 'N/A'}</td>`;
+      html += `<td>π ${parseFloat(refund.amount).toFixed(4)}<br><small>RM ${refund.amount_rm.toFixed(2)}</small></td>`;
+      html += `<td><span class="status-badge ${statusClass}">${refund.refund_status}</span></td>`;
+      html += `<td>${createdDate}</td>`;
+      html += '<td>';
+      
+      if (refund.refund_status === 'pending') {
+        html += `<button class="btn btn-primary" style="padding:6px 12px; font-size:12px;" onclick="processRefund('${refund.refund_id}')">Process</button>`;
+      } else if (refund.refund_status === 'completed') {
+        html += `<button class="btn btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="viewRefund('${refund.refund_id}')">View</button>`;
+      } else if (refund.refund_status === 'failed') {
+        html += `<button class="btn btn-danger" style="padding:6px 12px; font-size:12px;" onclick="retryRefund('${refund.refund_id}')">Retry</button>`;
+      } else {
+        html += `<span style="color:#999;">Processing...</span>`;
+      }
+      
+      html += '</td>';
+      html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    table.innerHTML = html;
+    
+  } catch (error) {
+    table.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+  }
+}
+
+// ============================================================
+// LOAD STATS
+// ============================================================
+
+async function loadStats() {
+  try {
+    const data = await apiCall('/api/refund/list?status=all&limit=1000');
+    
+    const stats = {
+      pending: 0,
+      processing: 0,
+      completed: 0,
+      failed: 0
+    };
+    
+    data.refunds.forEach(r => {
+      if (stats[r.refund_status] !== undefined) {
+        stats[r.refund_status]++;
+      }
+    });
+    
+    document.getElementById('statPending').textContent = stats.pending;
+    document.getElementById('statProcessing').textContent = stats.processing;
+    document.getElementById('statCompleted').textContent = stats.completed;
+    document.getElementById('statFailed').textContent = stats.failed;
+    
+  } catch (error) {
+    console.error('Failed to load stats:', error);
+  }
+}
+
+// ============================================================
+// CREATE REFUND
+// ============================================================
+
+function openCreateModal() {
+  document.getElementById('createModal').style.display = 'block';
+}
+
+function closeCreateModal() {
+  document.getElementById('createModal').style.display = 'none';
+  document.getElementById('createOrderId').value = '';
+  document.getElementById('createAmount').value = '';
+  document.getElementById('createReason').value = '';
+  document.getElementById('createAdminId').value = '';
+}
+
+async function createRefund() {
+  const order_id = document.getElementById('createOrderId').value.trim();
+  const amount_rm = parseFloat(document.getElementById('createAmount').value);
+  const reason = document.getElementById('createReason').value.trim();
+  const admin_id = document.getElementById('createAdminId').value.trim() || 'admin';
+  
+  if (!order_id || !amount_rm || !reason) {
+    showToast('Please fill in all required fields', 'error');
+    return;
+  }
+  
+  try {
+    showToast('Creating refund...', 'success');
+    
+    const data = await apiCall('/api/refund/create', 'POST', {
+      order_id,
+      amount_rm,
+      reason,
+      admin_id
+    });
+    
+    showToast(`✅ Refund created: ${data.refund_id}`, 'success');
+    closeCreateModal();
+    loadRefunds();
+    loadStats();
+    
+  } catch (error) {
+    showToast(`❌ Failed: ${error.message}`, 'error');
+  }
+}
+
+// ============================================================
+// PROCESS REFUND
+// ============================================================
+
+async function processRefund(refund_id) {
+  if (!confirm(`Process refund ${refund_id}?\n\nThis will send Pi to the customer.`)) {
+    return;
+  }
+  
+  try {
+    showToast('Processing refund...', 'success');
+    
+    const data = await apiCall('/api/refund/process', 'POST', { refund_id });
+    
+    showToast(`✅ Refund processed successfully!`, 'success');
+    loadRefunds();
+    loadStats();
+    
+    if (data.txid) {
+      alert(`Transaction ID: ${data.txid}\n\nRefund completed!`);
+    }
+    
+  } catch (error) {
+    showToast(`❌ Failed: ${error.message}`, 'error');
+  }
+}
+
+// ============================================================
+// VIEW REFUND
+// ============================================================
+
+async function viewRefund(refund_id) {
+  try {
+    const data = await apiCall(`/api/refund/status?refund_id=${refund_id}`);
+    const r = data.refund;
+    
+    alert(
+      `Refund Details\n\n` +
+      `ID: ${r.refund_id}\n` +
+      `Order: ${r.order_id}\n` +
+      `Customer: ${r.cus_name}\n` +
+      `Amount: π ${parseFloat(r.amount).toFixed(4)} (RM ${r.amount_rm})\n` +
+      `Status: ${r.refund_status}\n` +
+      `Reason: ${r.memo}\n` +
+      `TxID: ${r.txid || 'N/A'}\n` +
+      `Created: ${new Date(r.created_at * 1000).toLocaleString()}\n` +
+      `Completed: ${r.completed_at ? new Date(r.completed_at * 1000).toLocaleString() : 'N/A'}`
+    );
+    
+  } catch (error) {
+    showToast(`❌ Failed: ${error.message}`, 'error');
+  }
+}
+
+// ============================================================
+// RETRY REFUND
+// ============================================================
+
+async function retryRefund(refund_id) {
+  if (!confirm(`Retry failed refund ${refund_id}?`)) {
+    return;
+  }
+  
+  // Reset status to pending first
+  try {
+    // You'll need to add a reset endpoint or update the status manually in D1
+    alert('Please reset the refund status to "pending" in the database first, then try processing again.');
+    
+  } catch (error) {
+    showToast(`❌ Failed: ${error.message}`, 'error');
+  }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `toast ${type} show`;
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3000);
+}
+
+// Auto-refresh every 30 seconds
+setInterval(() => {
+  if (document.getElementById('dashboard').style.display !== 'none') {
+    loadRefunds();
+    loadStats();
+  }
+}, 30000);
+</script>
+
+</body>
+</html>
