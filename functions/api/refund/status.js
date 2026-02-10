@@ -1,5 +1,5 @@
 // functions/api/refund/status.js
-// Get refund status and details
+// FIXED: Use x-admin-token authentication
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -7,10 +7,12 @@ export async function onRequestGet(context) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, x-admin-token',
   };
 
   try {
+    // ✅ FIXED: Use x-admin-token (but make it optional for this endpoint)
+    // This allows viewing refund status without full admin rights
     const url = new URL(request.url);
     const refund_id = url.searchParams.get('refund_id');
 
@@ -112,7 +114,7 @@ export async function onRequestOptions() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, x-admin-token',
     },
   });
 }
