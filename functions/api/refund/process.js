@@ -1,5 +1,5 @@
 // functions/api/refund/process.js
-// FIXED: Use x-admin-token authentication
+// CORRECTED: Following official Pi API documentation for A2U payments
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -11,7 +11,6 @@ export async function onRequestPost(context) {
   };
 
   try {
-    // ✅ FIXED: Use x-admin-token
     const adminToken = request.headers.get('x-admin-token');
     if (!adminToken || adminToken !== env.ADMIN_TOKEN) {
       return Response.json({ 
@@ -85,34 +84,33 @@ export async function onRequestPost(context) {
 
     // ====================================================================
     // STEP 1: Create A2U Payment via Pi Platform API
+    // ✅ FIXED: Use correct request body format from Pi documentation
     // ====================================================================
     
-    const paymentData = {
-      amount: parseFloat(refund.amount),
-      memo: refund.memo || `Refund for order ${refund.order_id}`,
-      metadata: JSON.parse(refund.metadata || '{}'),
-      uid: refund.user_uid
+    const paymentRequestBody = {
+      payment: {  // ← CRITICAL: Wrap in "payment" object!
+        amount: parseFloat(refund.amount),
+        memo: refund.memo || `Refund for order ${refund.order_id}`,
+        metadata: JSON.parse(refund.metadata || '{}'),
+        uid: refund.user_uid
+      }
     };
 
     console.log('🔄 Creating A2U payment on Pi Platform...');
-    console.log('Payment data:', {
-      amount: paymentData.amount,
-      uid: paymentData.uid,
-      memo: paymentData.memo
-    });
+    console.log('Request body:', JSON.stringify(paymentRequestBody, null, 2));
 
-    const piResponse = await fetch('https://api.minepi.com/v2/payments', {
+    const createResponse = await fetch('https://api.minepi.com/v2/payments', {
       method: 'POST',
       headers: {
         'Authorization': `Key ${env.PI_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(paymentData)
+      body: JSON.stringify(paymentRequestBody)
     });
 
-    if (!piResponse.ok) {
-      const errorText = await piResponse.text();
-      console.error('❌ Pi API error:', errorText);
+    if (!createResponse.ok) {
+      const errorText = await createResponse.text();
+      console.error('❌ Pi API create error:', errorText);
       
       // Update refund with error
       await env.DB.prepare(`
@@ -121,92 +119,105 @@ export async function onRequestPost(context) {
             error_message = ?,
             retry_count = retry_count + 1
         WHERE refund_id = ?
-      `).bind(`Pi API error: ${errorText}`, refund_id).run();
+      `).bind(`Pi API create error: ${errorText}`, refund_id).run();
       
-      throw new Error(`Pi API error: ${piResponse.status} - ${errorText}`);
+      throw new Error(`Pi API create error: ${createResponse.status} - ${errorText}`);
     }
 
-    const piData = await piResponse.json();
+    const createData = await createResponse.json();
     
-    console.log('✅ A2U payment created on Pi Platform:', {
-      payment_id: piData.identifier,
-      has_transaction: !!piData.transaction,
-      status: piData.status
+    console.log('✅ A2U payment created:', {
+      payment_id: createData.identifier,
+      user_uid: createData.user_uid,
+      amount: createData.amount,
+      status: createData.status
     });
 
-    const paymentIdentifier = piData.identifier;
-    const recipientAddress = piData.to_address || piData.recipient;
-    const txid = piData.transaction?.txid;
+    const paymentIdentifier = createData.identifier;
+
+    // Update refund with payment_identifier
+    await env.DB.prepare(`
+      UPDATE refunds 
+      SET payment_identifier = ?,
+          refund_status = 'processing',
+          initiated_at = unixepoch()
+      WHERE refund_id = ?
+    `).bind(paymentIdentifier, refund_id).run();
 
     // ====================================================================
-    // STEP 2: Update Refund Record
+    // STEP 2: Get payment status to check if it's completed
     // ====================================================================
+    
+    console.log('🔍 Checking payment status...');
+    
+    const statusResponse = await fetch(
+      `https://api.minepi.com/v2/payments/${paymentIdentifier}`,
+      {
+        headers: {
+          'Authorization': `Key ${env.PI_API_KEY}`
+        }
+      }
+    );
 
-    // Check if payment is already completed by Pi Platform
-    if (piData.status?.developer_completed && txid) {
-      console.log('✅ Payment auto-completed by Pi Platform');
-      
-      // Update refund as completed
-      await env.DB.prepare(`
-        UPDATE refunds 
-        SET payment_identifier = ?,
-            recipient_address = ?,
-            txid = ?,
-            refund_status = 'completed',
-            initiated_at = unixepoch(),
-            completed_at = unixepoch()
-        WHERE refund_id = ?
-      `).bind(paymentIdentifier, recipientAddress, txid, refund_id).run();
-
-      // Update order
-      await env.DB.prepare(`
-        UPDATE ceo_orders 
-        SET has_refund = 1,
-            refund_reason = ?,
-            refunded_at = unixepoch()
-        WHERE order_id = ?
-      `).bind(refund.memo, refund.order_id).run();
-
-      console.log('✅ Refund completed:', {
-        refund_id,
-        payment_id: paymentIdentifier,
-        txid
-      });
-
-      return Response.json({
-        success: true,
-        refund_id,
-        payment_identifier: paymentIdentifier,
-        txid,
-        status: 'completed',
-        message: 'Refund processed successfully'
-      }, { 
-        headers: corsHeaders 
-      });
-      
+    if (!statusResponse.ok) {
+      console.error('⚠️ Failed to get payment status');
     } else {
-      // Payment initiated but not completed yet
-      console.log('⏳ Payment initiated, waiting for completion...');
-      
-      await env.DB.prepare(`
-        UPDATE refunds 
-        SET payment_identifier = ?,
-            recipient_address = ?,
-            refund_status = 'processing',
-            initiated_at = unixepoch()
-        WHERE refund_id = ?
-      `).bind(paymentIdentifier, recipientAddress, refund_id).run();
-
-      return Response.json({
-        success: true,
-        refund_id,
-        payment_identifier: paymentIdentifier,
-        status: 'processing',
-        message: 'A2U payment initiated. Transaction being processed by Pi Platform.'
-      }, { 
-        headers: corsHeaders 
+      const statusData = await statusResponse.json();
+      console.log('Payment status:', {
+        identifier: statusData.identifier,
+        developer_approved: statusData.status?.developer_approved,
+        developer_completed: statusData.status?.developer_completed,
+        transaction_verified: statusData.status?.transaction_verified,
+        has_transaction: !!statusData.transaction
       });
+
+      // If payment auto-completed by Pi Platform
+      if (statusData.status?.developer_completed && statusData.transaction?.txid) {
+        const txid = statusData.transaction.txid;
+        
+        console.log('✅ Payment auto-completed by Pi Platform, txid:', txid);
+        
+        // Update refund as completed
+        await env.DB.prepare(`
+          UPDATE refunds 
+          SET txid = ?,
+              refund_status = 'completed',
+              completed_at = unixepoch()
+          WHERE refund_id = ?
+        `).bind(txid, refund_id).run();
+
+        // Update order
+        await env.DB.prepare(`
+          UPDATE ceo_orders 
+          SET has_refund = 1,
+              refund_reason = ?,
+              refunded_at = unixepoch()
+          WHERE order_id = ?
+        `).bind(refund.memo, refund.order_id).run();
+
+        return Response.json({
+          success: true,
+          refund_id,
+          payment_identifier: paymentIdentifier,
+          txid,
+          status: 'completed',
+          message: 'Refund processed and completed successfully'
+        }, { 
+          headers: corsHeaders 
+        });
+      }
     }
+
+    // Payment created but not yet completed
+    return Response.json({
+      success: true,
+      refund_id,
+      payment_identifier: paymentIdentifier,
+      status: 'processing',
+      message: 'A2U payment created. Pi Platform will process the transaction. Check back in a few moments.'
+    }, { 
+      headers: corsHeaders 
+    });
 
   } catch (error) {
     console.error('❌ Process refund error:', error);
