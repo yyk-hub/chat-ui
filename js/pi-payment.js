@@ -96,7 +96,7 @@ const PiPayment = {
     try {
       console.log('🔐 Authenticating with payment scope...');
 
-      const scopes = ['payments'];
+      const scopes = ['payments', 'wallet_address'];
 
       function onIncompletePaymentFound(payment) {
         console.log('⚠️ Incomplete payment found:', payment);
