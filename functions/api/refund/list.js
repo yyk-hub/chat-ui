@@ -1,5 +1,5 @@
 // functions/api/refund/list.js
-// FIXED: Use x-admin-token instead of Bearer token
+// FIXED: Proper parameter binding for D1
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -11,7 +11,7 @@ export async function onRequestGet(context) {
   };
 
   try {
-    // ✅ FIXED: Use x-admin-token (matches your other admin endpoints)
+    // Auth check
     const adminToken = request.headers.get('x-admin-token');
     if (!adminToken || adminToken !== env.ADMIN_TOKEN) {
       return Response.json({ 
@@ -28,51 +28,56 @@ export async function onRequestGet(context) {
     const limit = parseInt(url.searchParams.get('limit') || '50');
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
-    // Build query
-    let query = `
-      SELECT 
-        r.*,
-        o.cus_name,
-        o.prod_name,
-        o.total_amt,
-        o.phone
-      FROM refunds r
-      JOIN ceo_orders o ON r.order_id = o.order_id
-    `;
-
-    const params = [];
-
-    // Filter by status
+    // ✅ FIXED: Build query with proper binding
+    let query;
+    let stmt;
+    
     if (status !== 'all') {
-      query += ` WHERE r.refund_status = ?`;
-      params.push(status);
+      // Query WITH status filter
+      query = `
+        SELECT 
+          r.*,
+          o.cus_name,
+          o.prod_name,
+          o.total_amt,
+          o.phone
+        FROM refunds r
+        JOIN ceo_orders o ON r.order_id = o.order_id
+        WHERE r.refund_status = ?
+        ORDER BY r.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+      stmt = env.DB.prepare(query).bind(status, limit, offset);
+    } else {
+      // Query WITHOUT status filter
+      query = `
+        SELECT 
+          r.*,
+          o.cus_name,
+          o.prod_name,
+          o.total_amt,
+          o.phone
+        FROM refunds r
+        JOIN ceo_orders o ON r.order_id = o.order_id
+        ORDER BY r.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+      stmt = env.DB.prepare(query).bind(limit, offset);
     }
-
-    // Order by most recent first
-    query += ` ORDER BY r.created_at DESC`;
-
-    // Pagination
-    query += ` LIMIT ? OFFSET ?`;
-    params.push(limit, offset);
-
-    // Execute query
-    let stmt = env.DB.prepare(query);
-    params.forEach(param => {
-      stmt = stmt.bind(param);
-    });
 
     const result = await stmt.all();
     const refunds = result.results || [];
 
     // Get total count
-    let countQuery = `SELECT COUNT(*) as total FROM refunds`;
+    let countQuery;
+    let countStmt;
+    
     if (status !== 'all') {
-      countQuery += ` WHERE refund_status = ?`;
-    }
-
-    let countStmt = env.DB.prepare(countQuery);
-    if (status !== 'all') {
-      countStmt = countStmt.bind(status);
+      countQuery = `SELECT COUNT(*) as total FROM refunds WHERE refund_status = ?`;
+      countStmt = env.DB.prepare(countQuery).bind(status);
+    } else {
+      countQuery = `SELECT COUNT(*) as total FROM refunds`;
+      countStmt = env.DB.prepare(countQuery);
     }
 
     const countResult = await countStmt.first();
