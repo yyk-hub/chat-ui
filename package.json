@@ -1,4 +1,18 @@
+
 {
+  "name": "chat-ui",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for Pi A2U refunds with local signing",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "author": "Yee Yu Ket",
+  "license": "MIT",
+  "dependencies": {
+    "@stellar/stellar-sdk": "^10.6.0"
+  },
   "devDependencies": {
     "wrangler": "^4.43.0"
   }
