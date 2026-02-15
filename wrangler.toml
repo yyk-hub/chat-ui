@@ -11,3 +11,6 @@ database_id = "fdc684fb-d1c5-426c-b6c4-a00402afea12"
 binding = "MAINTENANCE_KV"
 id = "c10da595a2204dac8e35fb87a757e0fe"
 preview_id = "5ff737d6327e4f37b1b8c3976a9210d1"
+
+compatibility_flags = [ "nodejs_compat" ]
+compatibility_date = "2024-09-23"
