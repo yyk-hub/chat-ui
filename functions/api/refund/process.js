@@ -1,5 +1,5 @@
 // functions/api/refund/process.js
-// Correct A2U Refund Flow: Create → Approve → Complete → Poll
+// FINAL FIX: Include APP_WALLET_SECRET in A2U payment request
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -33,76 +33,159 @@ export async function onRequestPost(context) {
       return Response.json({ success: false, error: `Refund status is ${refund.refund_status}, expected pending` }, { status: 400, headers: corsHeaders });
     }
 
-    // Step 1: Create payment
+    console.log('📥 Processing refund:', {
+      refund_id,
+      order_id: refund.order_id,
+      user_uid: refund.user_uid,
+      amount: refund.amount
+    });
+
+    // ====================================================================
+    // STEP 1: Create A2U Payment with Wallet Secret
+    // ====================================================================
+    
     const paymentRequestBody = {
       payment: {
         amount: parseFloat(refund.amount),
         memo: refund.memo || `Refund for order ${refund.order_id}`,
         metadata: JSON.parse(refund.metadata || '{}'),
-        uid: refund.user_uid
+        uid: refund.user_uid,
+        app_wallet_secret: env.APP_WALLET_SECRET  // ✅ CRITICAL FIX!
       }
     };
 
+    console.log('🔄 Creating A2U payment (Pi will auto-sign)...');
+
     const createResponse = await fetch('https://api.minepi.com/v2/payments', {
       method: 'POST',
-      headers: { 'Authorization': `Key ${env.PI_API_KEY}`, 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Key ${env.PI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(paymentRequestBody)
     });
+
     if (!createResponse.ok) {
       const errorText = await createResponse.text();
-      await env.DB.prepare(`UPDATE refunds SET refund_status='failed', error_message=?, retry_count=retry_count+1 WHERE refund_id=?`)
-        .bind(errorText, refund_id).run();
-      throw new Error(`Pi API create error: ${errorText}`);
+      console.error('❌ Pi API create error:', errorText);
+      
+      await env.DB.prepare(`
+        UPDATE refunds 
+        SET refund_status = 'failed',
+            error_message = ?,
+            retry_count = retry_count + 1
+        WHERE refund_id = ?
+      `).bind(`Create error: ${errorText}`, refund_id).run();
+      
+      throw new Error(`Pi API error: ${createResponse.status} - ${errorText}`);
     }
+
     const createData = await createResponse.json();
     const paymentIdentifier = createData.identifier;
+    
+    console.log('✅ Payment created:', paymentIdentifier);
+    console.log('Payment status:', createData.status);
 
-    await env.DB.prepare(`UPDATE refunds SET payment_identifier=?, refund_status='processing', initiated_at=unixepoch() WHERE refund_id=?`)
-      .bind(paymentIdentifier, refund_id).run();
+    // Update refund with payment_identifier
+    await env.DB.prepare(`
+      UPDATE refunds 
+      SET payment_identifier = ?,
+          refund_status = 'processing',
+          initiated_at = unixepoch()
+      WHERE refund_id = ?
+    `).bind(paymentIdentifier, refund_id).run();
 
-    // Step 2: Approve payment
-    await fetch(`https://api.minepi.com/v2/payments/${paymentIdentifier}/approve`, {
-      method: 'POST',
-      headers: { 'Authorization': `Key ${env.PI_API_KEY}` }
-    });
-
-    // Step 3: Complete payment
-    await fetch(`https://api.minepi.com/v2/payments/${paymentIdentifier}/complete`, {
-      method: 'POST',
-      headers: { 'Authorization': `Key ${env.PI_API_KEY}` }
-    });
-
-    // Step 4: Poll until transaction_verified
+    // ====================================================================
+    // STEP 2: Poll for Transaction Completion
+    // ====================================================================
+    
+    console.log('⏳ Polling for transaction completion...');
+    
     let txid = null;
-    for (let i = 0; i < 10; i++) {
-      await new Promise(r => setTimeout(r, 1000));
-      const statusResponse = await fetch(`https://api.minepi.com/v2/payments/${paymentIdentifier}`, {
-        headers: { 'Authorization': `Key ${env.PI_API_KEY}` }
-      });
-      if (!statusResponse.ok) continue;
+    let completed = false;
+    const MAX_ATTEMPTS = 20; // 20 seconds (Cloudflare Workers limit is ~30s)
+    
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      // Wait 1 second between polls
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const statusResponse = await fetch(
+        `https://api.minepi.com/v2/payments/${paymentIdentifier}`,
+        {
+          headers: {
+            'Authorization': `Key ${env.PI_API_KEY}`
+          }
+        }
+      );
+      
+      if (!statusResponse.ok) {
+        console.warn(`⚠️ Poll ${attempt + 1}: Status check failed`);
+        continue;
+      }
+      
       const statusData = await statusResponse.json();
-
-      if (statusData.developer_completed && statusData.transaction_verified && statusData.transaction?.txid) {
+      
+      console.log(`🔍 Poll ${attempt + 1}/${MAX_ATTEMPTS}:`, {
+        developer_approved: statusData.status?.developer_approved,
+        transaction_verified: statusData.status?.transaction_verified,
+        developer_completed: statusData.status?.developer_completed,
+        has_transaction: !!statusData.transaction,
+        txid: statusData.transaction?.txid
+      });
+      
+      // Check if transaction is verified and has txid
+      if (statusData.status?.transaction_verified && statusData.transaction?.txid) {
         txid = statusData.transaction.txid;
+        completed = true;
+        console.log('✅ Transaction verified! txid:', txid);
         break;
+      }
+      
+      // Check if cancelled
+      if (statusData.status?.cancelled) {
+        throw new Error('Payment was cancelled by Pi Platform');
       }
     }
 
-    if (!txid) {
+    // If not completed within timeout, return processing status
+    if (!completed || !txid) {
+      console.warn('⚠️ Transaction not completed within timeout');
+      
       return Response.json({
         success: true,
+        status: 'processing',
         refund_id,
         payment_identifier: paymentIdentifier,
-        status: 'processing',
-        message: 'Refund initiated but blockchain transaction not yet confirmed. Poll again later.'
-      }, { headers: corsHeaders });
+        message: 'Payment created but blockchain transaction not yet confirmed. Check status later.',
+        note: 'Use /api/refund/check to verify completion'
+      }, { 
+        headers: corsHeaders 
+      });
     }
 
-    // Step 5: Update DB
-    await env.DB.prepare(`UPDATE refunds SET txid=?, refund_status='completed', completed_at=unixepoch() WHERE refund_id=?`)
-      .bind(txid, refund_id).run();
-    await env.DB.prepare(`UPDATE ceo_orders SET has_refund=1, refund_reason=?, refunded_at=unixepoch() WHERE order_id=?`)
-      .bind(refund.memo, refund.order_id).run();
+    // ====================================================================
+    // STEP 3: Update Database with Completion
+    // ====================================================================
+    
+    console.log('💾 Updating database...');
+    
+    await env.DB.prepare(`
+      UPDATE refunds 
+      SET txid = ?,
+          refund_status = 'completed',
+          completed_at = unixepoch()
+      WHERE refund_id = ?
+    `).bind(txid, refund_id).run();
+
+    await env.DB.prepare(`
+      UPDATE ceo_orders 
+      SET has_refund = 1,
+          refund_reason = ?,
+          refunded_at = unixepoch()
+      WHERE order_id = ?
+    `).bind(refund.memo, refund.order_id).run();
+
+    console.log('✅ Refund completed successfully!');
 
     return Response.json({
       success: true,
@@ -111,10 +194,20 @@ export async function onRequestPost(context) {
       txid,
       status: 'completed',
       message: 'Refund processed and completed successfully!'
-    }, { headers: corsHeaders });
+    }, { 
+      headers: corsHeaders 
+    });
 
   } catch (error) {
-    return Response.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
+    console.error('❌ Process refund error:', error);
+    
+    return Response.json({
+      success: false,
+      error: error.message
+    }, { 
+      status: 500, 
+      headers: corsHeaders 
+    });
   }
 }
 
