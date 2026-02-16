@@ -6,6 +6,7 @@
   "main": "index.js",
 
   "scripts": {
+    "build": "echo build",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev"
   },
