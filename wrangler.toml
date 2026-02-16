@@ -1,7 +1,6 @@
-name = "chat-ui"        # Can match GitHub or just be descriptive
+name = "chat-ui"
 compatibility_date = "2024-10-14"
 compatibility_flags = ["nodejs_compat"]
-
 pages_build_output_dir = "."
 
 [[d1_databases]]
