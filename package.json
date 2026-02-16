@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "description": "Cloudflare Worker for Pi A2U refunds with local signing",
   "main": "index.js",
+  
   "scripts": {
+    "build": "echo build",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev"
   },
