@@ -6,589 +6,443 @@
   <title>Pi Refund Test — Send 1π</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=DM+Mono:wght@400&display=swap');
 
-    :root {
-      --pi: #7B4FE9;
-      --pi-light: #9B77FF;
-      --pi-dark: #4A2FA0;
-      --gold: #F5C842;
-      --bg: #0D0B14;
-      --card: #16121F;
-      --border: #2A2040;
-      --text: #F0EDF9;
-      --muted: #7A6F8F;
-      --success: #2ECC71;
-      --error: #E74C3C;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Syne', sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(123,79,233,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(123,79,233,0.05) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-    }
-
-    body::after {
-      content: '';
-      position: fixed;
-      top: -200px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(123,79,233,0.15) 0%, transparent 70%);
-      pointer-events: none;
+      padding: 20px;
     }
 
     .container {
+      background: white;
+      max-width: 440px;
       width: 100%;
-      max-width: 420px;
-      position: relative;
-      z-index: 1;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .pi-logo {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, var(--pi), var(--pi-light));
-      border-radius: 20px;
+    .logo {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
-      margin: 0 auto 16px;
-      box-shadow: 0 8px 32px rgba(123,79,233,0.4);
-      animation: float 3s ease-in-out infinite;
+      font-size: 36px;
+      margin: 0 auto 20px;
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-
-    .header h1 {
-      font-size: 28px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--text), var(--pi-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    h1 {
+      font-size: 26px;
+      text-align: center;
+      color: #1a202c;
       margin-bottom: 8px;
     }
 
-    .header p {
-      color: var(--muted);
+    .subtitle {
+      text-align: center;
+      color: #718096;
       font-size: 14px;
+      margin-bottom: 24px;
       line-height: 1.5;
     }
 
-    .test-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(245,200,66,0.1);
-      border: 1px solid rgba(245,200,66,0.3);
-      color: var(--gold);
-      padding: 4px 12px;
+    .badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      padding: 6px 12px;
       border-radius: 100px;
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 0.08em;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
       margin-bottom: 16px;
     }
 
-    .test-badge::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      background: var(--gold);
-      border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.8); }
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 28px;
-      margin-bottom: 16px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(123,79,233,0.5), transparent);
-    }
-
-    .amount-display {
+    .amount-box {
+      background: linear-gradient(135deg, #667eea15, #764ba215);
+      border-radius: 16px;
+      padding: 24px;
       text-align: center;
-      padding: 24px 0;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
-    .amount-display .label {
-      font-size: 11px;
-      letter-spacing: 0.1em;
+    .amount {
+      font-size: 48px;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 4px;
+    }
+
+    .amount-label {
+      font-size: 12px;
+      color: #718096;
       text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 8px;
+      letter-spacing: 0.05em;
     }
 
-    .amount-display .amount {
-      font-size: 56px;
-      font-weight: 800;
-      color: var(--pi-light);
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .amount-display .amount span {
-      font-size: 28px;
-      color: var(--muted);
-      font-weight: 400;
-    }
-
-    .user-box {
-      background: rgba(123,79,233,0.08);
-      border: 1px solid rgba(123,79,233,0.2);
+    .info-box {
+      background: #f7fafc;
       border-radius: 12px;
-      padding: 14px 16px;
+      padding: 16px;
       margin-bottom: 20px;
       display: none;
-      align-items: center;
-      gap: 12px;
     }
 
-    .user-box.visible { display: flex; }
-
-    .user-avatar {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, var(--pi), var(--pi-dark));
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-
-    .user-info .name {
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .user-info .uid {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
+    .info-box.show { display: block; }
 
     .info-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      padding: 8px 0;
       font-size: 13px;
     }
 
-    .info-row:last-child { border-bottom: none; }
-
-    .info-row .key { color: var(--muted); }
+    .info-row .label {
+      color: #718096;
+    }
 
     .info-row .value {
       font-family: 'DM Mono', monospace;
-      color: var(--text);
+      color: #1a202c;
+      font-weight: 500;
       font-size: 12px;
     }
 
-    .info-row .value.highlight { color: var(--pi-light); }
-
-    .pay-btn {
+    .btn {
       width: 100%;
-      padding: 18px;
-      background: linear-gradient(135deg, var(--pi), var(--pi-dark));
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
       border: none;
-      border-radius: 16px;
+      border-radius: 12px;
       color: white;
       font-family: 'Syne', sans-serif;
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.2s;
-      letter-spacing: 0.02em;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .pay-btn:hover:not(:disabled) {
+    .btn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(123,79,233,0.5);
+      box-shadow: 0 10px 30px rgba(102,126,234,0.4);
     }
 
-    .pay-btn:disabled {
+    .btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
-    .status-box {
-      border-radius: 16px;
-      padding: 20px;
+    .status {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 12px;
       text-align: center;
       display: none;
-      margin-top: 16px;
     }
 
-    .status-box.success {
-      display: block;
-      background: rgba(46,204,113,0.1);
-      border: 1px solid rgba(46,204,113,0.3);
+    .status.show { display: block; }
+
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
     }
 
-    .status-box.error {
-      display: block;
-      background: rgba(231,76,60,0.1);
-      border: 1px solid rgba(231,76,60,0.3);
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
     }
 
-    .status-box .status-icon { font-size: 36px; margin-bottom: 8px; }
-    .status-box .status-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-    .status-box.success .status-title { color: var(--success); }
-    .status-box.error .status-title { color: var(--error); }
+    .status-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
 
-    .status-box .status-detail {
+    .status-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .status-detail {
       font-family: 'DM Mono', monospace;
       font-size: 11px;
-      color: var(--muted);
+      opacity: 0.8;
+      margin-top: 8px;
       word-break: break-all;
-      line-height: 1.6;
     }
 
-    .order-id-box {
-      background: rgba(46,204,113,0.05);
-      border: 1px dashed rgba(46,204,113,0.3);
-      border-radius: 10px;
-      padding: 10px 14px;
+    .order-badge {
+      background: white;
+      border: 2px dashed #10b981;
+      padding: 12px;
+      border-radius: 8px;
       margin-top: 12px;
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
     }
 
-    .order-id-box .oid-label {
-      color: var(--muted);
+    .order-label {
       font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
       margin-bottom: 4px;
     }
 
-    .order-id-box .oid-value {
-      color: var(--success);
-      font-weight: 500;
+    .order-id {
+      font-family: 'DM Mono', monospace;
+      font-weight: 600;
+      font-size: 13px;
     }
 
-    .footer-note {
+    .note {
       text-align: center;
       font-size: 12px;
-      color: var(--muted);
-      margin-top: 20px;
-      line-height: 1.6;
+      color: #718096;
+      margin-top: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      display: inline-block;
+      animation: spin 1s linear infinite;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="header">
-    <div class="test-badge">Testnet Mode</div>
-    <div class="pi-logo">π</div>
-    <h1>Refund Test Payment</h1>
-    <p>Send 1π to test the A2U refund system.<br>Your Pi will be refunded automatically.</p>
+  <div style="text-align: center;">
+    <span class="badge">🧪 Testnet</span>
+  </div>
+  
+  <div class="logo">π</div>
+  
+  <h1>Refund Test Payment</h1>
+  <p class="subtitle">Send 1π for A2U refund testing. You'll get it back!</p>
+
+  <div class="amount-box">
+    <div class="amount">1 π</div>
+    <div class="amount-label">Test Payment Amount</div>
   </div>
 
-  <div class="card">
-    <div class="user-box" id="userBox">
-      <div class="user-avatar">👤</div>
-      <div class="user-info">
-        <div class="name" id="userName">Loading...</div>
-        <div class="uid" id="userUid">...</div>
-      </div>
-    </div>
-
-    <div class="amount-display">
-      <div class="label">Amount to Send</div>
-      <div class="amount">1 <span>π</span></div>
-    </div>
-
+  <div class="info-box" id="infoBox">
     <div class="info-row">
-      <span class="key">Purpose</span>
-      <span class="value highlight">A2U Refund Test</span>
+      <span class="label">User</span>
+      <span class="value" id="userDisplay">—</span>
     </div>
     <div class="info-row">
-      <span class="key">Network</span>
-      <span class="value">Pi Testnet</span>
+      <span class="label">Order ID</span>
+      <span class="value" id="orderDisplay">Generating...</span>
     </div>
     <div class="info-row">
-      <span class="key">Order ID</span>
-      <span class="value" id="orderIdDisplay">Will be generated</span>
+      <span class="label">Purpose</span>
+      <span class="value">Refund Test</span>
     </div>
   </div>
 
-  <button class="pay-btn" id="payBtn">
-    🔐 Authenticate & Pay 1π
+  <button class="btn" id="payBtn">
+    🔐 Pay with Pi
   </button>
 
-  <div class="status-box" id="statusBox">
-    <div class="status-icon" id="statusIcon">✅</div>
-    <div class="status-title" id="statusTitle">Payment Successful!</div>
+  <div class="status" id="statusBox">
+    <div class="status-icon" id="statusIcon"></div>
+    <div class="status-title" id="statusTitle"></div>
     <div class="status-detail" id="statusDetail"></div>
-    <div class="order-id-box" id="orderIdBox" style="display:none;">
-      <div class="oid-label">Order ID (for admin refund)</div>
-      <div class="oid-value" id="finalOrderId"></div>
+    <div class="order-badge" id="orderBadge" style="display:none;">
+      <div class="order-label">Your Order ID</div>
+      <div class="order-id" id="finalOrderId"></div>
     </div>
   </div>
 
-  <div class="footer-note">
-    Testnet payment for refund testing. Real Pi not spent.
+  <div class="note">
+    Must be opened in Pi Browser
   </div>
 </div>
 
 <script>
-  const API_BASE = window.location.origin;
-  let isInitialized = false;
-  let isAuthenticated = false;
-  let piUser = null;
-  let currentOrderId = null;
+  const API = window.location.origin;
+  let piInitialized = false;
+  let user = null;
+  let orderId = null;
 
-  // Initialize Pi SDK on page load
-  async function initPi() {
-    if (isInitialized) return true;
+  function showStatus(type, icon, title, detail, showOrder = false) {
+    const box = document.getElementById('statusBox');
+    box.className = `status show ${type}`;
+    document.getElementById('statusIcon').textContent = icon;
+    document.getElementById('statusTitle').textContent = title;
+    document.getElementById('statusDetail').textContent = detail;
     
+    if (showOrder && orderId) {
+      document.getElementById('orderBadge').style.display = 'block';
+      document.getElementById('finalOrderId').textContent = orderId;
+    }
+  }
+
+  function resetBtn() {
+    const btn = document.getElementById('payBtn');
+    btn.disabled = false;
+    btn.textContent = '🔐 Pay with Pi';
+  }
+
+  function updateBtn(text) {
+    document.getElementById('payBtn').textContent = text;
+  }
+
+  async function initializePi() {
+    if (piInitialized) return true;
+
     try {
-      console.log('🔄 Initializing Pi SDK...');
-      
       if (typeof Pi === 'undefined') {
-        throw new Error('Pi SDK not loaded. Please open in Pi Browser.');
+        throw new Error('Pi SDK not available. Open in Pi Browser.');
       }
 
-      // Detect environment
-      const isSandbox = window.location.hostname === 'chat-ui-30l.pages.dev' ||
-                        window.location.hostname.includes('localhost');
+      const isSandbox = !window.location.hostname.includes('ceo-9xi');
       
       await Pi.init({
         version: "2.0",
         sandbox: isSandbox
       });
-      
-      isInitialized = true;
-      console.log('✅ Pi SDK initialized');
+
+      piInitialized = true;
+      console.log('✅ Pi SDK ready');
       return true;
-      
+
     } catch (err) {
-      console.error('❌ Pi init error:', err);
-      showStatus('error', '❌', 'Initialization Error', 
-        'Please open this page in Pi Browser. Regular browsers cannot process Pi payments.');
+      console.error('❌ Init error:', err);
+      showStatus('error', '❌', 'Initialization Failed', 
+        'Please open this page in the Pi Browser app.');
       return false;
     }
   }
 
-  // Show status
-  function showStatus(type, icon, title, detail, orderId = null) {
-    const box = document.getElementById('statusBox');
-    box.className = `status-box ${type}`;
-    document.getElementById('statusIcon').textContent = icon;
-    document.getElementById('statusTitle').textContent = title;
-    document.getElementById('statusDetail').textContent = detail;
-
-    if (orderId) {
-      document.getElementById('orderIdBox').style.display = 'block';
-      document.getElementById('finalOrderId').textContent = orderId;
-    }
-  }
-
-  // Reset button
-  function resetButton() {
+  async function startPayment() {
     const btn = document.getElementById('payBtn');
-    btn.disabled = false;
-    btn.textContent = '🔐 Authenticate & Pay 1π';
-  }
+    btn.disabled = true;
 
-  // Handle incomplete payments
-  function onIncompletePaymentFound(payment) {
-    console.log('⚠️ Incomplete payment:', payment);
-    alert(`⚠️ You have an incomplete payment of ${payment.amount} π. Please complete it in Pi Wallet first.`);
-  }
-
-  // Main payment handler
-  async function handlePayment() {
-    const btn = document.getElementById('payBtn');
-    
     try {
-      // Step 1: Initialize
-      btn.disabled = true;
-      btn.textContent = '⏳ Initializing...';
-      
-      const initSuccess = await initPi();
-      if (!initSuccess) {
-        resetButton();
+      // Initialize Pi SDK
+      updateBtn('⏳ Connecting...');
+      const ready = await initializePi();
+      if (!ready) {
+        resetBtn();
         return;
       }
 
-      // Step 2: Authenticate
-      btn.textContent = '🔐 Authenticating...';
-      console.log('🔐 Starting authentication...');
+      // Authenticate IMMEDIATELY after init
+      updateBtn('🔐 Authenticating...');
       
       const auth = await Pi.authenticate(
         ['payments', 'wallet_address'],
-        onIncompletePaymentFound
+        (payment) => {
+          console.log('Incomplete payment:', payment);
+        }
       );
-      
-      piUser = auth.user;
-      isAuthenticated = true;
-      console.log('✅ Authenticated:', piUser.username);
 
-      // Show user info
-      document.getElementById('userBox').classList.add('visible');
-      document.getElementById('userName').textContent = `@${piUser.username}`;
-      document.getElementById('userUid').textContent = piUser.uid;
+      user = auth.user;
+      console.log('✅ Authenticated:', user.username);
 
       // Generate order ID
-      currentOrderId = `ORD${Date.now()}`;
-      document.getElementById('orderIdDisplay').textContent = currentOrderId;
+      orderId = `ORD${Date.now()}`;
 
-      // Step 3: Create payment
-      btn.textContent = '💳 Creating payment...';
-      console.log('💳 Creating payment...');
+      // Show info
+      document.getElementById('infoBox').classList.add('show');
+      document.getElementById('userDisplay').textContent = `@${user.username}`;
+      document.getElementById('orderDisplay').textContent = orderId;
+
+      // Create payment
+      updateBtn('💳 Creating payment...');
 
       Pi.createPayment({
         amount: 1.0,
-        memo: `Refund Test - ${currentOrderId}`,
+        memo: `Test - ${orderId}`,
         metadata: {
-          order_id: currentOrderId,
-          test: true,
-          purpose: 'a2u_refund_test'
+          order_id: orderId,
+          test: true
         }
       }, {
         onReadyForServerApproval: async (paymentId) => {
-          console.log('📝 Approving:', paymentId);
-          btn.textContent = '✅ Approving...';
-
-          const res = await fetch(`${API_BASE}/api/pi/approve`, {
+          updateBtn('✅ Approving...');
+          
+          await fetch(`${API}/api/pi/approve`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               payment_id: paymentId,
-              order_id: currentOrderId,
-              user_uid: piUser.uid,
-              username: piUser.username,
-              amount: 1.0,
-              is_test: true
+              order_id: orderId,
+              user_uid: user.uid,
+              username: user.username,
+              amount: 1.0
             })
           });
-          console.log('✅ Approved');
         },
 
-        onReadyForServerCompletion: async (paymentId, txid) => {
-          console.log('🔗 Completing:', txid);
-          btn.textContent = '🔗 Completing...';
-
-          const res = await fetch(`${API_BASE}/api/pi/complete`, {
+        onReadyForServerCompletion: async (paymentId, txid) {
+          updateBtn('🔗 Completing...');
+          
+          await fetch(`${API}/api/pi/complete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               payment_id: paymentId,
               txid: txid,
-              order_id: currentOrderId
+              order_id: orderId
             })
           });
 
-          console.log('✅ Payment completed!');
           btn.style.display = 'none';
-
-          showStatus(
-            'success',
-            '🎉',
-            'Payment Successful!',
-            `TxID: ${txid}\n\nAdmin will process your refund using this Order ID.`,
-            currentOrderId
-          );
+          showStatus('success', '🎉', 'Payment Complete!',
+            `TxID: ${txid}\n\nGive this Order ID to admin for refund:`, true);
         },
 
-        onCancel: (paymentId) => {
-          console.log('❌ Payment cancelled');
-          showStatus('error', '⚠️', 'Payment Cancelled', 'You cancelled the payment. Try again when ready.');
-          resetButton();
+        onCancel: () => {
+          showStatus('error', '⚠️', 'Cancelled', 'Payment was cancelled.');
+          resetBtn();
         },
 
         onError: (error) => {
-          console.error('❌ Payment error:', error);
           let msg = error.message || 'Unknown error';
-          if (msg.includes('pending payment')) {
-            msg = 'You have a pending payment. Complete or cancel it in Pi Wallet first.';
+          if (msg.includes('pending')) {
+            msg = 'Complete your pending payment in Pi Wallet first.';
           }
           showStatus('error', '❌', 'Payment Failed', msg);
-          resetButton();
+          resetBtn();
         }
       });
 
     } catch (err) {
-      console.error('❌ Error:', err);
-      showStatus('error', '❌', 'Error', err.message);
-      resetButton();
+      console.error('Error:', err);
+      let msg = err.message;
+      
+      if (msg.includes('timed out') || msg.includes('expired')) {
+        msg = 'Authentication timed out. Try again.';
+      }
+      
+      showStatus('error', '❌', 'Error', msg);
+      resetBtn();
     }
   }
 
-  // Attach event listener
-  document.getElementById('payBtn').addEventListener('click', handlePayment);
+  document.getElementById('payBtn').addEventListener('click', startPayment);
 
-  // Auto-initialize when page loads
+  // Pre-initialize Pi SDK on load
   window.addEventListener('load', () => {
     setTimeout(() => {
-      initPi().catch(err => console.error('Auto-init failed:', err));
-    }, 1000);
+      initializePi().catch(() => {});
+    }, 500);
   });
 </script>
 
