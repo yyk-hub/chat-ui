@@ -44,6 +44,7 @@ export async function onRequestPost(context) {
       INSERT INTO ceo_orders (
         order_id,
         user_uid,
+        pi_username,
         total_amt,
         pi_amount,
         order_status,
@@ -59,7 +60,7 @@ export async function onRequestPost(context) {
     `).bind(
       order_id,
       user_uid,
-      username || 'test_user',
+      pi_username || 'test_user',
       amount,                    // total_amt (in RM)
       amount,                    // pi_amount (1 RM = 1 Pi for testing)
       'completed',               // order_status
