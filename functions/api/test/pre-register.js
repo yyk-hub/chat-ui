@@ -6,11 +6,27 @@ export async function onRequestPost(context) {
   try {
     const { order_id, user_uid, amount } = await request.json();
 
-    // Direct insertion into your production-structured D1 table
+    // Mapping the data to your specific D1 columns:
+    // total_amt -> amount
+    // order_status -> 'pending'
     await env.DB.prepare(`
-      INSERT INTO ceo_orders (order_id, user_uid, amount, status, created_at) 
-      VALUES (?, ?, ?, 'pending_payment', unixepoch())
-    `).bind(order_id, user_uid, amount).run();
+      INSERT INTO ceo_orders (
+        order_id, 
+        user_uid, 
+        total_amt, 
+        order_status, 
+        created_at,
+        cus_name,
+        prod_name
+      ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+    `).bind(
+      order_id, 
+      user_uid, 
+      amount, 
+      'pending', 
+      'Test User', 
+      'Test Refund Product'
+    ).run();
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' }
