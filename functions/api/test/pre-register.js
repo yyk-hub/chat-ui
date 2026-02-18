@@ -44,7 +44,7 @@ export async function onRequestPost(context) {
       INSERT INTO ceo_orders (
         order_id,
         user_uid,
-        pi_username,
+        pi_username_id,
         total_amt,
         pi_amount,
         order_status,
@@ -55,9 +55,8 @@ export async function onRequestPost(context) {
         postcode,
         state_to,
         prod_name,
-        prod_price,
-        qty
-       ) VALUES (?, ?, ?, ?, ?, ?, unixepoch(), ?, ?, ?, ?, ?, ?, ?, ?)
+        quantity
+       ) VALUES (?, ?, ?, ?, ?, ?, unixepoch(), ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       order_id,
       user_uid,
@@ -71,8 +70,7 @@ export async function onRequestPost(context) {
       '88000',                   // postcode
       'Sabah',                   // state_to
       'A2U Refund Test',         // prod_name
-      amount,                    // prod_price
-      1                          // qty
+      1                          // quantity
     ).run();
 
     console.log('✅ Test order registered:', order_id);
