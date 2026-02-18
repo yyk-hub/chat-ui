@@ -48,7 +48,6 @@ export async function onRequestPost(context) {
         total_amt,
         pi_amount,
         order_status,
-        payment_status,
         created_at,
         cus_name,
         phone,
@@ -58,7 +57,7 @@ export async function onRequestPost(context) {
         prod_name,
         prod_price,
         qty
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, unixepoch(), ?, ?, ?, ?, ?, ?, ?, ?)
+       ) VALUES (?, ?, ?, ?, ?, ?, unixepoch(), ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       order_id,
       user_uid,
@@ -66,7 +65,6 @@ export async function onRequestPost(context) {
       amount,                    // total_amt (in RM)
       amount,                    // pi_amount (1 RM = 1 Pi for testing)
       'completed',               // order_status
-      'completed',               // payment_status
       'Test User',               // cus_name
       '0168101358',              // phone
       'Test Address',            // cus_address
