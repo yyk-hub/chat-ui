@@ -301,7 +301,7 @@
 
       // Show user info
       document.getElementById('info').classList.add('show');
-      document.getElementById('userInfo').textContent = `@${user.username}`;
+      document.getElementById('userInfo').textContent = `@${user.username || user.uid}`;
 
       // Generate Order ID
       orderID = `ORD${Date.now()}`;
