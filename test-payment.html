@@ -297,7 +297,7 @@
       });
       
       user = auth.user;
-      log(`✓ User: ${user.username}`);
+      log(`✓ User: ${user.username || user.uid}`);
 
       // Show user info
       document.getElementById('info').classList.add('show');
@@ -312,12 +312,21 @@
       log('Step 4: Create payment');
       updateBtn('💳 Creating payment...');
 
+      let approvalDone = false;
+      let completionDone = false;
+
       Pi.createPayment({
         amount: 1.0,
         memo: `Test-${orderID}`,
         metadata: { order_id: orderID, test: true }
       }, {
         onReadyForServerApproval: async (paymentId) => {
+          if (approvalDone) {
+            log('⚠ Approval already done, skipping');
+            return;
+          }
+          approvalDone = true;
+          
           log(`Approve: ${paymentId}`);
           updateBtn('✅ Approving...');
           
@@ -328,7 +337,7 @@
               payment_id: paymentId,
               order_id: orderID,
               user_uid: user.uid,
-              username: user.username,
+              username: user.username || 'unknown',
               amount: 1.0
             })
           });
@@ -337,6 +346,12 @@
         },
 
         onReadyForServerCompletion: async (paymentId, txid) => {
+          if (completionDone) {
+            log('⚠ Completion already done, skipping');
+            return;
+          }
+          completionDone = true;
+          
           log(`Complete: ${txid}`);
           updateBtn('🔗 Completing...');
           
