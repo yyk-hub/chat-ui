@@ -44,7 +44,6 @@ export async function onRequestPost(context) {
       INSERT INTO ceo_orders (
         order_id,
         user_uid,
-        pi_username,
         total_amt,
         pi_amount,
         order_status,
