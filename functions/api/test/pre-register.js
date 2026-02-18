@@ -1,40 +1,111 @@
-//test order for refund//
+// functions/api/test/pre-register.js
+// Pre-register test orders for refund testing
 
 export async function onRequestPost(context) {
   const { request, env } = context;
   
-  try {
-    const { order_id, user_uid, amount } = await request.json();
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
 
-    // Mapping the data to your specific D1 columns:
-    // total_amt -> amount
-    // order_status -> 'pending'
+  try {
+    const { order_id, user_uid, username, amount } = await request.json();
+
+    // Validate required fields
+    if (!order_id || !user_uid || !amount) {
+      return Response.json({
+        success: false,
+        error: 'Missing required fields: order_id, user_uid, amount'
+      }, { 
+        status: 400,
+        headers: corsHeaders 
+      });
+    }
+
+    console.log('📝 Pre-registering test order:', { order_id, user_uid, amount });
+
+    // Check if order already exists
+    const existing = await env.DB.prepare(
+      'SELECT order_id FROM ceo_orders WHERE order_id = ?'
+    ).bind(order_id).first();
+
+    if (existing) {
+      return Response.json({
+        success: true,
+        message: 'Order already exists',
+        order_id
+      }, { headers: corsHeaders });
+    }
+
+    // Insert test order with all required columns
     await env.DB.prepare(`
       INSERT INTO ceo_orders (
-        order_id, 
-        user_uid, 
-        total_amt, 
-        order_status, 
+        order_id,
+        user_uid,
+        pi_username,
+        total_amt,
+        pi_amount,
+        order_status,
+        payment_status,
         created_at,
         cus_name,
-        prod_name
-      ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+        phone,
+        cus_address,
+        postcode,
+        state_to,
+        prod_name,
+        prod_price,
+        qty
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, unixepoch(), ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
-      order_id, 
-      user_uid, 
-      amount, 
-      'pending', 
-      'Test User', 
-      'Test Refund Product'
+      order_id,
+      user_uid,
+      username || 'test_user',
+      amount,                    // total_amt (in RM)
+      amount,                    // pi_amount (1 RM = 1 Pi for testing)
+      'completed',               // order_status
+      'completed',               // payment_status
+      'Test User',               // cus_name
+      '0168101358',              // phone
+      'Test Address',            // cus_address
+      '88000',                   // postcode
+      'Sabah',                   // state_to
+      'A2U Refund Test',         // prod_name
+      amount,                    // prod_price
+      1                          // qty
     ).run();
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.log('✅ Test order registered:', order_id);
+
+    return Response.json({
+      success: true,
+      message: 'Test order registered successfully',
+      order_id,
+      user_uid,
+      amount
+    }, { headers: corsHeaders });
+
   } catch (err) {
-    return new Response(JSON.stringify({ success: false, error: err.message }), { 
+    console.error('❌ Pre-register error:', err);
+    
+    return Response.json({
+      success: false,
+      error: err.message
+    }, { 
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: corsHeaders 
     });
   }
+}
+
+export async function onRequestOptions() {
+  return new Response(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
