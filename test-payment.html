@@ -3,171 +3,189 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pi Refund Test - Secure Flow</title>
+  <title>Pi Payment & Refund Tester</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
-    /* ... (Your existing CSS) ... */
-    .processing { animation: pulse 1.5s infinite; opacity: 0.8; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      background: #f0f2f5;
+      display: flex; align-items: center; justify-content: center; min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: white; width: 100%; max-width: 450px;
+      border-radius: 24px; padding: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .status-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: bold; margin-bottom: 15px;
+    }
+    .status-pending { background: #fff7ed; color: #9a3412; }
+    .status-active { background: #f0fdf4; color: #166534; }
+
+    .amount-box {
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      padding: 20px; border-radius: 16px; margin: 20px 0;
+      text-align: center;
+    }
+    .amount-val { font-size: 36px; font-weight: 800; color: #6366f1; }
+
+    .btn {
+      width: 100%; padding: 16px; border-radius: 12px;
+      border: none; background: #6366f1; color: white;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+    
+    .debug-log {
+      margin-top: 20px; padding: 12px; background: #1e293b;
+      color: #94a3b8; border-radius: 8px; font-family: monospace;
+      font-size: 11px; height: 150px; overflow-y: auto; white-space: pre-wrap;
+    }
+    .error-msg { color: #ef4444; margin-top: 10px; font-size: 13px; text-align: center; }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <div class="logo">π</div>
-  <h1>Refund Test Flow</h1>
-  <p class="subtitle">1. Pay 1π → 2. Get Order ID → 3. Admin Refunds</p>
+  <div class="status-badge status-pending" id="stateBadge">System Idle</div>
+  <h2>Pi Refund Test Flow</h2>
+  <p style="color: #64748b; font-size: 14px;">Pay 1π to create a valid D1 record for refunding.</p>
 
-  <div class="amount">
-    <div class="amount-value">1.00 π</div>
+  <div class="amount-box">
+    <div class="amount-val">1.00 π</div>
+    <div style="font-size: 12px; color: #94a3b8;">Test Transaction</div>
   </div>
 
-  <div class="info" id="info">
-    <div class="info-row"><span class="info-label">User:</span><span class="info-value" id="userInfo">—</span></div>
-    <div class="info-row"><span class="info-label">Order ID:</span><span class="info-value" id="orderInfo">—</span></div>
-  </div>
+  <button class="btn" id="mainBtn" onclick="startProcess()">Initialize Payment</button>
+  <div id="errorDisplay" class="error-msg"></div>
 
-  <button class="btn" id="payBtn" onclick="startPay()">🔐 Start Test Payment</button>
-
-  <div class="result" id="result">
-    <div class="result-icon" id="resultIcon"></div>
-    <div class="result-title" id="resultTitle"></div>
-    <div class="result-detail" id="resultDetail"></div>
-    <div class="order-box" id="orderBox" style="display:none;">
-      <div class="order-label">Copy this for Refund Panel:</div>
-      <div class="order-id" id="finalOrder" style="background: #e0f2fe; padding: 5px; cursor: pointer;"></div>
-    </div>
-  </div>
-
-  <div class="debug" id="debug"></div>
+  <div class="debug-log" id="logs">-- System Logs --\n</div>
 </div>
 
 <script>
   const API = window.location.origin;
-  let user = null;
   let orderID = null;
-  let isProcessing = false;
+  let isLocked = false;
 
   function log(msg) {
-    const debug = document.getElementById('debug');
-    debug.classList.add('show');
-    debug.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
-    console.log(msg);
+    const box = document.getElementById('logs');
+    box.textContent += `> ${msg}\n`;
+    box.scrollTop = box.scrollHeight;
   }
 
-  function showResult(type, icon, title, detail, showOrder = false) {
-    const result = document.getElementById('result');
-    result.className = `result show ${type}`;
-    document.getElementById('resultIcon').textContent = icon;
-    document.getElementById('resultTitle').textContent = title;
-    document.getElementById('resultDetail').textContent = detail;
-    if (showOrder) document.getElementById('orderBox').style.display = 'block';
+  function updateUI(text, badge = null) {
+    document.getElementById('mainBtn').textContent = text;
+    if(badge) {
+      const b = document.getElementById('stateBadge');
+      b.textContent = badge;
+      b.className = `status-badge status-active`;
+    }
   }
 
-  async function startPay() {
-    if (isProcessing) return;
-    isProcessing = true;
-    
-    const btn = document.getElementById('payBtn');
-    btn.disabled = true;
-    btn.classList.add('processing');
-    document.getElementById('debug').textContent = ''; // Clear logs for new attempt
+  async function startProcess() {
+    if (isLocked) return;
+    isLocked = true;
+    document.getElementById('mainBtn').disabled = true;
+    document.getElementById('errorDisplay').textContent = '';
 
     try {
+      // 1. Init SDK
       log('Initializing Pi SDK...');
-      const isSandbox = !window.location.hostname.includes('ceo-9xi.pages.dev');
-      await Pi.init({ version: "2.0", sandbox: isSandbox });
+      await Pi.init({ version: "2.0", sandbox: !window.location.hostname.includes('pages.dev') });
 
-      log('Authenticating...');
+      // 2. Auth
+      log('Authenticating user...');
       const auth = await Pi.authenticate(['payments', 'wallet_address'], (p) => {
-        log('Incomplete payment detected.');
+        log('Warning: Incomplete payment detected.');
       });
       
-      user = auth.user;
+      const user = auth.user;
       orderID = `ORD${Date.now()}`;
-      
-      document.getElementById('info').classList.add('show');
-      document.getElementById('userInfo').textContent = `@${user.username || 'User'}`;
-      document.getElementById('orderInfo').textContent = orderID;
+      log(`User authenticated: ${user.username}`);
+      log(`Generated Order ID: ${orderID}`);
 
-      log('Creating payment object...');
+      // 3. Pre-Register (THE CRITICAL STEP)
+      updateUI('Syncing with D1...', 'REGISTERING');
+      log('Sending order to D1 database...');
       
-      // Tracking variables to prevent duplicate hits to your D1 database
-      let hasApproved = false;
-      let hasCompleted = false;
+      const regReq = await fetch(`${API}/api/test/pre-register`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ order_id: orderID, user_uid: user.uid, amount: 1.0 })
+      });
 
+      if (!regReq.ok) throw new Error('D1 Pre-registration failed.');
+      log('✓ Order record created in D1.');
+
+      // 4. Create Pi Payment
+      updateUI('Opening Pi Wallet...', 'PAYMENT_PENDING');
+      
       Pi.createPayment({
         amount: 1.0,
         memo: `RefundTest:${orderID}`,
         metadata: { order_id: orderID }
       }, {
         onReadyForServerApproval: async (paymentId) => {
-          if (hasApproved) return;
-          hasApproved = true;
+          log(`onReady: ${paymentId}. Calling approve.js...`);
           
-          log(`Server Approving: ${paymentId}`);
-          btn.textContent = '⏳ Verifying on Server...';
-
-          const response = await fetch(`${API}/api/pi/approve`, {
+          const res = await fetch(`${API}/api/pi/approve`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              payment_id: paymentId, 
-              order_id: orderID, 
-              user_uid: user.uid,
-              amount: 1.0 
-            })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ payment_id: paymentId, order_id: orderID })
           });
 
-          if (!response.ok) throw new Error('Server Approval Failed');
-          log('✓ Server Approved');
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || 'Server Approval Failed');
+          }
+          log('✅ Server Approved (D1 and Pi API Synced)');
         },
 
         onReadyForServerCompletion: async (paymentId, txid) => {
-          if (hasCompleted) return;
-          hasCompleted = true;
-
-          log(`Broadcasting: ${txid}`);
-          btn.textContent = '🔗 Finalizing Blockchain...';
-
-          const response = await fetch(`${API}/api/pi/complete`, {
+          log(`Completing Payment: ${txid}`);
+          
+          const res = await fetch(`${API}/api/pi/complete`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ payment_id: paymentId, txid: txid, order_id: orderID })
           });
 
-          if (!response.ok) throw new Error('Server Completion Failed');
-
-          log('🎉 Payment Confirmed!');
-          btn.style.display = 'none';
-          document.getElementById('finalOrder').textContent = orderID;
-          showResult('success', '✅', 'Payment Recorded', 'The order is now in D1. You can refund it via Admin.', true);
+          if (!res.ok) throw new Error('Completion Failed');
+          
+          log('🎉 SUCCESS! Order is ready for Refund Test.');
+          updateUI('Done! Order Ready', 'COMPLETED');
+          alert(`Success! Now go to Admin and refund Order ID: ${orderID}`);
         },
 
-        onCancel: (paymentId) => {
-          log('Payment Cancelled by User/System');
-          resetUI('Payment Cancelled');
+        onCancel: (pId) => {
+          log('User cancelled payment.');
+          reset('Cancelled');
         },
 
-        onError: (error, payment) => {
-          log(`SDK Error: ${error.message}`);
-          resetUI(`Error: ${error.message}`);
+        onError: (err) => {
+          log(`SDK Error: ${err.message}`);
+          reset(err.message);
         }
       });
 
-    } catch (err) {
-      log(`CRITICAL: ${err.message}`);
-      resetUI(err.message);
+    } catch (e) {
+      log(`Error: ${e.message}`);
+      reset(e.message);
     }
   }
 
-  function resetUI(msg) {
-    isProcessing = false;
-    const btn = document.getElementById('payBtn');
-    btn.disabled = false;
-    btn.classList.remove('processing');
-    btn.textContent = '🔐 Try Again';
-    showResult('error', '❌', 'Failed', msg);
+  function reset(msg) {
+    isLocked = false;
+    document.getElementById('mainBtn').disabled = false;
+    document.getElementById('mainBtn').textContent = 'Retry Payment';
+    document.getElementById('errorDisplay').textContent = msg;
+    const b = document.getElementById('stateBadge');
+    b.textContent = 'ERROR';
+    b.className = 'status-badge status-pending';
   }
 </script>
 </body>
